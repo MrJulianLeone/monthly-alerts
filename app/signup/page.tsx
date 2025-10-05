@@ -82,6 +82,27 @@ export default function SignupPage() {
               <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
             </div>
 
+            <div className="flex items-start gap-2 pt-2">
+              <input
+                type="checkbox"
+                id="agreeToTerms"
+                name="agreeToTerms"
+                className="mt-1 h-4 w-4 rounded border-gray-300"
+                required
+                disabled={loading}
+              />
+              <Label htmlFor="agreeToTerms" className="text-sm font-normal cursor-pointer">
+                I agree to the{" "}
+                <Link href="/terms" target="_blank" className="text-primary hover:underline">
+                  Terms of Service
+                </Link>
+                {" "}and{" "}
+                <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                  Privacy Policy
+                </Link>
+              </Label>
+            </div>
+
             <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? "Creating Account..." : "Create Account"}
             </Button>
@@ -93,12 +114,6 @@ export default function SignupPage() {
               </Link>
             </div>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-border">
-            <p className="text-xs text-muted-foreground text-center">
-              By signing up, you agree to our Terms of Service and Privacy Policy
-            </p>
-          </div>
         </Card>
       </div>
     </div>

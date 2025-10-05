@@ -38,6 +38,19 @@ export default function LoginPage() {
               <Input id="password" name="password" type="password" required />
             </div>
 
+            <div className="flex items-start gap-2">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                name="rememberMe"
+                className="mt-1 h-4 w-4 rounded border-gray-300"
+                required
+              />
+              <Label htmlFor="rememberMe" className="text-sm font-normal cursor-pointer">
+                I agree to save my login information for 15 days
+              </Label>
+            </div>
+
             <Button type="submit" size="lg" className="w-full">
               Sign In
             </Button>
