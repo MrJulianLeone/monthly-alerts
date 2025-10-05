@@ -23,7 +23,7 @@ export default async function SubscribePage() {
         </div>
       </header>
 
-      <div className="container max-w-2xl mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         <Link href="/dashboard">
           <Button variant="ghost" size="sm" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />

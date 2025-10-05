@@ -68,5 +68,5 @@ export async function logout() {
   await logoutUser()
   console.log("[v0] User logged out")
 
-  redirect("/login")
+  redirect("/")
 }
