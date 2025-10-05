@@ -27,66 +27,79 @@ export async function POST(req: NextRequest) {
   try {
     switch (event.type) {
       case "checkout.session.completed": {
-        const session = event.data.object as Stripe.Checkout.Session
+        try {
+          const session = event.data.object as Stripe.Checkout.Session
+          console.log("[Webhook] Processing checkout.session.completed")
 
-        if (session.mode === "subscription") {
-          const subscriptionId = session.subscription as string
-          const customerId = session.customer as string
-          const customerEmail = session.customer_details?.email
+          if (session.mode === "subscription") {
+            const subscriptionId = session.subscription as string
+            const customerId = session.customer as string
+            const customerEmail = session.customer_details?.email
 
-          // Get subscription details
-          const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+            console.log("[Webhook] Subscription ID:", subscriptionId)
+            console.log("[Webhook] Customer ID:", customerId)
+            console.log("[Webhook] Customer Email:", customerEmail)
 
-          // Get customer to find user_id from metadata
-          const customer = await stripe.customers.retrieve(customerId)
-          let userId = (customer as Stripe.Customer).metadata?.userId
+            // Get subscription details
+            console.log("[Webhook] Retrieving subscription details from Stripe...")
+            const subscription = await stripe.subscriptions.retrieve(subscriptionId)
+            console.log("[Webhook] Subscription retrieved, status:", subscription.status)
 
-          // If no userId in metadata (e.g., payment link), look up by email
-          if (!userId && customerEmail) {
-            console.log("[v0] No userId in metadata, looking up by email:", customerEmail)
-            const userResult = await sql`
-              SELECT id FROM users WHERE email = ${customerEmail} LIMIT 1
-            `
-            if (userResult.length > 0) {
-              userId = userResult[0].id
-              console.log("[v0] Found user by email:", userId)
+            // Get customer to find user_id from metadata
+            const customer = await stripe.customers.retrieve(customerId)
+            let userId = (customer as Stripe.Customer).metadata?.userId
+
+            // If no userId in metadata (e.g., payment link), look up by email
+            if (!userId && customerEmail) {
+              console.log("[Webhook] No userId in metadata, looking up by email:", customerEmail)
+              const userResult = await sql`
+                SELECT id FROM users WHERE email = ${customerEmail} LIMIT 1
+              `
+              if (userResult.length > 0) {
+                userId = userResult[0].id
+                console.log("[Webhook] Found user by email:", userId)
+              }
             }
+
+            if (!userId) {
+              console.error("[Webhook] Could not find userId for customer:", customerId, customerEmail)
+              return NextResponse.json({ error: "User not found" }, { status: 400 })
+            }
+
+            // Create or update subscription in database
+            console.log("[Webhook] Inserting/updating subscription in database...")
+            await sql`
+              INSERT INTO subscriptions (
+                user_id, 
+                stripe_customer_id, 
+                stripe_subscription_id, 
+                stripe_price_id,
+                status, 
+                current_period_start, 
+                current_period_end
+              )
+              VALUES (
+                ${userId}::uuid,
+                ${customerId},
+                ${subscriptionId},
+                ${subscription.items.data[0]?.price?.id || 'unknown'},
+                ${subscription.status},
+                to_timestamp(${subscription.current_period_start}),
+                to_timestamp(${subscription.current_period_end})
+              )
+              ON CONFLICT (stripe_subscription_id) 
+              DO UPDATE SET
+                status = ${subscription.status},
+                current_period_start = to_timestamp(${subscription.current_period_start}),
+                current_period_end = to_timestamp(${subscription.current_period_end}),
+                updated_at = NOW()
+            `
+
+            console.log("[Webhook] Subscription created/updated for user:", userId)
           }
-
-          if (!userId) {
-            console.error("[v0] Could not find userId for customer:", customerId, customerEmail)
-            break
-          }
-
-          // Create or update subscription in database
-          await sql`
-            INSERT INTO subscriptions (
-              user_id, 
-              stripe_customer_id, 
-              stripe_subscription_id, 
-              stripe_price_id,
-              status, 
-              current_period_start, 
-              current_period_end
-            )
-            VALUES (
-              ${userId}::uuid,
-              ${customerId},
-              ${subscriptionId},
-              ${subscription.items.data[0].price.id},
-              ${subscription.status},
-              to_timestamp(${subscription.current_period_start}),
-              to_timestamp(${subscription.current_period_end})
-            )
-            ON CONFLICT (stripe_subscription_id) 
-            DO UPDATE SET
-              status = ${subscription.status},
-              current_period_start = to_timestamp(${subscription.current_period_start}),
-              current_period_end = to_timestamp(${subscription.current_period_end}),
-              updated_at = NOW()
-          `
-
-          console.log("[v0] Subscription created/updated for user:", userId)
+        } catch (err: any) {
+          console.error("[Webhook] Error processing checkout.session.completed:", err)
+          throw err
         }
         break
       }
