@@ -1,6 +1,7 @@
 "use server"
 
 import { createUser, verifyUser, createSession, logout as logoutUser } from "@/lib/auth"
+import { redirect } from "next/navigation"
 
 export async function signup(formData: FormData) {
   const email = formData.get("email") as string
@@ -23,7 +24,7 @@ export async function signup(formData: FormData) {
     await createSession(user.id)
     console.log("[v0] Session created successfully")
 
-    return { success: true }
+    redirect("/dashboard")
   } catch (error: any) {
     console.log("[v0] Signup error:", error)
 
@@ -58,7 +59,7 @@ export async function login(formData: FormData) {
   await createSession(user.id)
   console.log("[v0] Session created successfully")
 
-  return { success: true }
+  redirect("/dashboard")
 }
 
 export async function logout() {
@@ -66,5 +67,5 @@ export async function logout() {
   await logoutUser()
   console.log("[v0] User logged out")
 
-  return { success: true }
+  redirect("/login")
 }
