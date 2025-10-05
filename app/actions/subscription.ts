@@ -27,20 +27,12 @@ export async function createCheckoutSession(userId: string, userEmail: string) {
       console.log("[Subscription] Created new customer:", customer.id)
     }
 
-    // Create hosted checkout session (not embedded)
+    // Create hosted checkout session using your Stripe product
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items: [
         {
-          price_data: {
-            currency: "usd",
-            product_data: {
-              name: "MonthlyAlerts Subscription",
-              description: "Monthly AI-curated stock alerts",
-            },
-            unit_amount: 2900,
-            recurring: { interval: "month" },
-          },
+          price: "price_1SEwoFIg8foNZBNgccgIefRf", // Your MonthlyAlerts product
           quantity: 1,
         },
       ],
