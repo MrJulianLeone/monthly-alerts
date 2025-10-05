@@ -57,7 +57,7 @@ export default async function AdminDashboardPage() {
             </div>
             <div className="flex items-center gap-2 sm:gap-4">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm">
+                <Button variant="outline" size="sm">
                   User Dashboard
                 </Button>
               </Link>
