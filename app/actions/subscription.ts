@@ -1,6 +1,5 @@
 "use server"
 
-import { redirect } from "next/navigation"
 import { stripe } from "@/lib/stripe"
 import { neon } from "@neondatabase/serverless"
 
@@ -86,20 +85,24 @@ export async function cancelSubscription(formData: FormData) {
   const subscriptionId = formData.get("subscriptionId") as string
 
   if (!subscriptionId) {
-    throw new Error("Subscription ID is required")
+    return { error: "Subscription ID is required" }
   }
 
-  // Cancel the subscription at period end
-  await stripe.subscriptions.update(subscriptionId, {
-    cancel_at_period_end: true,
-  })
+  try {
+    // Cancel the subscription at period end
+    await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: true,
+    })
 
-  // Update database
-  await sql`
-    UPDATE subscriptions 
-    SET cancel_at_period_end = true, updated_at = NOW()
-    WHERE stripe_subscription_id = ${subscriptionId}
-  `
+    // Update database
+    await sql`
+      UPDATE subscriptions 
+      SET cancel_at_period_end = true, updated_at = NOW()
+      WHERE stripe_subscription_id = ${subscriptionId}
+    `
 
-  redirect("/dashboard")
+    return { success: true }
+  } catch (error: any) {
+    return { error: error.message }
+  }
 }
