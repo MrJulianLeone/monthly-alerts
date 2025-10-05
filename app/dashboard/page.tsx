@@ -103,7 +103,7 @@ export default async function DashboardPage() {
                   <Calendar className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Next billing date:</span>
                   <span className="font-medium">
-                    {subscription.current_period_end
+                    {subscription?.current_period_end
                       ? new Date(subscription.current_period_end).toLocaleDateString()
                       : "N/A"}
                   </span>
@@ -113,7 +113,7 @@ export default async function DashboardPage() {
                   <span className="text-muted-foreground">Plan:</span>
                   <span className="font-medium">Monthly Subscription - $29/month</span>
                 </div>
-                {subscription.cancel_at_period_end && (
+                {subscription?.cancel_at_period_end && (
                   <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
                     <p className="text-sm text-amber-600">
                       Your subscription will be canceled at the end of the current billing period.
