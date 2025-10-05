@@ -23,7 +23,7 @@ export async function updateProfile(formData: FormData) {
   if (email !== session.email) {
     const existingUser = await sql`
       SELECT id FROM users 
-      WHERE email = ${email} AND id != ${session.user_id}
+      WHERE email = ${email} AND id != ${session.user_id}::uuid
       LIMIT 1
     `
 
@@ -37,7 +37,7 @@ export async function updateProfile(formData: FormData) {
   await sql`
     UPDATE users 
     SET first_name = ${firstName}, last_name = ${lastName}, name = ${fullName}, email = ${email}, updated_at = NOW()
-    WHERE id = ${session.user_id}
+    WHERE id = ${session.user_id}::uuid
   `
 
   revalidatePath("/dashboard")
@@ -65,7 +65,7 @@ export async function changePassword(formData: FormData) {
 
   // Verify current password
   const result = await sql`
-    SELECT password_hash FROM users WHERE id = ${session.user_id}
+    SELECT password_hash FROM users WHERE id = ${session.user_id}::uuid
   `
 
   const user = result[0]
@@ -83,7 +83,7 @@ export async function changePassword(formData: FormData) {
   await sql`
     UPDATE users 
     SET password_hash = ${hashedPassword}, updated_at = NOW()
-    WHERE id = ${session.user_id}
+    WHERE id = ${session.user_id}::uuid
   `
 
   return { success: true }

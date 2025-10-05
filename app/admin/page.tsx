@@ -12,7 +12,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 async function isAdmin(userId: string): Promise<boolean> {
   const result = await sql`
-    SELECT * FROM admin_users WHERE user_id = ${userId}
+    SELECT * FROM admin_users WHERE user_id = ${userId}::uuid
   `
   return result.length > 0
 }

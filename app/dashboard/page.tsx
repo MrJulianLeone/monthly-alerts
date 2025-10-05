@@ -11,7 +11,7 @@ const sql = neon(process.env.DATABASE_URL!)
 
 async function isAdmin(userId: string): Promise<boolean> {
   const result = await sql`
-    SELECT * FROM admin_users WHERE user_id = ${userId}
+    SELECT * FROM admin_users WHERE user_id = ${userId}::uuid
   `
   return result.length > 0
 }
@@ -25,7 +25,7 @@ export default async function DashboardPage() {
   // Fetch user subscription status
   const subscriptions = await sql`
     SELECT * FROM subscriptions 
-    WHERE user_id = ${session.user_id}
+    WHERE user_id = ${session.user_id}::uuid
     ORDER BY created_at DESC
     LIMIT 1
   `
