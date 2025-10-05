@@ -1,16 +1,13 @@
 import { neon } from "@neondatabase/serverless"
 import { cookies } from "next/headers"
 import { redirect } from "next/navigation"
+import bcrypt from "bcryptjs"
 
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function hashPassword(password: string): Promise<string> {
-  // Simple hash for demo - in production use bcrypt
-  const encoder = new TextEncoder()
-  const data = encoder.encode(password)
-  const hashBuffer = await crypto.subtle.digest("SHA-256", data)
-  const hashArray = Array.from(new Uint8Array(hashBuffer))
-  return hashArray.map((b) => b.toString(16).padStart(2, "0")).join("")
+  const saltRounds = 10
+  return await bcrypt.hash(password, saltRounds)
 }
 
 export async function createUser(email: string, password: string, name: string) {
@@ -26,15 +23,20 @@ export async function createUser(email: string, password: string, name: string) 
 }
 
 export async function verifyUser(email: string, password: string) {
-  const hashedPassword = await hashPassword(password)
-
   const result = await sql`
-    SELECT id, email, name
+    SELECT id, email, name, password_hash
     FROM users
-    WHERE email = ${email} AND password_hash = ${hashedPassword}
+    WHERE email = ${email}
   `
 
-  return result[0] || null
+  const user = result[0]
+  if (!user) return null
+
+  const isValidPassword = await bcrypt.compare(password, user.password_hash)
+  if (!isValidPassword) return null
+
+  // Return user without password hash
+  return { id: user.id, email: user.email, name: user.name }
 }
 
 export async function createSession(userId: string) {
