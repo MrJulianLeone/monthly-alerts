@@ -50,13 +50,13 @@ export default async function DashboardPage() {
         </div>
       </header>
 
-      <div className="container max-w-4xl mx-auto px-4 py-8">
+      <div className="container max-w-7xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Welcome, {session.firstName || session.email}</h1>
           <p className="text-muted-foreground">Manage your subscription and account settings</p>
         </div>
 
-        <div className="space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
           {/* Subscribe Section */}
           <Card className="p-6">
             <h2 className="text-xl font-semibold mb-4">Get MonthlyAlerts</h2>
