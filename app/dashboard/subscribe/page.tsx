@@ -8,6 +8,32 @@ import { SubscribeCheckout } from "@/components/subscribe-checkout"
 export default async function SubscribePage() {
   const session = await requireAuth()
 
+  // Log session for debugging (will appear in Vercel logs)
+  console.log("[Subscribe Page] Session data:", {
+    has_user_id: !!session.user_id,
+    has_email: !!session.email,
+    user_id_type: typeof session.user_id,
+    email: session.email
+  })
+
+  // Ensure we have required session data
+  if (!session.user_id || !session.email) {
+    console.error("[Subscribe Page] Missing session data:", session)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-8 max-w-md">
+          <h2 className="text-xl font-bold mb-4">Session Error</h2>
+          <p className="text-muted-foreground mb-4">
+            Your session is missing required information. Please try logging out and logging in again.
+          </p>
+          <Link href="/dashboard">
+            <Button>Back to Dashboard</Button>
+          </Link>
+        </Card>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
