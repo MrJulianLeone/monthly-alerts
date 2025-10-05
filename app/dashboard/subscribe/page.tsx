@@ -37,7 +37,7 @@ export default async function SubscribePage() {
             <p className="text-muted-foreground mb-2">
               Get monthly AI-curated alerts about fast-growing stock opportunities
             </p>
-            <p className="text-3xl font-bold text-primary mb-6">$29<span className="text-lg font-normal">/month</span></p>
+            <p className="text-3xl font-bold text-primary mb-6">$29.99<span className="text-lg font-normal">/month + tax</span></p>
           </div>
 
           <div className="space-y-4 mb-8">

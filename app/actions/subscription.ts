@@ -27,16 +27,25 @@ export async function createCheckoutSession(userId: string, userEmail: string) {
       console.log("[Subscription] Created new customer:", customer.id)
     }
 
-    // Create hosted checkout session using your Stripe product
+    // Create hosted checkout session with dynamic pricing
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items: [
         {
-          price: "price_1SEwoFIg8foNZBNgccgIefRf", // Your MonthlyAlerts product
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "MonthlyAlerts Subscription",
+              description: "Monthly AI-curated stock alerts",
+            },
+            unit_amount: 2999, // $29.99
+            recurring: { interval: "month" },
+          },
           quantity: 1,
         },
       ],
       mode: "subscription",
+      automatic_tax: { enabled: true },
       success_url: `${process.env.NEXT_PUBLIC_URL || "https://monthlyalerts.com"}/dashboard?success=true`,
       cancel_url: `${process.env.NEXT_PUBLIC_URL || "https://monthlyalerts.com"}/dashboard?canceled=true`,
     })

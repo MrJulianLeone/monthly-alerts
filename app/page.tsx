@@ -49,7 +49,7 @@ export default function HomePage() {
               </Button>
             </Link>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">Only $29/month • Cancel anytime</p>
+          <p className="text-sm text-muted-foreground mt-4">Only $29.99/month + tax • Cancel anytime</p>
         </div>
       </section>
 
@@ -141,10 +141,10 @@ export default function HomePage() {
             <div className="text-center mb-6">
               <h3 className="text-2xl font-bold mb-2">Monthly Subscription</h3>
               <div className="flex items-baseline justify-center gap-2 mb-4">
-                <span className="text-5xl font-bold">$29</span>
+                <span className="text-5xl font-bold">$29.99</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
-              <p className="text-muted-foreground text-sm">Billed monthly • Cancel anytime</p>
+              <p className="text-muted-foreground text-sm">Plus applicable taxes • Billed monthly • Cancel anytime</p>
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start gap-3">
