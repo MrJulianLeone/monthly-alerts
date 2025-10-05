@@ -55,7 +55,7 @@ export default function HomePage() {
 
       {/* Features Section */}
       <section className="bg-secondary py-12 md:py-20">
-        <div className="container mx-auto px-4">
+        <div className="container max-w-6xl mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Why MonthlyAlerts?</h2>
             <p className="text-muted-foreground text-lg">Cutting-edge AI technology meets financial expertise</p>
@@ -94,7 +94,7 @@ export default function HomePage() {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="container mx-auto px-4 py-12 md:py-20">
+      <section id="how-it-works" className="container max-w-6xl mx-auto px-4 py-12 md:py-20">
         <div className="max-w-3xl mx-auto text-center mb-12">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">How It Works</h2>
           <p className="text-muted-foreground text-lg">Simple, transparent, and effective</p>
@@ -132,7 +132,7 @@ export default function HomePage() {
 
       {/* Pricing */}
       <section className="bg-secondary py-12 md:py-20">
-        <div className="container mx-auto px-4">
+        <div className="container max-w-6xl mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Simple, Transparent Pricing</h2>
             <p className="text-muted-foreground text-lg">One plan, unlimited insights</p>
@@ -174,7 +174,7 @@ export default function HomePage() {
       </section>
 
       {/* Disclaimer */}
-      <section className="container mx-auto px-4 py-12">
+      <section className="container max-w-6xl mx-auto px-4 py-12">
         <Card className="max-w-4xl mx-auto p-6 bg-muted">
           <div className="flex gap-3">
             <Shield className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
