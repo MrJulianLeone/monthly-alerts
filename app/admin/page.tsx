@@ -18,64 +18,29 @@ async function isAdmin(userId: string): Promise<boolean> {
 }
 
 export default async function AdminDashboardPage() {
-  try {
-    const session = await getSession()
-    if (!session) redirect("/login")
+  const session = await getSession()
+  if (!session) redirect("/login")
 
-    const adminCheck = await isAdmin(session.user_id)
+  const adminCheck = await isAdmin(session.user_id)
+  if (!adminCheck) redirect("/dashboard")
 
-    if (!adminCheck) {
-      redirect("/dashboard")
-    }
+  // Fetch statistics
+  const totalUsersResult = await sql`
+    SELECT COUNT(*) as count FROM users
+  `
+  const totalUsers = Number(totalUsersResult[0].count)
 
-    console.log("[Admin Dashboard] Loading data for admin:", session.email)
+  const activeSubscriptionsResult = await sql`
+    SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
+  `
+  const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
 
-    // Fetch statistics
-    const totalUsersResult = await sql`
-      SELECT COUNT(*) as count FROM users
-    `
-    const totalUsers = Number(totalUsersResult[0].count)
+  const monthlyRevenue = activeSubscriptions * 29
 
-    const activeSubscriptionsResult = await sql`
-      SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
-    `
-    const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
-
-    const monthlyRevenueResult = await sql`
-      SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
-    `
-    const monthlyRevenue = Number(monthlyRevenueResult[0].count) * 29
-
-    const totalAlertsResult = await sql`
-      SELECT COUNT(*) as count FROM alerts
-    `
-    const totalAlerts = Number(totalAlertsResult[0].count)
-
-    // Fetch recent users
-    const recentUsers = await sql`
-      SELECT id, email, first_name, last_name, name, created_at 
-      FROM users 
-      ORDER BY created_at DESC 
-      LIMIT 10
-    `
-
-    // Fetch recent subscriptions
-    const recentSubscriptions = await sql`
-      SELECT s.*, u.email, u.first_name, u.last_name
-      FROM subscriptions s
-      JOIN users u ON s.user_id = u.id
-      ORDER BY s.created_at DESC
-      LIMIT 10
-    `
-
-    // Fetch recent alerts
-    const recentAlerts = await sql`
-      SELECT * FROM alerts 
-      ORDER BY sent_at DESC 
-      LIMIT 5
-    `
-
-    console.log("[Admin Dashboard] Data loaded successfully")
+  const totalAlertsResult = await sql`
+    SELECT COUNT(*) as count FROM alerts
+  `
+  const totalAlerts = Number(totalAlertsResult[0].count)
 
   return (
     <div className="min-h-screen bg-background">
@@ -150,114 +115,23 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Send Alert Section */}
-        <Card className="p-6 mb-8">
-          <div className="flex items-center justify-between mb-6">
+        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
+          <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold mb-1">Send Monthly Alert</h2>
               <p className="text-sm text-muted-foreground">
-                Compose and send alerts to all active subscribers ({activeSubscriptions} users)
+                Compose and send your monthly stock alert to all {activeSubscriptions} active subscribers
               </p>
             </div>
-            <Send className="h-5 w-5 text-muted-foreground" />
-          </div>
-          <Link href="/admin/send-alert">
-            <Button>
-              <Send className="h-4 w-4 mr-2" />
-              Compose New Alert
-            </Button>
-          </Link>
-        </Card>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-8">
-          {/* Recent Users */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Users</h2>
-            <div className="space-y-3">
-              {recentUsers.map((user: any) => (
-                <div
-                  key={user.id}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
-                >
-                  <div>
-                    <p className="font-medium text-sm">{user.email}</p>
-                    <p className="text-xs text-muted-foreground">{user.name || "No name"}</p>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{new Date(user.created_at).toLocaleDateString()}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-
-          {/* Recent Subscriptions */}
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Recent Subscriptions</h2>
-            <div className="space-y-3">
-              {recentSubscriptions.map((sub: any) => (
-                <div
-                  key={sub.id}
-                  className="flex items-center justify-between py-2 border-b border-border last:border-0"
-                >
-                  <div>
-                    <p className="font-medium text-sm">{sub.email}</p>
-                    <Badge variant={sub.status === "active" ? "default" : "secondary"} className="text-xs mt-1">
-                      {sub.status}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground">{new Date(sub.created_at).toLocaleDateString()}</p>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
-
-        {/* Alert History */}
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4">Alert History</h2>
-          {recentAlerts.length > 0 ? (
-            <div className="space-y-4">
-              {recentAlerts.map((alert: any) => (
-                <div key={alert.id} className="border border-border rounded-lg p-4">
-                  <div className="flex items-start justify-between gap-4 mb-2">
-                    <h3 className="font-semibold">{alert.subject}</h3>
-                    <Badge variant="secondary">{alert.recipient_count} recipients</Badge>
-                  </div>
-                  <p className="text-sm text-muted-foreground mb-2 line-clamp-2">{alert.content}</p>
-                  <p className="text-xs text-muted-foreground">Sent on {new Date(alert.sent_at).toLocaleString()}</p>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-8">
-              <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-              <p className="text-sm text-muted-foreground">No alerts sent yet</p>
-            </div>
-          )}
-        </Card>
-      </div>
-    </div>
-  )
-  } catch (error) {
-    console.error("[Admin Dashboard] Error:", error)
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <Card className="p-8 max-w-md">
-          <h2 className="text-xl font-bold mb-4 text-destructive">Admin Dashboard Error</h2>
-          <p className="text-muted-foreground mb-4">
-            There was an error loading the admin dashboard. This could be due to:
-          </p>
-          <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground mb-6">
-            <li>Database connection issues</li>
-            <li>Missing environment variables</li>
-            <li>Data integrity problems</li>
-          </ul>
-          <p className="text-sm mb-4">Error: {String(error)}</p>
-          <div className="flex gap-3">
-            <Link href="/dashboard">
-              <Button>Back to Dashboard</Button>
+            <Link href="/admin/send-alert">
+              <Button>
+                <Send className="h-4 w-4 mr-2" />
+                Compose Alert
+              </Button>
             </Link>
           </div>
         </Card>
       </div>
-    )
-  }
+    </div>
+  )
 }
