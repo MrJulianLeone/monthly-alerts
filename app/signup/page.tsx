@@ -59,9 +59,16 @@ export default function SignupPage() {
           <form action={handleSubmit} className="space-y-4">
             {error && <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">{error}</div>}
 
-            <div className="space-y-2">
-              <Label htmlFor="name">Full Name</Label>
-              <Input id="name" name="name" type="text" placeholder="John Doe" required disabled={loading} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="firstName">First Name</Label>
+                <Input id="firstName" name="firstName" type="text" placeholder="John" required disabled={loading} />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="lastName">Last Name</Label>
+                <Input id="lastName" name="lastName" type="text" placeholder="Doe" required disabled={loading} />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -72,6 +79,7 @@ export default function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required minLength={8} disabled={loading} />
+              <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
             </div>
 
             <Button type="submit" size="lg" className="w-full" disabled={loading}>

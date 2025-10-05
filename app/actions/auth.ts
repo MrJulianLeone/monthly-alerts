@@ -6,18 +6,19 @@ import { redirect } from "next/navigation"
 export async function signup(formData: FormData) {
   const email = formData.get("email") as string
   const password = formData.get("password") as string
-  const name = formData.get("name") as string
+  const firstName = formData.get("firstName") as string
+  const lastName = formData.get("lastName") as string
 
   console.log("[v0] Signup action called with email:", email)
 
-  if (!email || !password || !name) {
+  if (!email || !password || !firstName || !lastName) {
     console.log("[v0] Missing required fields")
     return { error: "All fields are required" }
   }
 
   try {
     console.log("[v0] Creating user...")
-    const user = await createUser(email, password, name)
+    const user = await createUser(email, password, firstName, lastName)
     console.log("[v0] User created successfully:", user.id)
 
     console.log("[v0] Creating session...")

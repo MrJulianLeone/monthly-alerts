@@ -51,7 +51,7 @@ export default async function DashboardPage() {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold mb-2">Welcome back, {session.name || session.email}</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome back, {session.firstName || session.email}</h1>
           <p className="text-muted-foreground">Manage your subscription and view your monthly alerts</p>
         </div>
 

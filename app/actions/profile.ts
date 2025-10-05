@@ -1,20 +1,22 @@
 "use server"
 
-import { requireAuth } from "@/lib/auth"
+import { requireAuth, hashPassword } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import bcrypt from "bcryptjs"
 
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function updateProfile(formData: FormData) {
   const session = await requireAuth()
 
-  const name = formData.get("name") as string
+  const firstName = formData.get("firstName") as string
+  const lastName = formData.get("lastName") as string
   const email = formData.get("email") as string
 
-  if (!name || !email) {
-    return { error: "Name and email are required" }
+  if (!firstName || !lastName || !email) {
+    return { error: "All fields are required" }
   }
 
   // Check if email is already taken by another user
@@ -31,12 +33,58 @@ export async function updateProfile(formData: FormData) {
   }
 
   // Update user profile
+  const fullName = `${firstName} ${lastName}`
   await sql`
     UPDATE users 
-    SET name = ${name}, email = ${email}, updated_at = NOW()
+    SET first_name = ${firstName}, last_name = ${lastName}, name = ${fullName}, email = ${email}, updated_at = NOW()
     WHERE id = ${session.user_id}
   `
 
   revalidatePath("/dashboard")
   redirect("/dashboard")
+}
+
+export async function changePassword(formData: FormData) {
+  const session = await requireAuth()
+
+  const currentPassword = formData.get("currentPassword") as string
+  const newPassword = formData.get("newPassword") as string
+  const confirmPassword = formData.get("confirmPassword") as string
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
+    return { error: "All password fields are required" }
+  }
+
+  if (newPassword !== confirmPassword) {
+    return { error: "New passwords do not match" }
+  }
+
+  if (newPassword.length < 8) {
+    return { error: "Password must be at least 8 characters" }
+  }
+
+  // Verify current password
+  const result = await sql`
+    SELECT password_hash FROM users WHERE id = ${session.user_id}
+  `
+
+  const user = result[0]
+  if (!user) {
+    return { error: "User not found" }
+  }
+
+  const isValid = await bcrypt.compare(currentPassword, user.password_hash)
+  if (!isValid) {
+    return { error: "Current password is incorrect" }
+  }
+
+  // Update password
+  const hashedPassword = await hashPassword(newPassword)
+  await sql`
+    UPDATE users 
+    SET password_hash = ${hashedPassword}, updated_at = NOW()
+    WHERE id = ${session.user_id}
+  `
+
+  return { success: true }
 }
