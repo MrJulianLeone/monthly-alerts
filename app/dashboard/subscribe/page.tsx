@@ -39,10 +39,12 @@ export default async function SubscribePage() {
       {/* Header */}
       <header className="border-b border-border bg-card">
         <div className="container mx-auto px-4 py-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">MonthlyAlerts.com</span>
-          </Link>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <span className="font-bold text-xl">MonthlyAlerts.com</span>
+            </Link>
+          </div>
         </div>
       </header>
 

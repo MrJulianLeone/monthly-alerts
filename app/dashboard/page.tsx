@@ -44,25 +44,27 @@ export default async function DashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <TrendingUp className="h-6 w-6 text-primary" />
-            <span className="font-bold text-xl">MonthlyAlerts.com</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            {adminCheck && (
-              <Link href="/admin">
-                <Button variant="outline" size="sm">
-                  Admin Dashboard
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <span className="font-bold text-xl">MonthlyAlerts.com</span>
+            </Link>
+            <div className="flex items-center gap-2 sm:gap-4">
+              {adminCheck && (
+                <Link href="/admin">
+                  <Button variant="outline" size="sm">
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
+              <form action={logout}>
+                <Button variant="ghost" size="sm" type="submit">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
                 </Button>
-              </Link>
-            )}
-            <form action={logout}>
-              <Button variant="ghost" size="sm" type="submit">
-                <LogOut className="h-4 w-4 mr-2" />
-                Sign Out
-              </Button>
-            </form>
+              </form>
+            </div>
           </div>
         </div>
       </header>
