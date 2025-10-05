@@ -35,7 +35,7 @@ export default async function AdminDashboardPage() {
   `
   const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
 
-  const monthlyRevenue = activeSubscriptions * 29
+  const monthlyRevenue = (activeSubscriptions * 29.99).toFixed(2)
 
   const totalAlertsResult = await sql`
     SELECT COUNT(*) as count FROM alerts
