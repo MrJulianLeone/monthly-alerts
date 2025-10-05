@@ -1,11 +1,11 @@
 -- Create alerts table to track sent monthly alerts
 CREATE TABLE IF NOT EXISTS alerts (
-  id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   subject TEXT NOT NULL,
   content TEXT NOT NULL,
   sent_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   recipient_count INTEGER DEFAULT 0,
-  created_by TEXT REFERENCES neon_auth.users_sync(id),
+  created_by UUID REFERENCES users(id),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 

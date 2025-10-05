@@ -22,7 +22,7 @@ export async function sendAlert(formData: FormData) {
   const subscribers = await sql`
     SELECT u.email, u.name
     FROM subscriptions s
-    JOIN neon_auth.users_sync u ON s.user_id = u.id
+    JOIN users u ON s.user_id = u.id
     WHERE s.status = 'active'
   `
 

@@ -19,9 +19,6 @@ export default function HomePage() {
                 Login
               </Button>
             </Link>
-            <Link href="/signup">
-              <Button size="sm">Get Started</Button>
-            </Link>
           </nav>
         </div>
       </header>
@@ -75,8 +72,8 @@ export default function HomePage() {
               </p>
             </Card>
             <Card className="p-6">
-              <div className="h-12 w-12 rounded-lg bg-accent/10 flex items-center justify-center mb-4">
-                <Mail className="h-6 w-6 text-accent" />
+              <div className="h-12 w-12 rounded-lg bg-blue-500/10 flex items-center justify-center mb-4">
+                <Mail className="h-6 w-6 text-blue-600" />
               </div>
               <h3 className="font-semibold text-lg mb-2">Monthly Insights</h3>
               <p className="text-muted-foreground text-sm">
