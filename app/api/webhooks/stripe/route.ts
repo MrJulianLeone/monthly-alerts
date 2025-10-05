@@ -32,16 +32,29 @@ export async function POST(req: NextRequest) {
         if (session.mode === "subscription") {
           const subscriptionId = session.subscription as string
           const customerId = session.customer as string
+          const customerEmail = session.customer_details?.email
 
           // Get subscription details
           const subscription = await stripe.subscriptions.retrieve(subscriptionId)
 
-          // Get customer to find user_id
+          // Get customer to find user_id from metadata
           const customer = await stripe.customers.retrieve(customerId)
-          const userId = (customer as Stripe.Customer).metadata?.userId
+          let userId = (customer as Stripe.Customer).metadata?.userId
+
+          // If no userId in metadata (e.g., payment link), look up by email
+          if (!userId && customerEmail) {
+            console.log("[v0] No userId in metadata, looking up by email:", customerEmail)
+            const userResult = await sql`
+              SELECT id FROM users WHERE email = ${customerEmail} LIMIT 1
+            `
+            if (userResult.length > 0) {
+              userId = userResult[0].id
+              console.log("[v0] Found user by email:", userId)
+            }
+          }
 
           if (!userId) {
-            console.error("[v0] No userId found in customer metadata")
+            console.error("[v0] Could not find userId for customer:", customerId, customerEmail)
             break
           }
 
@@ -57,7 +70,7 @@ export async function POST(req: NextRequest) {
               current_period_end
             )
             VALUES (
-              ${userId},
+              ${userId}::uuid,
               ${customerId},
               ${subscriptionId},
               ${subscription.items.data[0].price.id},

@@ -66,7 +66,7 @@ export default async function DashboardPage() {
             <Link href="/dashboard/subscribe">
               <Button size="lg" className="w-full">
                 <CreditCard className="h-4 w-4 mr-2" />
-                Subscribe Now - $29/month
+                Subscribe Now - $29.99/month + tax
               </Button>
             </Link>
           </Card>
