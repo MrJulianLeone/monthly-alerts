@@ -1,4 +1,5 @@
-import { requireAuth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
+import { redirect } from "next/navigation"
 import { updateProfile } from "@/app/actions/profile"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +10,8 @@ import Link from "next/link"
 import PasswordChangeForm from "./password-change-form"
 
 export default async function SettingsPage() {
-  const session = await requireAuth()
+  const session = await getSession()
+  if (!session) redirect("/login")
 
   return (
     <div className="min-h-screen bg-background">

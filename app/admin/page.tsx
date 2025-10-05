@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { logout } from "@/app/actions/auth"
 import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
@@ -19,7 +19,8 @@ async function isAdmin(userId: string): Promise<boolean> {
 
 export default async function AdminDashboardPage() {
   try {
-    const session = await requireAuth()
+    const session = await getSession()
+    if (!session) redirect("/login")
 
     const adminCheck = await isAdmin(session.user_id)
 

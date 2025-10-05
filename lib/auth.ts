@@ -93,6 +93,11 @@ export async function requireAuth() {
   return session
 }
 
+// Helper that doesn't redirect - for use in pages where redirect is handled separately
+export async function getSessionOrRedirect() {
+  return await getSession()
+}
+
 export async function logout() {
   const cookieStore = await cookies()
   const sessionId = cookieStore.get("session")?.value

@@ -1,4 +1,5 @@
-import { requireAuth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
+import { redirect } from "next/navigation"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TrendingUp, ArrowLeft } from "lucide-react"
@@ -6,7 +7,8 @@ import Link from "next/link"
 import { SubscribeCheckout } from "@/components/subscribe-checkout"
 
 export default async function SubscribePage() {
-  const session = await requireAuth()
+  const session = await getSession()
+  if (!session) redirect("/login")
 
   // Log session for debugging (will appear in Vercel logs)
   console.log("[Subscribe Page] Session data:", {

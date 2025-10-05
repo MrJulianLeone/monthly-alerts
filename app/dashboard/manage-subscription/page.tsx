@@ -1,5 +1,5 @@
 import { redirect } from "next/navigation"
-import { requireAuth } from "@/lib/auth"
+import { getSession } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -10,7 +10,8 @@ import { cancelSubscription } from "@/app/actions/subscription"
 const sql = neon(process.env.DATABASE_URL!)
 
 export default async function ManageSubscriptionPage() {
-  const session = await requireAuth()
+  const session = await getSession()
+  if (!session) redirect("/login")
 
   // Fetch user subscription
   const subscriptions = await sql`
