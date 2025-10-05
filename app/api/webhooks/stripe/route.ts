@@ -100,7 +100,7 @@ export async function POST(req: NextRequest) {
             status = ${subscription.status},
             current_period_start = to_timestamp(${subscription.current_period_start}),
             current_period_end = to_timestamp(${subscription.current_period_end}),
-            cancel_at_period_end = ${subscription.cancel_at_period_end},
+            cancel_at_period_end = ${subscription.cancel_at_period_end || false},
             updated_at = NOW()
           WHERE stripe_subscription_id = ${subscription.id}
         `
@@ -115,12 +115,12 @@ export async function POST(req: NextRequest) {
         await sql`
           UPDATE subscriptions
           SET 
-            status = 'canceled',
+            status = 'cancelled',
             updated_at = NOW()
           WHERE stripe_subscription_id = ${subscription.id}
         `
 
-        console.log("[v0] Subscription canceled:", subscription.id)
+        console.log("[v0] Subscription cancelled:", subscription.id)
         break
       }
 
