@@ -10,12 +10,12 @@ import { cancelSubscription } from "@/app/actions/subscription"
 const sql = neon(process.env.DATABASE_URL!)
 
 export default async function ManageSubscriptionPage() {
-  const { userId } = await requireAuth()
+  const session = await requireAuth()
 
   // Fetch user subscription
   const subscriptions = await sql`
     SELECT * FROM subscriptions 
-    WHERE user_id = ${userId}
+    WHERE user_id = ${session.user_id}::uuid
     ORDER BY created_at DESC
     LIMIT 1
   `
