@@ -235,4 +235,28 @@ export default async function AdminDashboardPage() {
       </div>
     </div>
   )
+  } catch (error) {
+    console.error("[Admin Dashboard] Error:", error)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <Card className="p-8 max-w-md">
+          <h2 className="text-xl font-bold mb-4 text-destructive">Admin Dashboard Error</h2>
+          <p className="text-muted-foreground mb-4">
+            There was an error loading the admin dashboard. This could be due to:
+          </p>
+          <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground mb-6">
+            <li>Database connection issues</li>
+            <li>Missing environment variables</li>
+            <li>Data integrity problems</li>
+          </ul>
+          <p className="text-sm mb-4">Error: {String(error)}</p>
+          <div className="flex gap-3">
+            <Link href="/dashboard">
+              <Button>Back to Dashboard</Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 }
