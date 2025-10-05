@@ -1,6 +1,6 @@
 "use server"
 
-import { requireAuth, hashPassword } from "@/lib/auth"
+import { getSession, hashPassword } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
@@ -9,7 +9,8 @@ import bcrypt from "bcryptjs"
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function updateProfile(formData: FormData) {
-  const session = await requireAuth()
+  const session = await getSession()
+  if (!session) redirect("/login")
 
   const firstName = formData.get("firstName") as string
   const lastName = formData.get("lastName") as string
@@ -45,7 +46,8 @@ export async function updateProfile(formData: FormData) {
 }
 
 export async function changePassword(formData: FormData) {
-  const session = await requireAuth()
+  const session = await getSession()
+  if (!session) return { error: "Not authenticated" }
 
   const currentPassword = formData.get("currentPassword") as string
   const newPassword = formData.get("newPassword") as string
