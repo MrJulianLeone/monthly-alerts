@@ -18,58 +18,63 @@ async function isAdmin(userId: string): Promise<boolean> {
 }
 
 export default async function AdminDashboardPage() {
-  const session = await requireAuth()
+  try {
+    const session = await requireAuth()
 
-  const adminCheck = await isAdmin(session.user_id)
+    const adminCheck = await isAdmin(session.user_id)
 
-  if (!adminCheck) {
-    redirect("/dashboard")
-  }
+    if (!adminCheck) {
+      redirect("/dashboard")
+    }
 
-  // Fetch statistics
-  const totalUsersResult = await sql`
-    SELECT COUNT(*) as count FROM users
-  `
-  const totalUsers = Number(totalUsersResult[0].count)
+    console.log("[Admin Dashboard] Loading data for admin:", session.email)
 
-  const activeSubscriptionsResult = await sql`
-    SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
-  `
-  const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
+    // Fetch statistics
+    const totalUsersResult = await sql`
+      SELECT COUNT(*) as count FROM users
+    `
+    const totalUsers = Number(totalUsersResult[0].count)
 
-  const monthlyRevenueResult = await sql`
-    SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
-  `
-  const monthlyRevenue = Number(monthlyRevenueResult[0].count) * 29
+    const activeSubscriptionsResult = await sql`
+      SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
+    `
+    const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
 
-  const totalAlertsResult = await sql`
-    SELECT COUNT(*) as count FROM alerts
-  `
-  const totalAlerts = Number(totalAlertsResult[0].count)
+    const monthlyRevenueResult = await sql`
+      SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
+    `
+    const monthlyRevenue = Number(monthlyRevenueResult[0].count) * 29
 
-  // Fetch recent users
-  const recentUsers = await sql`
-    SELECT id, email, first_name, last_name, name, created_at 
-    FROM users 
-    ORDER BY created_at DESC 
-    LIMIT 10
-  `
+    const totalAlertsResult = await sql`
+      SELECT COUNT(*) as count FROM alerts
+    `
+    const totalAlerts = Number(totalAlertsResult[0].count)
 
-  // Fetch recent subscriptions
-  const recentSubscriptions = await sql`
-    SELECT s.*, u.email 
-    FROM subscriptions s
-    JOIN users u ON s.user_id = u.id
-    ORDER BY s.created_at DESC
-    LIMIT 10
-  `
+    // Fetch recent users
+    const recentUsers = await sql`
+      SELECT id, email, first_name, last_name, name, created_at 
+      FROM users 
+      ORDER BY created_at DESC 
+      LIMIT 10
+    `
 
-  // Fetch recent alerts
-  const recentAlerts = await sql`
-    SELECT * FROM alerts 
-    ORDER BY sent_at DESC 
-    LIMIT 5
-  `
+    // Fetch recent subscriptions
+    const recentSubscriptions = await sql`
+      SELECT s.*, u.email, u.first_name, u.last_name
+      FROM subscriptions s
+      JOIN users u ON s.user_id = u.id
+      ORDER BY s.created_at DESC
+      LIMIT 10
+    `
+
+    // Fetch recent alerts
+    const recentAlerts = await sql`
+      SELECT * FROM alerts 
+      ORDER BY sent_at DESC 
+      LIMIT 5
+    `
+
+    console.log("[Admin Dashboard] Data loaded successfully")
 
   return (
     <div className="min-h-screen bg-background">
