@@ -9,8 +9,18 @@ import Link from "next/link"
 
 const sql = neon(process.env.DATABASE_URL!)
 
+async function isAdmin(userId: string): Promise<boolean> {
+  const result = await sql`
+    SELECT * FROM admin_users WHERE user_id = ${userId}
+  `
+  return result.length > 0
+}
+
 export default async function DashboardPage() {
   const session = await requireAuth()
+
+  // Check if user is admin
+  const adminCheck = await isAdmin(session.user_id)
 
   // Fetch user subscription status
   const subscriptions = await sql`
@@ -39,12 +49,21 @@ export default async function DashboardPage() {
             <TrendingUp className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">MonthlyAlerts.com</span>
           </Link>
-          <form action={logout}>
-            <Button variant="ghost" size="sm" type="submit">
-              <LogOut className="h-4 w-4 mr-2" />
-              Sign Out
-            </Button>
-          </form>
+          <div className="flex items-center gap-4">
+            {adminCheck && (
+              <Link href="/admin">
+                <Button variant="outline" size="sm">
+                  Admin Dashboard
+                </Button>
+              </Link>
+            )}
+            <form action={logout}>
+              <Button variant="ghost" size="sm" type="submit">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </form>
+          </div>
         </div>
       </header>
 
