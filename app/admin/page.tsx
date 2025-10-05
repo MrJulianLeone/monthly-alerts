@@ -49,7 +49,7 @@ export default async function AdminDashboardPage() {
 
   // Fetch recent users
   const recentUsers = await sql`
-    SELECT id, email, name, created_at 
+    SELECT id, email, first_name, last_name, name, created_at 
     FROM users 
     ORDER BY created_at DESC 
     LIMIT 10
