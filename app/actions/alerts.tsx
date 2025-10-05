@@ -37,7 +37,7 @@ export async function sendAlert(formData: FormData) {
     console.log("[SendAlert] Sending emails...")
     const emailPromises = subscribers.map((subscriber: any) =>
       resend.emails.send({
-        from: "MonthlyAlerts <no-reply@alerts.monthlyalerts.com>",
+        from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
         to: subscriber.email,
         subject: subject,
         html: `
