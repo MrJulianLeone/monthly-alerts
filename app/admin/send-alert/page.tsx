@@ -20,9 +20,9 @@ async function isAdmin(userId: string): Promise<boolean> {
 }
 
 export default async function SendAlertPage() {
-  const { userId } = await requireAuth()
+  const session = await requireAuth()
 
-  const adminCheck = await isAdmin(userId)
+  const adminCheck = await isAdmin(session.user_id)
 
   if (!adminCheck) {
     redirect("/dashboard")
@@ -62,7 +62,7 @@ export default async function SendAlertPage() {
 
           <Card className="p-6">
             <form action={sendAlert} className="space-y-6">
-              <input type="hidden" name="userId" value={userId} />
+              <input type="hidden" name="userId" value={session.user_id} />
               <input type="hidden" name="recipientCount" value={activeSubscriptions} />
 
               <div className="space-y-2">
