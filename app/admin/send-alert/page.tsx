@@ -24,16 +24,13 @@ export default async function SendAlertPage() {
   if (!session) redirect("/login")
 
   const adminCheck = await isAdmin(session.user_id)
-
-  if (!adminCheck) {
-    redirect("/dashboard")
-  }
+  if (!adminCheck) redirect("/dashboard")
 
   // Get active subscriber count
   const activeSubscriptionsResult = await sql`
     SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
   `
-  const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
+  const activeSubscriptions = Number(activeSubscriptionsResult[0]?.count || 0)
 
   return (
     <div className="min-h-screen bg-background">
