@@ -4,7 +4,8 @@ import { logout } from "@/app/actions/auth"
 import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { TrendingUp, CreditCard, LogOut, Settings } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import { TrendingUp, CreditCard, LogOut, Settings, CheckCircle2, XCircle } from "lucide-react"
 import Link from "next/link"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -21,6 +22,18 @@ export default async function DashboardPage() {
   if (!session) redirect("/login")
 
   const adminCheck = await isAdmin(session.user_id)
+
+  // Check subscription status
+  const subscriptionResult = await sql`
+    SELECT status, stripe_subscription_id, current_period_end 
+    FROM subscriptions 
+    WHERE user_id = ${session.user_id}::uuid 
+    ORDER BY created_at DESC 
+    LIMIT 1
+  `
+
+  const subscription = subscriptionResult[0]
+  const isActive = subscription?.status === "active"
 
   return (
     <div className="min-h-screen bg-background">
@@ -57,18 +70,52 @@ export default async function DashboardPage() {
         </div>
 
         <div className="grid md:grid-cols-2 gap-6">
-          {/* Subscribe Section */}
+          {/* Subscription Status */}
           <Card className="p-6">
-            <h2 className="text-xl font-semibold mb-4">Get MonthlyAlerts</h2>
-            <p className="text-sm text-muted-foreground mb-6">
-              Subscribe to receive monthly AI-curated alerts about fast-growing stock opportunities.
-            </p>
-            <Link href="/dashboard/subscribe">
-              <Button size="lg" className="w-full">
-                <CreditCard className="h-4 w-4 mr-2" />
-                Subscribe Now - $29.99/month + tax
-              </Button>
-            </Link>
+            <div className="flex items-start justify-between mb-4">
+              <div>
+                <h2 className="text-xl font-semibold mb-1">Subscription Status</h2>
+                <p className="text-sm text-muted-foreground">Your MonthlyAlerts subscription</p>
+              </div>
+              {isActive ? (
+                <Badge className="bg-green-500/10 text-green-600 hover:bg-green-500/20">
+                  <CheckCircle2 className="h-3 w-3 mr-1" />
+                  Active
+                </Badge>
+              ) : (
+                <Badge variant="secondary">
+                  <XCircle className="h-3 w-3 mr-1" />
+                  Inactive
+                </Badge>
+              )}
+            </div>
+
+            {isActive ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  You have an active subscription. You&apos;ll receive monthly AI-curated stock alerts via email.
+                </p>
+                <div className="flex gap-3">
+                  <Link href="/dashboard/manage-subscription" className="flex-1">
+                    <Button variant="outline" className="w-full">
+                      Manage Subscription
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Subscribe to receive monthly AI-curated alerts about fast-growing stock opportunities.
+                </p>
+                <Link href="/dashboard/subscribe">
+                  <Button size="lg" className="w-full">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Subscribe Now - $29.99/month + tax
+                  </Button>
+                </Link>
+              </div>
+            )}
           </Card>
 
           {/* Account Settings */}
