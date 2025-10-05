@@ -40,65 +40,53 @@ export async function POST(req: NextRequest) {
             console.log("[Webhook] Customer ID:", customerId)
             console.log("[Webhook] Customer Email:", customerEmail)
 
-            // Get subscription details
-            console.log("[Webhook] Retrieving subscription details from Stripe...")
-            const subscription = await stripe.subscriptions.retrieve(subscriptionId)
-            console.log("[Webhook] Subscription retrieved, status:", subscription.status)
-
-            // Get customer to find user_id from metadata
-            const customer = await stripe.customers.retrieve(customerId)
-            let userId = (customer as Stripe.Customer).metadata?.userId
-
-            // If no userId in metadata (e.g., payment link), look up by email
-            if (!userId && customerEmail) {
-              console.log("[Webhook] No userId in metadata, looking up by email:", customerEmail)
-              const userResult = await sql`
-                SELECT id FROM users WHERE email = ${customerEmail} LIMIT 1
-              `
-              if (userResult.length > 0) {
-                userId = userResult[0].id
-                console.log("[Webhook] Found user by email:", userId)
-              }
+            // Look up user by email (no Stripe API calls to avoid timeout)
+            if (!customerEmail) {
+              console.error("[Webhook] No customer email in session")
+              return NextResponse.json({ error: "No customer email" }, { status: 400 })
             }
 
-            if (!userId) {
-              console.error("[Webhook] Could not find userId for customer:", customerId, customerEmail)
+            console.log("[Webhook] Looking up user by email:", customerEmail)
+            const userResult = await sql`
+              SELECT id FROM users WHERE email = ${customerEmail} LIMIT 1
+            `
+            
+            if (userResult.length === 0) {
+              console.error("[Webhook] User not found for email:", customerEmail)
               return NextResponse.json({ error: "User not found" }, { status: 400 })
             }
 
-            // Create or update subscription in database
-            console.log("[Webhook] Inserting/updating subscription in database...")
+            const userId = userResult[0].id
+            console.log("[Webhook] Found user:", userId)
+
+            // Create subscription record with basic info
+            // Will be updated with full details by customer.subscription.updated event
+            console.log("[Webhook] Creating subscription record...")
             await sql`
               INSERT INTO subscriptions (
                 user_id, 
                 stripe_customer_id, 
                 stripe_subscription_id, 
-                stripe_price_id,
-                status, 
-                current_period_start, 
-                current_period_end
+                status
               )
               VALUES (
                 ${userId}::uuid,
                 ${customerId},
                 ${subscriptionId},
-                ${subscription.items.data[0]?.price?.id || 'unknown'},
-                ${subscription.status},
-                to_timestamp(${subscription.current_period_start}),
-                to_timestamp(${subscription.current_period_end})
+                'active'
               )
               ON CONFLICT (stripe_subscription_id) 
               DO UPDATE SET
-                status = ${subscription.status},
-                current_period_start = to_timestamp(${subscription.current_period_start}),
-                current_period_end = to_timestamp(${subscription.current_period_end}),
+                status = 'active',
+                stripe_customer_id = ${customerId},
                 updated_at = NOW()
             `
 
-            console.log("[Webhook] Subscription created/updated for user:", userId)
+            console.log("[Webhook] Subscription record created for user:", userId)
           }
         } catch (err: any) {
-          console.error("[Webhook] Error processing checkout.session.completed:", err)
+          console.error("[Webhook] Error processing checkout.session.completed:", err.message)
+          console.error("[Webhook] Stack:", err.stack)
           throw err
         }
         break
