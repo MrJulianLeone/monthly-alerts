@@ -51,7 +51,7 @@ export async function verifyUser(email: string, password: string) {
 
 export async function createSession(userId: string) {
   const sessionId = crypto.randomUUID()
-  const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000) // 30 days
+  const expiresAt = new Date(Date.now() + 15 * 24 * 60 * 60 * 1000) // 15 days
 
   await sql`
     INSERT INTO sessions (id, user_id, expires_at)
@@ -64,6 +64,7 @@ export async function createSession(userId: string) {
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",
     expires: expiresAt,
+    maxAge: 15 * 24 * 60 * 60, // 15 days in seconds
   })
 
   return sessionId
