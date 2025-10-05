@@ -2,8 +2,11 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { TrendingUp, Mail, Sparkles, Shield, Clock, BarChart3 } from "lucide-react"
+import { getSession } from "@/lib/auth"
 
-export default function HomePage() {
+export default async function HomePage() {
+  const session = await getSession()
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -14,11 +17,19 @@ export default function HomePage() {
             <span className="font-bold text-xl">MonthlyAlerts.com</span>
           </div>
           <nav className="flex items-center gap-4">
-            <Link href="/login">
-              <Button variant="ghost" size="sm">
-                Login
-              </Button>
-            </Link>
+            {session ? (
+              <Link href="/dashboard">
+                <Button variant="default" size="sm">
+                  Dashboard
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/login">
+                <Button variant="ghost" size="sm">
+                  Login
+                </Button>
+              </Link>
+            )}
           </nav>
         </div>
       </header>
