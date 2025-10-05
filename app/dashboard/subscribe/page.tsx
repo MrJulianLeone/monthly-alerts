@@ -6,7 +6,7 @@ import Link from "next/link"
 import { SubscribeCheckout } from "@/components/subscribe-checkout"
 
 export default async function SubscribePage() {
-  const { userId, email } = await requireAuth()
+  const session = await requireAuth()
 
   return (
     <div className="min-h-screen bg-background">
@@ -35,7 +35,7 @@ export default async function SubscribePage() {
           </div>
 
           <Card className="p-8">
-            <SubscribeCheckout userId={userId} userEmail={email} />
+            <SubscribeCheckout userId={session.user_id} userEmail={session.email} />
           </Card>
         </div>
       </div>

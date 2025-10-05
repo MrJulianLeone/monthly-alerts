@@ -7,49 +7,59 @@ import { neon } from "@neondatabase/serverless"
 const sql = neon(process.env.DATABASE_URL!)
 
 export async function createSubscriptionCheckout(userId: string, userEmail: string) {
-  // Create or retrieve Stripe customer
-  let customer
-  const existingCustomers = await stripe.customers.list({
-    email: userEmail,
-    limit: 1,
-  })
+  try {
+    console.log("[Subscription] Starting checkout for user:", userId, userEmail)
 
-  if (existingCustomers.data.length > 0) {
-    customer = existingCustomers.data[0]
-  } else {
-    customer = await stripe.customers.create({
+    // Create or retrieve Stripe customer
+    let customer
+    const existingCustomers = await stripe.customers.list({
       email: userEmail,
-      metadata: {
-        userId,
-      },
+      limit: 1,
     })
-  }
 
-  // Create checkout session for subscription
-  const session = await stripe.checkout.sessions.create({
-    ui_mode: "embedded",
-    customer: customer.id,
-    line_items: [
-      {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: "MonthlyAlerts Subscription",
-            description: "Monthly AI-curated stock alerts",
-          },
-          unit_amount: 2900, // $29.00
-          recurring: {
-            interval: "month",
-          },
+    if (existingCustomers.data.length > 0) {
+      customer = existingCustomers.data[0]
+      console.log("[Subscription] Found existing customer:", customer.id)
+    } else {
+      customer = await stripe.customers.create({
+        email: userEmail,
+        metadata: {
+          userId,
         },
-        quantity: 1,
-      },
-    ],
-    mode: "subscription",
-    return_url: `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
-  })
+      })
+      console.log("[Subscription] Created new customer:", customer.id)
+    }
 
-  return session.client_secret
+    // Create checkout session for subscription
+    const session = await stripe.checkout.sessions.create({
+      ui_mode: "embedded",
+      customer: customer.id,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "MonthlyAlerts Subscription",
+              description: "Monthly AI-curated stock alerts",
+            },
+            unit_amount: 2900, // $29.00
+            recurring: {
+              interval: "month",
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "subscription",
+      return_url: `${process.env.NEXT_PUBLIC_URL || "http://localhost:3000"}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
+    })
+
+    console.log("[Subscription] Created session:", session.id)
+    return session.client_secret
+  } catch (error) {
+    console.error("[Subscription] Error creating checkout:", error)
+    throw error
+  }
 }
 
 export async function cancelSubscription(formData: FormData) {
