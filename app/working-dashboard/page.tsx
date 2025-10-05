@@ -26,7 +26,7 @@ export default async function WorkingDashboard() {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container max-w-7xl mx-auto px-4 py-4">
+        <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <Link href="/" className="flex items-center gap-2">
               <TrendingUp className="h-6 w-6 text-primary" />
@@ -45,7 +45,7 @@ export default async function WorkingDashboard() {
         </div>
       </header>
 
-      <div className="container max-w-7xl mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         <Card className="p-8">
           <h1 className="text-3xl font-bold mb-4">Working Dashboard!</h1>
           <div className="space-y-2">

@@ -31,7 +31,7 @@ export default async function ManageSubscriptionPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container max-w-7xl mx-auto px-4 py-4">
+        <div className="container max-w-6xl mx-auto px-4 py-4">
           <Link href="/dashboard" className="flex items-center gap-2">
             <TrendingUp className="h-6 w-6 text-primary" />
             <span className="font-bold text-xl">MonthlyAlerts.com</span>
