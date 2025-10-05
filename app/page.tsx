@@ -218,9 +218,6 @@ export default async function HomePage() {
               <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
                 Privacy
               </Link>
-              <Link href="/contact" className="text-muted-foreground hover:text-foreground">
-                Contact
-              </Link>
             </div>
           </div>
         </div>
