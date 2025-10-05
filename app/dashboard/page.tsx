@@ -5,7 +5,7 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Mail, CreditCard, LogOut, Calendar, CheckCircle2, XCircle } from "lucide-react"
+import { TrendingUp, Mail, CreditCard, LogOut, CheckCircle2, XCircle } from "lucide-react"
 import Link from "next/link"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -32,7 +32,7 @@ export default async function DashboardPage() {
     LIMIT 1
   `
 
-  const subscription = subscriptions[0]
+  const subscription = subscriptions?.[0]
   const isActive = subscription?.status === "active"
 
   // Fetch recent alerts
@@ -102,26 +102,10 @@ export default async function DashboardPage() {
             {isActive ? (
               <div className="space-y-4">
                 <div className="flex items-center gap-3 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-muted-foreground">Next billing date:</span>
-                  <span className="font-medium">
-                    {subscription?.current_period_end
-                      ? new Date(subscription.current_period_end).toLocaleDateString()
-                      : "N/A"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 text-sm">
                   <CreditCard className="h-4 w-4 text-muted-foreground" />
                   <span className="text-muted-foreground">Plan:</span>
                   <span className="font-medium">Monthly Subscription - $29/month</span>
                 </div>
-                {subscription?.cancel_at_period_end && (
-                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
-                    <p className="text-sm text-amber-600">
-                      Your subscription will be canceled at the end of the current billing period.
-                    </p>
-                  </div>
-                )}
                 <div className="flex gap-3 pt-2">
                   <Link href="/dashboard/manage-subscription">
                     <Button variant="outline" size="sm">
@@ -155,12 +139,6 @@ export default async function DashboardPage() {
                 <p className="text-sm font-medium">{session.email}</p>
               </div>
               <div>
-                <p className="text-xs text-muted-foreground mb-1">Member Since</p>
-                <p className="text-sm font-medium">
-                  {session.createdAt ? new Date(session.createdAt).toLocaleDateString() : "N/A"}
-                </p>
-              </div>
-              <div>
                 <p className="text-xs text-muted-foreground mb-1">Alerts Received</p>
                 <p className="text-sm font-medium">{recentAlerts.length} total</p>
               </div>
@@ -186,16 +164,12 @@ export default async function DashboardPage() {
           {recentAlerts.length > 0 ? (
             <div className="space-y-4">
               {recentAlerts.map((alert: any) => (
-                <div key={alert.id} className="border border-border rounded-lg p-4 hover:bg-accent/5 transition-colors">
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-semibold mb-1">{alert.subject}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-2">{alert.content}</p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="text-xs text-muted-foreground">{new Date(alert.sent_at).toLocaleDateString()}</p>
-                    </div>
-                  </div>
+                <div key={alert.id} className="border border-border rounded-lg p-4">
+                  <h3 className="font-semibold mb-1">{alert.subject}</h3>
+                  <p className="text-sm text-muted-foreground">{alert.content?.substring(0, 100)}...</p>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {new Date(alert.sent_at).toLocaleDateString()}
+                  </p>
                 </div>
               ))}
             </div>
