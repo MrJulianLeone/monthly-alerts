@@ -120,6 +120,14 @@ export default function TermsPage() {
               <span className="font-semibold">MonthlyAlerts.com</span>
             </div>
             <p className="text-sm text-muted-foreground">© 2025 MonthlyAlerts.com. All rights reserved.</p>
+            <div className="flex gap-6 text-sm">
+              <Link href="/terms" className="text-muted-foreground hover:text-foreground">
+                Terms
+              </Link>
+              <Link href="/privacy" className="text-muted-foreground hover:text-foreground">
+                Privacy
+              </Link>
+            </div>
           </div>
         </div>
       </footer>
