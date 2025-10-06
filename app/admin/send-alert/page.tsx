@@ -23,9 +23,11 @@ export default async function SendAlertPage() {
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
 
-  // Get active subscriber count
+  // Get active subscriber count (excluding admin users)
   const activeSubscriptionsResult = await sql`
-    SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
+    SELECT COUNT(*) as count FROM subscriptions s
+    WHERE s.status = 'active'
+    AND s.user_id NOT IN (SELECT user_id FROM admin_users)
   `
   const activeSubscriptions = Number(activeSubscriptionsResult[0]?.count || 0)
 
@@ -50,9 +52,9 @@ export default async function SendAlertPage() {
 
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Send Monthly Alert</h1>
+            <h1 className="text-3xl font-bold mb-2">Compose Alert</h1>
             <p className="text-muted-foreground">
-              This alert will be sent to {activeSubscriptions} active subscriber{activeSubscriptions !== 1 ? 's' : ''}
+              Compose a message or generate an AI alert to send to {activeSubscriptions} active subscriber{activeSubscriptions !== 1 ? 's' : ''}
             </p>
           </div>
 

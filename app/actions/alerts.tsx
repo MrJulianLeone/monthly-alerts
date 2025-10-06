@@ -19,12 +19,13 @@ export async function sendAlert(formData: FormData) {
     }
 
     console.log("[SendAlert] Getting active subscribers...")
-    // Get all active subscribers
+    // Get all active subscribers (excluding admin users)
     const subscribers = await sql`
       SELECT u.email, u.first_name, u.last_name
       FROM subscriptions s
       JOIN users u ON s.user_id = u.id
       WHERE s.status = 'active'
+      AND s.user_id NOT IN (SELECT user_id FROM admin_users)
     `
 
     console.log("[SendAlert] Found", subscribers.length, "active subscribers")
