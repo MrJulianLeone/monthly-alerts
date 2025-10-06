@@ -32,13 +32,14 @@ export default async function UsersListPage({
   const limit = 20
   const offset = (page - 1) * limit
 
-  // Fetch users (excluding admin users)
+  // Fetch all users (including admin users)
   const users = await sql`
     SELECT u.id, u.email, u.first_name, u.last_name, u.created_at,
-           s.status as subscription_status
+           s.status as subscription_status, s.created_at as subscription_date,
+           CASE WHEN au.user_id IS NOT NULL THEN true ELSE false END as is_admin
     FROM users u
-    LEFT JOIN subscriptions s ON u.id = s.user_id
-    WHERE u.id NOT IN (SELECT user_id FROM admin_users)
+    LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
+    LEFT JOIN admin_users au ON u.id = au.user_id
     ORDER BY u.created_at DESC
     LIMIT ${limit} OFFSET ${offset}
   `
@@ -46,7 +47,6 @@ export default async function UsersListPage({
   // Get total count for pagination
   const totalResult = await sql`
     SELECT COUNT(*) as count FROM users
-    WHERE id NOT IN (SELECT user_id FROM admin_users)
   `
   const total = Number(totalResult[0].count)
   const totalPages = Math.ceil(total / limit)
@@ -106,8 +106,10 @@ export default async function UsersListPage({
                 <tr className="border-b border-border">
                   <th className="text-left p-4 font-medium">Name</th>
                   <th className="text-left p-4 font-medium">Email</th>
-                  <th className="text-left p-4 font-medium">Status</th>
-                  <th className="text-left p-4 font-medium">Joined</th>
+                  <th className="text-left p-4 font-medium">Role</th>
+                  <th className="text-left p-4 font-medium">Subscription</th>
+                  <th className="text-left p-4 font-medium">Registered</th>
+                  <th className="text-left p-4 font-medium">Subscribed</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,6 +120,13 @@ export default async function UsersListPage({
                     </td>
                     <td className="p-4 text-muted-foreground">{user.email}</td>
                     <td className="p-4">
+                      {user.is_admin ? (
+                        <Badge variant="outline" className="border-purple-600 text-purple-600">Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary">User</Badge>
+                      )}
+                    </td>
+                    <td className="p-4">
                       {user.subscription_status === "active" ? (
                         <Badge variant="default" className="bg-green-600">Active</Badge>
                       ) : (
@@ -127,11 +136,14 @@ export default async function UsersListPage({
                     <td className="p-4 text-muted-foreground">
                       {new Date(user.created_at).toLocaleDateString()}
                     </td>
+                    <td className="p-4 text-muted-foreground">
+                      {user.subscription_date ? new Date(user.subscription_date).toLocaleDateString() : 'N/A'}
+                    </td>
                   </tr>
                 ))}
                 {users.length === 0 && (
                   <tr>
-                    <td colSpan={4} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
                       No users found
                     </td>
                   </tr>

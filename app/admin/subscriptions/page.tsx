@@ -32,13 +32,14 @@ export default async function SubscriptionsListPage({
   const limit = 20
   const offset = (page - 1) * limit
 
-  // Fetch subscriptions (excluding admin users)
+  // Fetch all active subscriptions (including admin users)
   const subscriptions = await sql`
-    SELECT s.*, u.email, u.first_name, u.last_name
+    SELECT s.*, u.email, u.first_name, u.last_name, u.created_at as user_registered,
+           CASE WHEN au.user_id IS NOT NULL THEN true ELSE false END as is_admin
     FROM subscriptions s
     JOIN users u ON s.user_id = u.id
+    LEFT JOIN admin_users au ON u.id = au.user_id
     WHERE s.status = 'active'
-    AND s.user_id NOT IN (SELECT user_id FROM admin_users)
     ORDER BY s.created_at DESC
     LIMIT ${limit} OFFSET ${offset}
   `
@@ -47,7 +48,6 @@ export default async function SubscriptionsListPage({
   const totalResult = await sql`
     SELECT COUNT(*) as count FROM subscriptions s
     WHERE s.status = 'active'
-    AND s.user_id NOT IN (SELECT user_id FROM admin_users)
   `
   const total = Number(totalResult[0].count)
   const totalPages = Math.ceil(total / limit)
@@ -106,10 +106,11 @@ export default async function SubscriptionsListPage({
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border">
-                  <th className="text-left p-4 font-medium">User</th>
+                  <th className="text-left p-4 font-medium">Name</th>
                   <th className="text-left p-4 font-medium">Email</th>
+                  <th className="text-left p-4 font-medium">Role</th>
                   <th className="text-left p-4 font-medium">Status</th>
-                  <th className="text-left p-4 font-medium">Current Period</th>
+                  <th className="text-left p-4 font-medium">Registered</th>
                   <th className="text-left p-4 font-medium">Subscribed</th>
                 </tr>
               </thead>
@@ -121,26 +122,26 @@ export default async function SubscriptionsListPage({
                     </td>
                     <td className="p-4 text-muted-foreground">{sub.email}</td>
                     <td className="p-4">
+                      {sub.is_admin ? (
+                        <Badge variant="outline" className="border-purple-600 text-purple-600">Admin</Badge>
+                      ) : (
+                        <Badge variant="secondary">User</Badge>
+                      )}
+                    </td>
+                    <td className="p-4">
                       <div className="flex flex-col gap-1">
                         <Badge variant="default" className="bg-green-600 w-fit">
-                          {sub.status}
+                          Active
                         </Badge>
                         {sub.cancel_at_period_end && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-600 w-fit">
+                          <Badge variant="outline" className="text-orange-600 border-orange-600 w-fit text-xs">
                             Canceling
                           </Badge>
                         )}
                       </div>
                     </td>
-                    <td className="p-4 text-muted-foreground text-sm">
-                      {sub.current_period_start && sub.current_period_end ? (
-                        <>
-                          {new Date(sub.current_period_start).toLocaleDateString()} -{" "}
-                          {new Date(sub.current_period_end).toLocaleDateString()}
-                        </>
-                      ) : (
-                        "N/A"
-                      )}
+                    <td className="p-4 text-muted-foreground">
+                      {new Date(sub.user_registered).toLocaleDateString()}
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {new Date(sub.created_at).toLocaleDateString()}
@@ -149,7 +150,7 @@ export default async function SubscriptionsListPage({
                 ))}
                 {subscriptions.length === 0 && (
                   <tr>
-                    <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                    <td colSpan={6} className="p-8 text-center text-muted-foreground">
                       No active subscriptions found
                     </td>
                   </tr>

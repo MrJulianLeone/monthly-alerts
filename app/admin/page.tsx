@@ -24,17 +24,15 @@ export default async function AdminDashboardPage() {
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
 
-  // Fetch statistics (excluding admin users)
+  // Fetch statistics (including all users and admin users)
   const totalUsersResult = await sql`
     SELECT COUNT(*) as count FROM users
-    WHERE id NOT IN (SELECT user_id FROM admin_users)
   `
   const totalUsers = Number(totalUsersResult[0].count)
 
   const activeSubscriptionsResult = await sql`
     SELECT COUNT(*) as count FROM subscriptions s
     WHERE s.status = 'active'
-    AND s.user_id NOT IN (SELECT user_id FROM admin_users)
   `
   const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
 
