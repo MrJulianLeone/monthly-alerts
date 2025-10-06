@@ -24,14 +24,17 @@ export default async function AdminDashboardPage() {
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
 
-  // Fetch statistics
+  // Fetch statistics (excluding admin users)
   const totalUsersResult = await sql`
     SELECT COUNT(*) as count FROM users
+    WHERE id NOT IN (SELECT user_id FROM admin_users)
   `
   const totalUsers = Number(totalUsersResult[0].count)
 
   const activeSubscriptionsResult = await sql`
-    SELECT COUNT(*) as count FROM subscriptions WHERE status = 'active'
+    SELECT COUNT(*) as count FROM subscriptions s
+    WHERE s.status = 'active'
+    AND s.user_id NOT IN (SELECT user_id FROM admin_users)
   `
   const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
 
@@ -81,37 +84,45 @@ export default async function AdminDashboardPage() {
 
         {/* Stats Grid */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Total Users</h3>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold">{totalUsers}</p>
-          </Card>
+          <Link href="/admin/users">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Total Users</h3>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{totalUsers}</p>
+            </Card>
+          </Link>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Active Subscriptions</h3>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold">{activeSubscriptions}</p>
-          </Card>
+          <Link href="/admin/subscriptions">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Active Subscriptions</h3>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{activeSubscriptions}</p>
+            </Card>
+          </Link>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Monthly Revenue</h3>
-              <DollarSign className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold">${monthlyRevenue}</p>
-          </Card>
+          <Link href="/admin/subscriptions">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Monthly Revenue</h3>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">${monthlyRevenue}</p>
+            </Card>
+          </Link>
 
-          <Card className="p-6">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Alerts Sent</h3>
-              <Mail className="h-4 w-4 text-muted-foreground" />
-            </div>
-            <p className="text-3xl font-bold">{totalAlerts}</p>
-          </Card>
+          <Link href="/admin/alerts">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Alerts Sent</h3>
+                <Mail className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{totalAlerts}</p>
+            </Card>
+          </Link>
         </div>
 
         {/* Send Alert Section */}
