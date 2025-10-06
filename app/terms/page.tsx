@@ -16,7 +16,7 @@ export default function TermsPage() {
         </div>
       </header>
 
-      <div className="container max-w-6xl mx-auto px-4 py-8">
+      <div className="container max-w-4xl mx-auto px-4 py-8">
         <Link href="/">
           <Button variant="ghost" size="sm" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -25,80 +25,82 @@ export default function TermsPage() {
         </Link>
 
         <Card className="p-8">
-          <h1 className="text-3xl font-bold mb-6">Terms of Subscription and Use</h1>
+          <h1 className="text-3xl font-bold mb-6">Terms of Service</h1>
 
           <div className="prose prose-sm max-w-none space-y-6">
             <section>
-              <h2 className="text-xl font-semibold mb-3">1. Purpose</h2>
+              <h2 className="text-xl font-semibold mb-3">1. Nature of Service</h2>
               <p className="text-muted-foreground">
-                MonthlyAlerts.com provides a subscription-based newsletter highlighting companies, products, and trends
-                the authors find interesting. The content is for informational and educational purposes only.
+                MonthlyAlerts.com (&quot;the Service&quot;) publishes financial and business research for educational and
+                informational purposes. The Service provides general commentary, data analysis, and company profiles prepared
+                from public information believed to be reliable. Nothing on this site or in email alerts constitutes a
+                personalized investment recommendation, financial planning, or solicitation to buy or sell any security.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">2. No Investment Advice</h2>
+              <h2 className="text-xl font-semibold mb-3">2. Regulatory Classification</h2>
               <p className="text-muted-foreground mb-3">
-                MonthlyAlerts.com is not a financial advisor, broker, or investment firm. Nothing in the newsletter
-                constitutes investment, financial, or trading advice. Any reference to stock prices, performance, or
-                valuation is included solely to illustrate company activity or to support educational discussion.
+                MonthlyAlerts.com is not registered as an investment adviser under the Investment Advisers Act of 1940 or any
+                state securities law because the Service qualifies for the &quot;publisher&apos;s exemption.&quot;
               </p>
-              <p className="text-muted-foreground">
-                Subscribers should not buy, sell, or hold securities based on the newsletter. Always consult a qualified
-                financial advisor before making investment decisions.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">3. Educational Content Only</h2>
-              <p className="text-muted-foreground">
-                The newsletter discusses companies and products that may have publicly traded securities. Mentions of such
-                securities are incidental and meant to support commentary on innovation, business models, or market trends.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">4. Subscription and Cancellation</h2>
-              <p className="text-muted-foreground">
-                Subscriptions are billed monthly in advance at $29.99 plus applicable taxes. Users may cancel at any time
-                through their account page. Cancellation stops future billing but does not refund past charges. Access
-                continues until the end of the paid period.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">5. Accuracy and Liability</h2>
               <p className="text-muted-foreground mb-3">
-                MonthlyAlerts.com strives for factual accuracy but makes no guarantee of completeness or timeliness. All
-                information is provided &quot;as is.&quot;
+                Under SEC Release IA-1092 and related case law (e.g., Lowe v. SEC, 472 U.S. 181 (1985)), publishers who
+                provide impersonal and bona fide financial research available to the general public and not tailored to
+                specific client objectives are not considered investment advisers.
               </p>
               <p className="text-muted-foreground">
-                MonthlyAlerts.com, its authors, and affiliates are not liable for any losses, damages, or claims resulting
-                from reliance on newsletter content.
-              </p>
-            </section>
-
-            <section>
-              <h2 className="text-xl font-semibold mb-3">6. Intellectual Property</h2>
-              <p className="text-muted-foreground">
-                All content, including text, images, and formatting, belongs to MonthlyAlerts.com. Subscribers may not
-                reproduce, distribute, or republish the content without written permission.
+                Our work is therefore classified as investment research, similar in nature to services such as Value Line,
+                Morningstar, and The Wall Street Journal&apos;s financial sections.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">7. Privacy</h2>
+              <h2 className="text-xl font-semibold mb-3">3. No Personalized Advice</h2>
               <p className="text-muted-foreground">
-                Email addresses and payment information are stored securely and used only for subscription management and
-                content delivery.
+                The information presented does not consider any reader&apos;s personal financial situation, objectives, or risk
+                tolerance. You must make your own investment decisions or consult a licensed professional before acting on any
+                information contained herein.
               </p>
             </section>
 
             <section>
-              <h2 className="text-xl font-semibold mb-3">8. Updates to Terms</h2>
+              <h2 className="text-xl font-semibold mb-3">4. Accuracy and Liability</h2>
               <p className="text-muted-foreground">
-                MonthlyAlerts.com may modify these terms at any time. Continued subscription constitutes acceptance of
-                updated terms.
+                All data and opinions are based on sources believed reliable but are not guaranteed for accuracy or
+                completeness. Market data and prices may change without notice. MonthlyAlerts.com and its contributors assume
+                no responsibility for losses or damages arising from reliance on the material provided.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">5. Performance and Auditing</h2>
+              <p className="text-muted-foreground">
+                Past performance or back-tested results are not indicative of future outcomes. Any performance tracking or
+                audit report is provided solely for transparency and should not be interpreted as a recommendation or forecast.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">6. Subscription and Cancellation</h2>
+              <p className="text-muted-foreground">
+                Subscribers may cancel at any time. Upon cancellation, access to future alerts terminates at the end of the
+                current billing period. No refunds are issued for past periods.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">7. Intellectual Property</h2>
+              <p className="text-muted-foreground">
+                All content, graphics, and code are the property of MonthlyAlerts.com. Redistribution without permission is
+                prohibited.
+              </p>
+            </section>
+
+            <section>
+              <h2 className="text-xl font-semibold mb-3">8. Contact</h2>
+              <p className="text-muted-foreground">
+                Questions about these terms may be directed to admin at monthlyalerts dot com.
               </p>
             </section>
 
