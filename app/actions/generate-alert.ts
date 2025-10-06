@@ -12,26 +12,32 @@ export async function generateAlert(
   price: string,
   sentiment: "positive" | "negative"
 ) {
+  const windowDays = 30 // Hard-coded 30 day window
+  const angle = sentiment === "positive" ? "good" : "bad"
+  
   try {
-    console.log("[GenerateAlert] Starting for:", ticker, company, price, sentiment)
+    console.log("[GenerateAlert] Starting for:", ticker, company, price, "angle:", angle)
 
-    const input = `Summarize the last 30 days of news for ${company} (ticker: ${ticker}) currently trading at ${price}.
+    const input = `Task: Write a ≤90-word EDUCATIONAL news update for ${company} (${ticker}) at ${price}.
+Angle: ${angle}. Do NOT print these words or any of: positive, negative, bullish, bearish, favorable, cautious, optimistic.
 
-Write a 90-word market update following these rules:
-- Do NOT use words like: positive, negative, bullish, bearish, favorable, cautious, optimistic
-- No predictions, targets, or advice words: buy, sell, should, recommend
-- Use neutral verbs: reported, filed, announced, completed
-- Cite 2-3 specific recent news items with dates
-- Mention current price once
-- Keep factual and educational tone
+Hard rules:
+- Use ONLY items published in the last ${windowDays} days. If <2 items, output exactly:
+  "No qualifying recent items in the past ${windowDays} days."
+- No market data preamble. One paragraph only.
+- Mention current price once.
+- Include 2–3 dated facts with inline citations: [Source YYYY-MM-DD] with links.
+- Neutral verbs only: reported, filed, announced, completed, disclosed.
+- No advice, targets, predictions, or directives.
 
-Structure:
-- Opening sentence with current price
-- 2-3 brief factual points about recent news (with dates)
-- One line: "Why this matters:" + neutral fact
-- End with: "Educational market research. Not investment advice."
+Content policy:
+- Prefer SEC/IR, earnings, contracts, capacity changes, financings, regulatory actions.
+- Exclude items older than the window, rumors, or undated blogs.
 
-Keep under 90 words total.`
+Structure (exactly):
+${company} (${ticker}) trades near ${price}. {fact 1 with citation} {fact 2 with citation}{ optional fact 3 with citation}. 
+Why this matters: {one neutral consequence}. 
+Educational market research. Not investment advice.`
 
     const res = await openai.responses.create({
       model: "gpt-4o-mini",
@@ -43,6 +49,13 @@ Keep under 90 words total.`
 
     if (!generatedContent) {
       throw new Error("No content generated")
+    }
+
+    // Check if no qualifying items found
+    if (generatedContent.includes("No qualifying recent items")) {
+      return {
+        error: `No recent news found for ${ticker} in the past ${windowDays} days. The AI searches for SEC filings, earnings, and official announcements. Try a company with recent news activity.`,
+      }
     }
 
     console.log("[GenerateAlert] Generated successfully")
