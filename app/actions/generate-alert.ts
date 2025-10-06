@@ -67,26 +67,29 @@ Sentiment: ${sentiment}
 Recent news and data:
 ${newsContent}
 
-Generate a newsletter-style company alert using the information above.
+Generate a concise, text-based newsletter alert using the information above. Use the ${sentiment} tone.
 
-Format:
+Format (plain text, no markdown):
 
-**Monthly Alerts Insight – ${monthYear}**
-### ${company} (${ticker}): [Short Headline Reflecting Sentiment]
-**Price:** ${price} | **Sector:** [detected industry from news]
+${company} (${ticker}) - ${price}
 
-**Summary:** One paragraph summarizing business, key financial results, and recent performance in the tone of ${sentiment}.
-**Recent Developments:** 2–3 bullet points with the latest corporate or market updates.
-**Why It Matters:** One concise line connecting the developments to investor or market implications.
+Company Description:
+[2-3 sentences describing what the company does and its market position]
 
-Write in under 180 words. No recommendations.`
+Recent Developments:
+[3-4 bullet points with specific recent news, dates, and developments from the past 30 days]
+
+Summary of Opportunity:
+[2-3 sentences explaining why this matters to investors, using ${sentiment} tone]
+
+Write in under 150 words total. Be factual and concise. No price ranges, intraday data, volume figures, or percentage changes. No investment advice or recommendations.`
 
     const reportResponse = await client.chat.completions.create({
       model: "gpt-5",
       messages: [
         {
           role: "system",
-          content: "You are an equity research writer for a stock alert newsletter. Your job is to produce short, factual company reports using verified web data. Each report should start with a one-sentence description of the company's business, then summarize recent news and performance. The tone should match the sentiment variable (Positive or Negative) but remain professional and data-driven. No investment advice, price targets, or speculation."
+          content: "You are a concise equity research writer for a stock alert newsletter. Write clear, factual company reports in plain text format. Focus on: (1) what the company does, (2) specific recent developments with dates, and (3) why it matters to investors. Match the requested sentiment tone (positive or negative) while staying professional and data-driven. Avoid market data like price ranges, volume, intraday changes, or percentages. No investment advice or price targets."
         },
         {
           role: "user",
