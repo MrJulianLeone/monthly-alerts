@@ -40,7 +40,7 @@ export async function generateAlert(
     // Build the hardened prompt fresh each call - IDENTICAL for both sentiments
     const prompt = `You are a factual markets writer.
 
-Goal: one paragraph ≤90 words about ${company} (${ticker}) at $${price}.
+Goal: one paragraph ≤100 words about ${company} (${ticker}) at $${price}.
 Use ONLY news from last ${windowDays} days. Reference 2–3 specific news items with dates.
 Do NOT include any market-data dump, headings, bullets, or sections.
 Do not include citations, URLs, or markdown links of any kind in the output.
@@ -49,11 +49,13 @@ Forbidden unless attached to a news event:
 open, intraday, high, low, 52-week, range, previous close, change, market cap, float, beta, volume.
 
 Rules:
-- Mention price once.
-- Neutral verbs: announced, reported, filed, completed, disclosed.
-- No advice, predictions, targets, or sentiment words (positive/negative/bullish/bearish).
+- Start with: "${company} (${ticker}) trades near $${price}."
+- Follow immediately with: One short sentence (5-10 words) describing what the company does
+- Then include 2-3 recent news items with dates
+- Neutral verbs: announced, reported, filed, completed, disclosed
+- No advice, predictions, targets, or sentiment words (positive/negative/bullish/bearish)
 - If <2 qualifying items: output exactly "No qualifying recent items in the past ${windowDays} days."
-- If your first token would be a heading or list marker, STOP and regenerate internally.
+- If your first token would be a heading or list marker, STOP and regenerate internally
 
 Sentiment lens: ${sentiment}
 - If positive: emphasize benefits, opportunities, growth momentum
