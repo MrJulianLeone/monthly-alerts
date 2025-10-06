@@ -17,30 +17,61 @@ export async function generateAlert(
   try {
     console.log("[GenerateAlert] Starting for:", ticker, company, price, "sentiment:", sentiment)
 
-    const input = `You are a factual financial summarizer. 
-Task: Write a ≤90-word educational update for ${company} (${ticker}) trading at ${price}.
-Sentiment goal: ${sentiment}. DO NOT use the words positive, negative, bullish, bearish, favorable, cautious, optimistic, pessimistic.
+    // Select prompt based on sentiment
+    const input = sentiment === "positive" 
+      ? `You are a factual financial summarizer.
 
-Step 1 – Selection rules:
-- Gather news from the last ${windowDays} days via web search.
-- Classify each item as:
-  +1 = positive drivers (contracts won, capacity added, partnerships, revenue growth, regulatory approval)
-  -1 = negative drivers (executive exits, delays, losses, financing dilution, legal issues, guidance cuts)
-  0 = neutral (routine filings, small operational updates).
-- Choose 2–3 items whose classification sum is most aligned with the sentiment goal.
-  - For positive: choose +1 items if available.
-  - For negative: choose -1 items if available.
+Goal: Write a ≤90-word educational market update for ${company} (${ticker}) trading at ${price}.
+Sentiment target: POSITIVE. 
+Do NOT print words such as positive, negative, bullish, bearish, favorable, cautious, optimistic, or pessimistic.
 
-Step 2 – Compose the summary:
-- One sentence stating ${company} (${ticker}) trades near ${price}.
-- Two to three factual items with date + source link in brackets [Source YYYY-MM-DD].
-- One line "Why this matters:" explaining the directional context (e.g., growth momentum vs. financial pressure).
+Step 1 – Data selection rules
+- Collect news from the last ${windowDays} days via web search.
+- Keep only items that reflect constructive or growth-oriented developments:
+  • new contracts or partnerships
+  • project completions or capacity additions
+  • financing or credit facilities on favorable terms
+  • regulatory approvals or certifications
+  • earnings improvements, revenue growth, or cost reductions
+  • product launches or geographic expansion
+- Exclude any items involving executive departures, losses, litigation, delays, layoffs, or missed guidance.
+- If no clearly positive items exist, output exactly:
+  "No qualifying recent positive developments in the past ${windowDays} days."
+
+Step 2 – Compose summary
+- One sentence: "${company} (${ticker}) trades near ${price}."
+- Two factual items with source + date in brackets [Source YYYY-MM-DD].
+- One line: "Why this matters:" stating a neutral reason for potential strength (e.g., revenue growth, operational expansion, strategic funding).
 - End with: "Educational market research. Not investment advice."
 
-Rules:
-- Use neutral verbs: announced, reported, filed, completed, disclosed.
-- Do not include any predictions, targets, or advice language.
-- If fewer than 2 items match sentiment, state "No qualifying recent items in the past ${windowDays} days."`
+Style rules
+- Neutral verbs only: reported, filed, announced, disclosed, completed.
+- No predictions, targets, or advice.
+- If both positive and negative items appear, delete the negative ones.`
+      : `You are a factual financial summarizer.
+
+Goal: Write a ≤90-word educational market update for ${company} (${ticker}) trading at ${price}.
+Sentiment target: NEGATIVE. 
+Do NOT print words such as positive, negative, bullish, bearish, favorable, cautious, optimistic, or pessimistic.
+
+Step 1 – Data selection rules
+- Collect news from the last ${windowDays} days via web search.
+- Keep only items that reflect setbacks or risks:
+  • executive departures, financing dilution, losses, litigation, regulatory delays, missed guidance, cost overruns, layoffs, or operational issues.
+- Exclude any items involving expansions, new contracts, partnerships, financings on favorable terms, or approvals.
+- If no clearly negative items exist, output exactly:
+  "No qualifying recent negative developments in the past ${windowDays} days."
+
+Step 2 – Compose summary
+- One sentence: "${company} (${ticker}) trades near ${price}."
+- Two factual items with source + date in brackets [Source YYYY-MM-DD].
+- One line: "Why this matters:" stating neutral reason for concern (e.g., leadership changes, financing strain).
+- End with: "Educational market research. Not investment advice."
+
+Style rules
+- Neutral verbs only: reported, filed, announced, disclosed, completed.
+- No predictions, targets, or advice.
+- If both positive and negative items appear, delete the positive ones.`
 
     const res = await openai.responses.create({
       model: "gpt-4o-mini",
