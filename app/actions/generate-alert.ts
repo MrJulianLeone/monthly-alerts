@@ -41,22 +41,13 @@ export async function generateAlert(
 
     // Step 1: Fetch current news using gpt-4o-mini with web search
     console.log("[GenerateAlert] Step 1: Fetching recent news with web search...")
-    const newsResponse = await client.chat.completions.create({
+    const newsResponse = await client.responses.create({
       model: "gpt-4o-mini",
       tools: [{ type: "web_search" }],
-      messages: [
-        { 
-          role: "system", 
-          content: "You are a financial news researcher. Fetch and summarize 3-5 recent verified news items about the requested company. Include specific details like dates, financial figures, and key developments. Focus on factual information from the past 30 days."
-        },
-        { 
-          role: "user", 
-          content: `Recent news about ${company} (${ticker}). Include company business description, sector, recent financial results, and latest corporate developments.`
-        }
-      ]
+      input: `You are a financial news researcher. Fetch and summarize 3-5 recent verified news items about ${company} (${ticker}). Include company business description, sector, recent financial results, and latest corporate developments. Include specific details like dates, financial figures, and key developments. Focus on factual information from the past 30 days.`
     })
 
-    const newsContent = newsResponse.choices?.[0]?.message?.content?.trim()
+    const newsContent = newsResponse.output_text?.trim()
     
     if (!newsContent || newsContent.length < 20) {
       return {
