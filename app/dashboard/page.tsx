@@ -92,15 +92,9 @@ export default async function DashboardPage() {
 
             {isActive ? (
               <div className="space-y-4">
-                <p className="text-sm text-muted-foreground mb-3">
-                  You have an active subscription. You&apos;ll receive monthly AI-curated stock alerts via email.
+                <p className="text-sm text-muted-foreground">
+                  You have an active subscription. You&apos;ll receive monthly AI-curated stock alerts via email. Check your spam folder for welcome email.
                 </p>
-                <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-3">
-                  <p className="text-xs text-blue-800 dark:text-blue-200">
-                    <strong>Welcome email sent!</strong> Check your spam/junk folder and mark emails from{" "}
-                    <span className="font-mono">no-reply@alerts.monthlyalerts.com</span> as &quot;Not Spam&quot; to ensure delivery.
-                  </p>
-                </div>
                 <div className="flex gap-3">
                   <Link href="/dashboard/manage-subscription" className="flex-1">
                     <Button variant="outline" className="w-full">
