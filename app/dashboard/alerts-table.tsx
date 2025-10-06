@@ -94,15 +94,27 @@ export default function AlertsTable({ alerts, userSignupDate, isActive }: Alerts
                         {formatDate(alert.sent_at)}
                       </td>
                       <td className="py-4 pr-4">
-                        <span className="font-mono font-semibold text-sm">
-                          {alert.ticker}
-                        </span>
+                        {canView ? (
+                          <span className="font-mono font-semibold text-sm">
+                            {alert.ticker}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">•••</span>
+                        )}
                       </td>
                       <td className="py-4 pr-4 text-sm">
-                        {alert.company_name}
+                        {canView ? (
+                          alert.company_name
+                        ) : (
+                          <span className="text-muted-foreground">•••••••</span>
+                        )}
                       </td>
                       <td className="py-4 pr-4 text-sm font-medium">
-                        {alert.price}
+                        {canView ? (
+                          alert.price
+                        ) : (
+                          <span className="text-muted-foreground">•••</span>
+                        )}
                       </td>
                       <td className="py-4 pr-4">
                         {alert.sentiment === "positive" ? (

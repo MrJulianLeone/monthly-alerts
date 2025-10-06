@@ -51,7 +51,7 @@ export default async function HomePage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
               <Button size="lg" className="w-full sm:w-auto">
-                Start Your Free Trial
+                Get Your First Alert Free
               </Button>
             </Link>
             <Link href="#how-it-works">
@@ -60,7 +60,9 @@ export default async function HomePage() {
               </Button>
             </Link>
           </div>
-          <p className="text-sm text-muted-foreground mt-4">Only $29.99/month + tax • Cancel anytime</p>
+          <p className="text-sm text-muted-foreground mt-4">
+            First alert free for all registered users • Then $29.99/month + tax
+          </p>
         </div>
       </section>
 
@@ -115,27 +117,27 @@ export default async function HomePage() {
             <div className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto mb-4">
               1
             </div>
-            <h3 className="font-semibold text-lg mb-2">Subscribe</h3>
+            <h3 className="font-semibold text-lg mb-2">Register Free</h3>
             <p className="text-muted-foreground text-sm">
-              Sign up and start your subscription. Cancel anytime, no questions asked.
+              Create your account to receive your first stock alert completely free. No credit card required.
             </p>
           </div>
           <div className="text-center">
             <div className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto mb-4">
               2
             </div>
-            <h3 className="font-semibold text-lg mb-2">AI Analyzes</h3>
+            <h3 className="font-semibold text-lg mb-2">Get First Alert Free</h3>
             <p className="text-muted-foreground text-sm">
-              Our AI continuously monitors market data and identifies emerging opportunities.
+              Receive your first AI-curated stock alert with full company analysis at no cost.
             </p>
           </div>
           <div className="text-center">
             <div className="h-16 w-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto mb-4">
               3
             </div>
-            <h3 className="font-semibold text-lg mb-2">Get Alerts</h3>
+            <h3 className="font-semibold text-lg mb-2">Subscribe for More</h3>
             <p className="text-muted-foreground text-sm">
-              Receive monthly emails with detailed analysis and actionable insights.
+              Continue receiving monthly alerts by subscribing. Cancel anytime, no questions asked.
             </p>
           </div>
         </div>
@@ -159,6 +161,10 @@ export default async function HomePage() {
             </div>
             <ul className="space-y-3 mb-8">
               <li className="flex items-start gap-3">
+                <Sparkles className="h-5 w-5 text-accent shrink-0 mt-0.5" />
+                <span className="text-sm"><strong>First alert free</strong> for all registered users</span>
+              </li>
+              <li className="flex items-start gap-3">
                 <BarChart3 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
                 <span className="text-sm">Monthly AI-curated stock alerts</span>
               </li>
@@ -177,7 +183,7 @@ export default async function HomePage() {
             </ul>
             <Link href="/signup" className="block">
               <Button size="lg" className="w-full">
-                Start Your Free Trial
+                Get Your First Alert Free
               </Button>
             </Link>
           </Card>
