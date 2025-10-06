@@ -17,32 +17,30 @@ export async function generateAlert(
   try {
     console.log("[GenerateAlert] Starting for:", ticker, company, price, "sentiment:", sentiment)
 
-    const input = `Task: Write a ≤90-word educational update about ${company} (${ticker}) at ${price}.
-Sentiment: ${sentiment}. DO NOT print this word or synonyms.
+    const input = `You are a factual financial summarizer. 
+Task: Write a ≤90-word educational update for ${company} (${ticker}) trading at ${price}.
+Sentiment goal: ${sentiment}. DO NOT use the words positive, negative, bullish, bearish, favorable, cautious, optimistic, pessimistic.
 
-Selection rules:
-1) Gather news last ${windowDays} days via web search. Keep max 8 items.
-2) Score each item:
-   +1 = constructive (contracts won, guidance up, financing on good terms, capacity online, regulatory approval, major partner)
-   -1 = adverse (delays, guidance down, layoffs, litigation/regulatory action, dilutive financing, missed targets)
-   0  = neutral (procedural filings, minor mentions).
-3) Choose the top 2–3 items that maximize the sum toward the target sentiment:
-   - If Sentiment=positive: prefer items with +1; break ties by recency.
-   - If Sentiment=negative: prefer items with -1; break ties by recency.
-   - If <2 items match, fill with 0-score items but keep tone neutral.
-4) Do not include price/volume dumps unless tied to a cited event.
+Step 1 – Selection rules:
+- Gather news from the last ${windowDays} days via web search.
+- Classify each item as:
+  +1 = positive drivers (contracts won, capacity added, partnerships, revenue growth, regulatory approval)
+  -1 = negative drivers (executive exits, delays, losses, financing dilution, legal issues, guidance cuts)
+  0 = neutral (routine filings, small operational updates).
+- Choose 2–3 items whose classification sum is most aligned with the sentiment goal.
+  - For positive: choose +1 items if available.
+  - For negative: choose -1 items if available.
 
-Output format (exactly one paragraph):
-${company} (${ticker}) trades near ${price}. {fact1 with inline citation [Source YYYY-MM-DD]} {fact2 with citation}{ optional fact3 with citation}. 
-Why this matters: {one neutral consequence}. 
-Educational market research. Not investment advice.
+Step 2 – Compose the summary:
+- One sentence stating ${company} (${ticker}) trades near ${price}.
+- Two to three factual items with date + source link in brackets [Source YYYY-MM-DD].
+- One line "Why this matters:" explaining the directional context (e.g., growth momentum vs. financial pressure).
+- End with: "Educational market research. Not investment advice."
 
-Style constraints:
-- No words: positive, negative, bullish, bearish, favorable, cautious, optimistic, pessimistic.
-- Neutral verbs only: reported, filed, announced, completed, disclosed.
-- Mention price once. No predictions, targets, advice, or directives.
-- If <2 qualifying recent items exist, output exactly:
-  "No qualifying recent items in the past ${windowDays} days."`
+Rules:
+- Use neutral verbs: announced, reported, filed, completed, disclosed.
+- Do not include any predictions, targets, or advice language.
+- If fewer than 2 items match sentiment, state "No qualifying recent items in the past ${windowDays} days."`
 
     const res = await openai.responses.create({
       model: "gpt-4o-mini",
