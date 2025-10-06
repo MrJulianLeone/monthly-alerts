@@ -35,28 +35,44 @@ export async function sendAlert(formData: FormData) {
 
     // Send emails to all subscribers
     console.log("[SendAlert] Sending emails...")
+    const subscriberName = subscribers[0]?.first_name || "Subscriber"
+    
     const emailPromises = subscribers.map((subscriber: any) =>
       resend.emails.send({
         from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
         to: subscriber.email,
         subject: subject,
-        html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #2563eb;">${subject}</h1>
-            <div style="white-space: pre-wrap; line-height: 1.6;">
-              ${content}
-            </div>
-            <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;" />
-            <p style="color: #6b7280; font-size: 12px;">
-              <strong>Disclaimer:</strong> This is informational content only and not investment advice. 
-              All investment decisions should be made based on your own research and consultation with qualified financial advisors.
-            </p>
-            <p style="color: #6b7280; font-size: 12px;">
-              You're receiving this because you're subscribed to MonthlyAlerts.com. 
-              <a href="https://monthlyalerts.com/dashboard/manage-subscription">Manage your subscription</a>
-            </p>
-          </div>
-        `,
+        html: `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif; background-color: #ffffff;">
+  <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
+    
+    <div style="margin-bottom: 30px;">
+      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #374151;">
+        ${content}
+      </p>
+    </div>
+
+    <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
+      <p style="margin: 0 0 10px 0; font-size: 11px; line-height: 1.5; color: #6b7280;">
+        <strong>Disclaimer:</strong> This is educational market research and not investment advice. All investment decisions should be made based on your own research and consultation with qualified financial advisors. Past performance does not guarantee future results.
+      </p>
+      <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #6b7280;">
+        You are receiving this email because you subscribed to MonthlyAlerts.com. To manage your subscription or unsubscribe, visit: https://monthlyalerts.com/dashboard/manage-subscription
+      </p>
+    </div>
+
+  </div>
+</body>
+</html>`,
+        headers: {
+          'List-Unsubscribe': '<https://monthlyalerts.com/dashboard/manage-subscription>',
+          'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click',
+        },
       }),
     )
 
