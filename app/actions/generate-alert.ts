@@ -31,13 +31,14 @@ Instructions:
 4. Do not invent or alter facts
 5. Keep impersonal, factual, and concise
 6. Mention current price once
-7. End with: "Educational market research. Not investment advice."
+7. Add one closing statement that supports the ${sentiment} sentiment
+8. End with: "Educational market research. Not investment advice."
 
 Avoid words: buy, sell, should, recommend, bullish, bearish, optimistic, pessimistic, positive, negative.
 Use neutral verbs: announced, reported, disclosed, completed, filed.
 
 Format:
-${company} (${ticker}) trades near $${price}. [News item 1 with date]. [News item 2 with date]. Why this matters: [neutral context]. Educational market research. Not investment advice.`
+${company} (${ticker}) trades near $${price}. [News item 1 with date]. [News item 2 with date]. [One statement supporting ${sentiment} perspective based on the facts]. Educational market research. Not investment advice.`
 
     // Fresh API call — no history or memory
     const response = await client.responses.create({
