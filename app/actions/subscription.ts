@@ -80,6 +80,7 @@ export async function cancelSubscription(formData: FormData) {
 
     return { success: true }
   } catch (error: any) {
+    console.error("[CancelSubscription] Error:", error)
     return { error: error.message }
   }
 }

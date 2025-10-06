@@ -17,11 +17,16 @@ async function isAdmin(userId: string): Promise<boolean> {
   return result.length > 0
 }
 
-export default async function DashboardPage() {
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: { success?: string; canceled?: string }
+}) {
   const session = await getSession()
   if (!session) redirect("/login")
 
   const adminCheck = await isAdmin(session.user_id)
+  const showCanceledMessage = searchParams.canceled === "true"
 
   // Check subscription status
   const subscriptionResult = await sql`
@@ -68,6 +73,15 @@ export default async function DashboardPage() {
           <h1 className="text-3xl font-bold mb-2">Welcome, {session.firstName || session.email}</h1>
           <p className="text-muted-foreground">Manage your subscription and account settings</p>
         </div>
+
+        {/* Success Messages */}
+        {showCanceledMessage && (
+          <Card className="p-4 mb-6 bg-orange-50 border-orange-200 dark:bg-orange-950/20 dark:border-orange-900">
+            <p className="text-sm text-orange-800 dark:text-orange-200">
+              ✓ Your subscription has been canceled and will remain active until the end of your billing period.
+            </p>
+          </Card>
+        )}
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Subscription Status */}

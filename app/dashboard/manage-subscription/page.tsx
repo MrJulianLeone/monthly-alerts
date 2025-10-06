@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TrendingUp, ArrowLeft, AlertTriangle } from "lucide-react"
 import Link from "next/link"
-import { cancelSubscription } from "@/app/actions/subscription"
+import { CancelSubscriptionForm } from "./cancel-subscription-form"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -39,7 +39,7 @@ export default async function ManageSubscriptionPage() {
         </div>
       </header>
 
-      <div className="container mx-auto px-4 py-8">
+      <div className="container max-w-6xl mx-auto px-4 py-8">
         <Link href="/dashboard">
           <Button variant="ghost" size="sm" className="mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -90,12 +90,7 @@ export default async function ManageSubscriptionPage() {
                 </p>
               </div>
             </div>
-            <form action={cancelSubscription}>
-              <input type="hidden" name="subscriptionId" value={subscription.stripe_subscription_id} />
-              <Button type="submit" variant="destructive">
-                Cancel Subscription
-              </Button>
-            </form>
+            <CancelSubscriptionForm subscriptionId={subscription.stripe_subscription_id} />
           </Card>
         </div>
       </div>
