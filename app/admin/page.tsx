@@ -144,7 +144,7 @@ export default async function AdminDashboardPage() {
         </Card>
 
         {/* Send Message Section */}
-        <Card className="p-6 mb-8 bg-secondary/30 border-secondary/50">
+        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold mb-1">Send Message to Subscribers</h2>
@@ -153,7 +153,7 @@ export default async function AdminDashboardPage() {
               </p>
             </div>
             <Link href="/admin/send-message">
-              <Button variant="secondary">
+              <Button>
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Compose Message
               </Button>

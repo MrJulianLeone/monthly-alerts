@@ -19,7 +19,7 @@ export async function sendAlert(formData: FormData) {
     }
 
     console.log("[SendAlert] Getting active subscribers...")
-    // Get all active subscribers (excluding admin users)
+    // Get all active subscribers (excluding admin users from count)
     const subscribers = await sql`
       SELECT u.email, u.first_name, u.last_name
       FROM subscriptions s
@@ -30,18 +30,28 @@ export async function sendAlert(formData: FormData) {
 
     console.log("[SendAlert] Found", subscribers.length, "active subscribers")
 
-    if (subscribers.length === 0) {
-      return { error: "No active subscribers to send to" }
+    // Get admin users to send them a copy
+    const admins = await sql`
+      SELECT u.email, u.first_name, u.last_name
+      FROM admin_users au
+      JOIN users u ON au.user_id = u.id
+    `
+
+    // Combine subscribers and admins for sending
+    const allRecipients = [...subscribers, ...admins]
+
+    if (allRecipients.length === 0) {
+      return { error: "No recipients to send to" }
     }
 
-    // Send emails to all subscribers
-    console.log("[SendAlert] Sending emails...")
+    // Send emails to all recipients
+    console.log("[SendAlert] Sending emails to", allRecipients.length, "recipients (", subscribers.length, "subscribers +", admins.length, "admins)")
     const subscriberName = subscribers[0]?.first_name || "Subscriber"
     
-    const emailPromises = subscribers.map((subscriber: any) =>
+    const emailPromises = allRecipients.map((recipient: any) =>
       resend.emails.send({
         from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
-        to: subscriber.email,
+        to: recipient.email,
         subject: subject,
         html: `<!DOCTYPE html>
 <html>
