@@ -10,9 +10,10 @@ export async function generateAlert(
   ticker: string,
   company: string,
   price: string,
-  sentiment: "positive" | "negative",
-  windowDays: number = 7
+  sentiment: "positive" | "negative"
 ) {
+  const windowDays = 30 // Fixed at 30 days
+  
   try {
     console.log("[GenerateAlert] Starting for:", ticker, company, price, sentiment, "windowDays:", windowDays)
 
@@ -85,7 +86,7 @@ Return BOTH:
     // Check if no qualifying items
     if (generatedContent.includes("No qualifying recent items")) {
       return {
-        error: `No recent news found for ${ticker} in the past ${windowDays} days. Try increasing the time window or selecting a different company.`,
+        error: `Insufficient recent news found for ${ticker}. The AI requires at least 2 specific news items (press releases, earnings, SEC filings) from the past 30 days. Try a different ticker with recent news activity.`,
       }
     }
 
