@@ -69,11 +69,7 @@ export default function PrivacyPage() {
             <section>
               <h2 className="text-xl font-semibold mb-3">4. Data Deletion</h2>
               <p className="text-muted-foreground mb-3">
-                You may request deletion of all your data at any time by emailing{" "}
-                <a href="mailto:admin@monthlyalerts.com" className="text-primary hover:underline">
-                  admin@monthlyalerts.com
-                </a>
-                .
+                You may request deletion of all your data at any time by contacting admin at monthlyalerts dot com.
               </p>
               <p className="text-muted-foreground">
                 Upon request, all personally identifiable information will be permanently deleted from our systems within a
@@ -107,12 +103,8 @@ export default function PrivacyPage() {
 
             <section>
               <h2 className="text-xl font-semibold mb-3">8. Contact</h2>
-              <p className="text-muted-foreground mb-2">For privacy-related questions or deletion requests, contact:</p>
               <p className="text-muted-foreground">
-                <strong>Email:</strong>{" "}
-                <a href="mailto:admin@monthlyalerts.com" className="text-primary hover:underline">
-                  admin@monthlyalerts.com
-                </a>
+                For privacy-related questions or deletion requests, contact admin at monthlyalerts dot com.
               </p>
             </section>
 
