@@ -17,83 +17,77 @@ export async function generateAlert(
   try {
     console.log("[GenerateAlert] Starting for:", ticker, company, price, "sentiment:", sentiment)
 
-    // Select prompt based on sentiment
-    const input = sentiment === "positive" 
-      ? `You are a factual financial summarizer.
+    // First, gather recent news via web search
+    const newsGatherPrompt = `Search for news about ${company} (ticker: ${ticker}) from the last ${windowDays} days.
+Find 3-5 specific items from:
+- SEC filings (8-K, 10-Q, press releases)
+- Earnings announcements
+- Major contracts or partnerships
+- Regulatory actions
+- Leadership changes
+- Financial transactions
 
-Goal: Write a ≤90-word educational market update for ${company} (${ticker}) trading at ${price}.
-Sentiment target: POSITIVE. 
-Do NOT print words such as positive, negative, bullish, bearish, favorable, cautious, optimistic, or pessimistic.
+List each item with: [Date YYYY-MM-DD] Source - Brief headline`
 
-Step 1 – Data selection rules
-- Collect news from the last ${windowDays} days via web search.
-- Keep only items that reflect constructive or growth-oriented developments:
-  • new contracts or partnerships
-  • project completions or capacity additions
-  • financing or credit facilities on favorable terms
-  • regulatory approvals or certifications
-  • earnings improvements, revenue growth, or cost reductions
-  • product launches or geographic expansion
-- Exclude any items involving executive departures, losses, litigation, delays, layoffs, or missed guidance.
-- If no clearly positive items exist, output exactly:
-  "No qualifying recent positive developments in the past ${windowDays} days."
-
-Step 2 – Compose summary
-- One sentence: "${company} (${ticker}) trades near ${price}."
-- Two factual items with source + date in brackets [Source YYYY-MM-DD].
-- One line: "Why this matters:" stating a neutral reason for potential strength (e.g., revenue growth, operational expansion, strategic funding).
-- End with: "Educational market research. Not investment advice."
-
-Style rules
-- Neutral verbs only: reported, filed, announced, disclosed, completed.
-- No predictions, targets, or advice.
-- If both positive and negative items appear, delete the negative ones.`
-      : `You are a factual financial summarizer.
-
-Goal: Write a ≤90-word educational market update for ${company} (${ticker}) trading at ${price}.
-Sentiment target: NEGATIVE. 
-Do NOT print words such as positive, negative, bullish, bearish, favorable, cautious, optimistic, or pessimistic.
-
-Step 1 – Data selection rules
-- Collect news from the last ${windowDays} days via web search.
-- Keep only items that reflect setbacks or risks:
-  • executive departures, financing dilution, losses, litigation, regulatory delays, missed guidance, cost overruns, layoffs, or operational issues.
-- Exclude any items involving expansions, new contracts, partnerships, financings on favorable terms, or approvals.
-- If no clearly negative items exist, output exactly:
-  "No qualifying recent negative developments in the past ${windowDays} days."
-
-Step 2 – Compose summary
-- One sentence: "${company} (${ticker}) trades near ${price}."
-- Two factual items with source + date in brackets [Source YYYY-MM-DD].
-- One line: "Why this matters:" stating neutral reason for concern (e.g., leadership changes, financing strain).
-- End with: "Educational market research. Not investment advice."
-
-Style rules
-- Neutral verbs only: reported, filed, announced, disclosed, completed.
-- No predictions, targets, or advice.
-- If both positive and negative items appear, delete the positive ones.`
-
-    const res = await openai.responses.create({
+    const newsRes = await openai.responses.create({
       model: "gpt-4o-mini",
       tools: [{ type: "web_search" }],
-      input: input,
+      input: newsGatherPrompt,
     })
 
-    const generatedContent = res.output_text
+    const newsItems = newsRes.output_text
+
+    if (!newsItems || newsItems.length < 20) {
+      return {
+        error: `No recent news found for ${ticker}. Try a different company with recent activity.`,
+      }
+    }
+
+    console.log("[GenerateAlert] Found news items, now formatting with sentiment lens...")
+
+    // Now format with sentiment lens
+    const input = `You are a neutral financial writer.
+
+Task: Write a ≤90-word educational update about ${company} (${ticker}) trading at ${price}.
+Sentiment lens: ${sentiment}. Do NOT use those words explicitly.
+
+Facts (use all as given):
+${newsItems}
+
+Instructions:
+- Interpret the same facts through the selected lens.
+  * If Sentiment = positive → emphasize potential benefits, opportunities, improvements, or strategic rationale.
+  * If Sentiment = negative → emphasize challenges, risks, costs, leadership uncertainty, or financial strain.
+- Do not invent or alter facts.
+- Keep impersonal, factual, and concise.
+- Mention current price once.
+- End with: "Educational market research. Not investment advice."
+- Avoid words: buy, sell, should, recommend, bullish, bearish, optimistic, pessimistic.
+- Use neutral verbs: announced, reported, disclosed, completed, filed.`
+
+    const res = await openai.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content: "You are a neutral financial writer who creates factual, educational market updates.",
+        },
+        {
+          role: "user",
+          content: input,
+        },
+      ],
+      temperature: 0.5,
+      max_tokens: 300,
+    })
+
+    const generatedContent = res.choices[0]?.message?.content
 
     if (!generatedContent) {
       throw new Error("No content generated")
     }
 
-    // Check if no qualifying items found
-    if (generatedContent.includes("No qualifying recent items")) {
-      return {
-        error: `No recent news found for ${ticker} in the past ${windowDays} days. The AI searches for SEC filings, earnings, and official announcements. Try a company with recent news activity.`,
-      }
-    }
-
-    console.log("[GenerateAlert] Generated successfully")
-    console.log("[GenerateAlert] Sources:", res.output[0]?.content?.[0]?.annotations ?? res.citations ?? [])
+    console.log("[GenerateAlert] Generated successfully with sentiment lens:", sentiment)
     
     // Generate subject line
     const subject = `${company} (${ticker}) Market Update - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
