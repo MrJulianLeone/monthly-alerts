@@ -39,14 +39,13 @@ export default async function HomePage() {
         <div className="max-w-3xl mx-auto text-center">
           <div className="inline-flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-sm font-medium mb-6">
             <Sparkles className="h-4 w-4" />
-            AI-Powered Stock Discovery
+            AI-Powered Market Research
           </div>
           <h1 className="text-4xl md:text-6xl font-bold mb-6 text-balance">
-            Discover Fast-Growing Companies Before Everyone Else
+            Discover Interesting Companies Through AI-Powered Research
           </h1>
           <p className="text-lg md:text-xl text-muted-foreground mb-8 text-pretty">
-            Get monthly AI-curated alerts about emerging stock opportunities. Our advanced algorithms analyze thousands
-            of companies to find the next big winners.
+            Monthly alerts highlighting companies worth knowing about. Our proprietary AI models review thousands of signals daily to uncover interesting businesses across the market.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/signup">
@@ -78,10 +77,9 @@ export default async function HomePage() {
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <Sparkles className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">AI-Powered Analysis</h3>
+              <h3 className="font-semibold text-lg mb-2">Proprietary AI Models</h3>
               <p className="text-muted-foreground text-sm">
-                Our proprietary AI scans thousands of companies, analyzing growth metrics, market trends, and financial
-                indicators.
+                Our AI reviews thousands of market signals daily to identify companies with compelling characteristics worth researching further.
               </p>
             </Card>
             <Card className="p-6">
@@ -90,16 +88,16 @@ export default async function HomePage() {
               </div>
               <h3 className="font-semibold text-lg mb-2">Monthly Insights</h3>
               <p className="text-muted-foreground text-sm">
-                Receive curated alerts directly to your inbox. No spam, just high-quality opportunities once a month.
+                Receive research alerts directly to your inbox highlighting interesting companies our AI has identified. No spam, just quality insights.
               </p>
             </Card>
             <Card className="p-6">
               <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                 <Clock className="h-6 w-6 text-primary" />
               </div>
-              <h3 className="font-semibold text-lg mb-2">Early Detection</h3>
+              <h3 className="font-semibold text-lg mb-2">Daily Signal Processing</h3>
               <p className="text-muted-foreground text-sm">
-                Identify fast-growing companies before they hit mainstream radar. Stay ahead of the market.
+                Our AI continuously monitors market data, processing thousands of signals every day to surface companies worth your attention.
               </p>
             </Card>
           </div>
@@ -128,7 +126,7 @@ export default async function HomePage() {
             </div>
             <h3 className="font-semibold text-lg mb-2">Get First Alert Free</h3>
             <p className="text-muted-foreground text-sm">
-              Receive your first AI-curated stock alert with full company analysis at no cost.
+              Receive your first research alert highlighting an interesting company our AI has identified at no cost.
             </p>
           </div>
           <div className="text-center">
@@ -137,7 +135,7 @@ export default async function HomePage() {
             </div>
             <h3 className="font-semibold text-lg mb-2">Subscribe for More</h3>
             <p className="text-muted-foreground text-sm">
-              Continue receiving monthly alerts by subscribing. Cancel anytime, no questions asked.
+              Continue receiving monthly research alerts about interesting companies. Cancel anytime, no questions asked.
             </p>
           </div>
         </div>
@@ -166,11 +164,11 @@ export default async function HomePage() {
               </li>
               <li className="flex items-start gap-3">
                 <BarChart3 className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                <span className="text-sm">Monthly AI-curated stock alerts</span>
+                <span className="text-sm">Monthly research alerts on interesting companies</span>
               </li>
               <li className="flex items-start gap-3">
                 <TrendingUp className="h-5 w-5 text-accent shrink-0 mt-0.5" />
-                <span className="text-sm">Detailed company analysis</span>
+                <span className="text-sm">AI-powered signal processing across thousands of data points</span>
               </li>
               <li className="flex items-start gap-3">
                 <Mail className="h-5 w-5 text-accent shrink-0 mt-0.5" />
