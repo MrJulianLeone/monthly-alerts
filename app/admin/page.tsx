@@ -5,7 +5,7 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, DollarSign, Mail, LogOut, Send } from "lucide-react"
+import { TrendingUp, Users, DollarSign, Mail, LogOut, Send, MessageSquare } from "lucide-react"
 import Link from "next/link"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -126,18 +126,36 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Send Alert Section */}
-        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
+        <Card className="p-6 mb-6 bg-primary/5 border-primary/20">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold mb-1">Send Monthly Alert</h2>
               <p className="text-sm text-muted-foreground">
-                Compose and send your monthly stock alert to all {activeSubscriptions} active subscribers
+                Generate an AI-powered stock alert to send to all {activeSubscriptions} active subscribers
               </p>
             </div>
             <Link href="/admin/send-alert">
               <Button>
                 <Send className="h-4 w-4 mr-2" />
                 Compose Alert
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        {/* Send Message Section */}
+        <Card className="p-6 mb-8 bg-secondary/30 border-secondary/50">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold mb-1">Send Message to Subscribers</h2>
+              <p className="text-sm text-muted-foreground">
+                Compose and send a custom message to all {activeSubscriptions} active subscribers
+              </p>
+            </div>
+            <Link href="/admin/send-message">
+              <Button variant="secondary">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Compose Message
               </Button>
             </Link>
           </div>

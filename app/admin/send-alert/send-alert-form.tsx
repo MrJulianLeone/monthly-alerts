@@ -9,11 +9,10 @@ import { Label } from "@/components/ui/label"
 import { Card } from "@/components/ui/card"
 import { sendAlert } from "@/app/actions/alerts"
 import { generateAlert } from "@/app/actions/generate-alert"
-import { Sparkles, Send, Edit } from "lucide-react"
+import { Sparkles, Send } from "lucide-react"
 import Link from "next/link"
 
 export default function SendAlertForm({ userId, recipientCount }: { userId: string; recipientCount: number }) {
-  const [mode, setMode] = useState<"ai" | "manual">("manual")
   const [step, setStep] = useState<"input" | "review">("input")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -70,11 +69,6 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
     }
   }
 
-  async function handleManualSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setStep("review")
-  }
-
   if (step === "review") {
     return (
       <div className="space-y-6">
@@ -90,20 +84,18 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
           </div>
         )}
 
-        {mode === "ai" && (
-          <Card className="p-6 bg-primary/5 border-primary/20">
-            <div className="flex items-center gap-2 mb-4">
-              <Sparkles className="h-5 w-5 text-primary" />
-              <h3 className="font-semibold">AI-Generated Alert</h3>
-            </div>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p><strong>Ticker:</strong> {ticker}</p>
-              <p><strong>Company:</strong> {company}</p>
-              <p><strong>Price:</strong> {price}</p>
-              <p><strong>Sentiment:</strong> {sentiment}</p>
-            </div>
-          </Card>
-        )}
+        <Card className="p-6 bg-primary/5 border-primary/20">
+          <div className="flex items-center gap-2 mb-4">
+            <Sparkles className="h-5 w-5 text-primary" />
+            <h3 className="font-semibold">AI-Generated Alert</h3>
+          </div>
+          <div className="space-y-2 text-sm text-muted-foreground">
+            <p><strong>Ticker:</strong> {ticker}</p>
+            <p><strong>Company:</strong> {company}</p>
+            <p><strong>Price:</strong> {price}</p>
+            <p><strong>Sentiment:</strong> {sentiment}</p>
+          </div>
+        </Card>
 
         <div className="space-y-4">
           <div className="space-y-2">
@@ -158,98 +150,12 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
   }
 
   return (
-    <div className="space-y-6">
-      {/* Mode Toggle */}
-      <div className="flex gap-2 p-1 bg-muted rounded-lg">
-        <button
-          type="button"
-          onClick={() => setMode("manual")}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            mode === "manual"
-              ? "bg-background shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Edit className="h-4 w-4" />
-          Compose Message
-        </button>
-        <button
-          type="button"
-          onClick={() => setMode("ai")}
-          className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md text-sm font-medium transition-colors ${
-            mode === "ai"
-              ? "bg-background shadow-sm"
-              : "text-muted-foreground hover:text-foreground"
-          }`}
-        >
-          <Sparkles className="h-4 w-4" />
-          AI Generate
-        </button>
-      </div>
-
-      {mode === "manual" ? (
-        <form onSubmit={handleManualSubmit} className="space-y-6">
-          {error && (
-            <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
-
-          <div className="space-y-2">
-            <Label htmlFor="manualSubject">Subject</Label>
-            <Input
-              id="manualSubject"
-              value={subject}
-              onChange={(e) => setSubject(e.target.value)}
-              placeholder="e.g., Monthly Stock Alert: AAPL"
-              required
-              disabled={loading}
-            />
-            <p className="text-xs text-muted-foreground">
-              The subject line for your email
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="manualContent">Message</Label>
-            <Textarea
-              id="manualContent"
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              placeholder="Enter your message to subscribers..."
-              required
-              disabled={loading}
-              rows={12}
-            />
-            <p className="text-xs text-muted-foreground">
-              Write your message. Disclaimer and unsubscribe link will be added automatically.
-            </p>
-          </div>
-
-          <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
-            <p className="text-sm text-amber-600">
-              <strong>Note:</strong> This message will be sent to {recipientCount} active subscriber{recipientCount !== 1 ? 's' : ''}.
-            </p>
-          </div>
-
-          <div className="flex gap-3">
-            <Button type="submit" size="lg" disabled={loading || !subject || !content}>
-              Continue to Review
-            </Button>
-            <Link href="/admin">
-              <Button type="button" variant="outline" size="lg" disabled={loading}>
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </form>
-      ) : (
-        <form onSubmit={handleGenerate} className="space-y-6">
-          {error && (
-            <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+    <form onSubmit={handleGenerate} className="space-y-6">
+      {error && (
+        <div className="bg-destructive/10 text-destructive px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 gap-4">
         <div className="space-y-2">
@@ -322,19 +228,17 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
         </div>
       </div>
 
-          <div className="flex gap-3">
-            <Button type="submit" size="lg" disabled={loading}>
-              <Sparkles className="h-4 w-4 mr-2" />
-              {loading ? "Generating..." : "Generate Alert with AI"}
-            </Button>
-            <Link href="/admin">
-              <Button type="button" variant="outline" size="lg" disabled={loading}>
-                Cancel
-              </Button>
-            </Link>
-          </div>
-        </form>
-      )}
-    </div>
+      <div className="flex gap-3">
+        <Button type="submit" size="lg" disabled={loading}>
+          <Sparkles className="h-4 w-4 mr-2" />
+          {loading ? "Generating..." : "Generate Alert with AI"}
+        </Button>
+        <Link href="/admin">
+          <Button type="button" variant="outline" size="lg" disabled={loading}>
+            Cancel
+          </Button>
+        </Link>
+      </div>
+    </form>
   )
 }

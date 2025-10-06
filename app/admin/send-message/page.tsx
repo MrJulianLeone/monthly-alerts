@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation"
 import { getSession } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
-import SendAlertForm from "./send-alert-form"
+import SendMessageForm from "./send-message-form"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { TrendingUp, ArrowLeft } from "lucide-react"
@@ -16,7 +16,7 @@ async function isAdmin(userId: string): Promise<boolean> {
   return result.length > 0
 }
 
-export default async function SendAlertPage() {
+export default async function SendMessagePage() {
   const session = await getSession()
   if (!session) redirect("/login")
 
@@ -52,17 +52,18 @@ export default async function SendAlertPage() {
 
         <div className="max-w-2xl mx-auto">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold mb-2">Send Monthly Alert</h1>
+            <h1 className="text-3xl font-bold mb-2">Compose Message</h1>
             <p className="text-muted-foreground">
-              Generate an AI-powered alert to send to {activeSubscriptions} active subscriber{activeSubscriptions !== 1 ? 's' : ''}
+              Send a message to {activeSubscriptions} active subscriber{activeSubscriptions !== 1 ? 's' : ''}
             </p>
           </div>
 
           <Card className="p-6">
-            <SendAlertForm userId={session.user_id} recipientCount={activeSubscriptions} />
+            <SendMessageForm recipientCount={activeSubscriptions} />
           </Card>
         </div>
       </div>
     </div>
   )
 }
+
