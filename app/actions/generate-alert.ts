@@ -58,9 +58,11 @@ Do NOT include any disclaimer text - that will be added separately.`
 
     console.log("[GenerateAlert] Generated successfully")
     console.log("[GenerateAlert] Citations:", response.output[0]?.content?.[0]?.annotations ?? [])
+    console.log("[GenerateAlert] Sentiment used:", sentiment)
     
-    // Generate subject line fresh
-    const subject = `${company} (${ticker}) Market Update - ${new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}`
+    // Generate subject line based on sentiment
+    const sentimentLabel = sentiment === "positive" ? "Positive Alert" : "Negative Alert"
+    const subject = `${company} (${ticker}) - ${sentimentLabel}`
 
     return {
       success: true,
