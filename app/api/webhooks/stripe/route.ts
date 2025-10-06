@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
             // Create subscription record with basic info
             // Will be updated with full details by customer.subscription.updated event
             console.log("[Webhook] Creating subscription record...")
-            await sql`
+            const insertResult = await sql`
               INSERT INTO subscriptions (
                 user_id, 
                 stripe_customer_id, 
@@ -80,9 +80,35 @@ export async function POST(req: NextRequest) {
                 status = 'active',
                 stripe_customer_id = ${customerId},
                 updated_at = NOW()
+              RETURNING (xmax = 0) AS inserted
             `
 
             console.log("[Webhook] Subscription record created for user:", userId)
+
+            // Send welcome email only on new subscriptions
+            const isNewSubscription = insertResult[0]?.inserted
+            if (isNewSubscription) {
+              console.log("[Webhook] Sending welcome email...")
+              try {
+                // Get user details
+                const userDetails = await sql`
+                  SELECT first_name, last_name, email FROM users WHERE id = ${userId}::uuid
+                `
+                
+                if (userDetails.length > 0) {
+                  const user = userDetails[0]
+                  
+                  // Import and send welcome email
+                  const { sendWelcomeEmail } = await import("@/app/actions/send-welcome-email")
+                  await sendWelcomeEmail(user.email, user.first_name, user.last_name)
+                  
+                  console.log("[Webhook] Welcome email sent to:", user.email)
+                }
+              } catch (emailError) {
+                console.error("[Webhook] Failed to send welcome email:", emailError)
+                // Don't fail the webhook if email fails
+              }
+            }
           }
         } catch (err: any) {
           console.error("[Webhook] Error processing checkout.session.completed:", err.message)
