@@ -85,10 +85,10 @@ export async function POST(req: NextRequest) {
 
             console.log("[Webhook] Subscription record created for user:", userId)
 
-            // Send welcome email only on new subscriptions
+            // Send subscription confirmation email on new subscriptions
             const isNewSubscription = insertResult[0]?.inserted
             if (isNewSubscription) {
-              console.log("[Webhook] Sending welcome email...")
+              console.log("[Webhook] Sending subscription confirmation email...")
               try {
                 // Get user details
                 const userDetails = await sql`
@@ -98,14 +98,14 @@ export async function POST(req: NextRequest) {
                 if (userDetails.length > 0) {
                   const user = userDetails[0]
                   
-                  // Import and send welcome email
-                  const { sendWelcomeEmail } = await import("@/app/actions/send-welcome-email")
-                  await sendWelcomeEmail(user.email, user.first_name, user.last_name)
+                  // Import and send subscription confirmation email
+                  const { sendSubscriptionEmail } = await import("@/app/actions/send-subscription-email")
+                  await sendSubscriptionEmail(user.email, user.first_name, user.last_name)
                   
-                  console.log("[Webhook] Welcome email sent to:", user.email)
+                  console.log("[Webhook] Subscription confirmation email sent to:", user.email)
                 }
               } catch (emailError) {
-                console.error("[Webhook] Failed to send welcome email:", emailError)
+                console.error("[Webhook] Failed to send subscription email:", emailError)
                 // Don't fail the webhook if email fails
               }
             }
