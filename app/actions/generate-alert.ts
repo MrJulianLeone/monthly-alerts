@@ -41,10 +41,11 @@ export async function generateAlert(
     const prompt = `You are a factual markets writer.
 
 Goal: one paragraph ≤90 words about ${company} (${ticker}) at $${price}.
-Use ONLY news from last ${windowDays} days. Cite 2–3 items inline as [Source YYYY-MM-DD] with links.
+Use ONLY news from last ${windowDays} days. Reference 2–3 specific news items with dates.
 Do NOT include any market-data dump, headings, bullets, or sections.
+Do not include citations, URLs, or markdown links of any kind in the output.
 
-Forbidden unless attached to a cited event sentence:
+Forbidden unless attached to a news event:
 open, intraday, high, low, 52-week, range, previous close, change, market cap, float, beta, volume.
 
 Rules:
