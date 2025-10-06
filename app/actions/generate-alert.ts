@@ -13,31 +13,36 @@ export async function generateAlert(
   sentiment: "positive" | "negative"
 ) {
   const windowDays = 30 // Hard-coded 30 day window
-  const angle = sentiment === "positive" ? "good" : "bad"
   
   try {
-    console.log("[GenerateAlert] Starting for:", ticker, company, price, "angle:", angle)
+    console.log("[GenerateAlert] Starting for:", ticker, company, price, "sentiment:", sentiment)
 
-    const input = `Task: Write a ≤90-word EDUCATIONAL news update for ${company} (${ticker}) at ${price}.
-Angle: ${angle}. Do NOT print these words or any of: positive, negative, bullish, bearish, favorable, cautious, optimistic.
+    const input = `Task: Write a ≤90-word educational update about ${company} (${ticker}) at ${price}.
+Sentiment: ${sentiment}. DO NOT print this word or synonyms.
 
-Hard rules:
-- Use ONLY items published in the last ${windowDays} days. If <2 items, output exactly:
-  "No qualifying recent items in the past ${windowDays} days."
-- No market data preamble. One paragraph only.
-- Mention current price once.
-- Include 2–3 dated facts with inline citations: [Source YYYY-MM-DD] with links.
-- Neutral verbs only: reported, filed, announced, completed, disclosed.
-- No advice, targets, predictions, or directives.
+Selection rules:
+1) Gather news last ${windowDays} days via web search. Keep max 8 items.
+2) Score each item:
+   +1 = constructive (contracts won, guidance up, financing on good terms, capacity online, regulatory approval, major partner)
+   -1 = adverse (delays, guidance down, layoffs, litigation/regulatory action, dilutive financing, missed targets)
+   0  = neutral (procedural filings, minor mentions).
+3) Choose the top 2–3 items that maximize the sum toward the target sentiment:
+   - If Sentiment=positive: prefer items with +1; break ties by recency.
+   - If Sentiment=negative: prefer items with -1; break ties by recency.
+   - If <2 items match, fill with 0-score items but keep tone neutral.
+4) Do not include price/volume dumps unless tied to a cited event.
 
-Content policy:
-- Prefer SEC/IR, earnings, contracts, capacity changes, financings, regulatory actions.
-- Exclude items older than the window, rumors, or undated blogs.
-
-Structure (exactly):
-${company} (${ticker}) trades near ${price}. {fact 1 with citation} {fact 2 with citation}{ optional fact 3 with citation}. 
+Output format (exactly one paragraph):
+${company} (${ticker}) trades near ${price}. {fact1 with inline citation [Source YYYY-MM-DD]} {fact2 with citation}{ optional fact3 with citation}. 
 Why this matters: {one neutral consequence}. 
-Educational market research. Not investment advice.`
+Educational market research. Not investment advice.
+
+Style constraints:
+- No words: positive, negative, bullish, bearish, favorable, cautious, optimistic, pessimistic.
+- Neutral verbs only: reported, filed, announced, completed, disclosed.
+- Mention price once. No predictions, targets, advice, or directives.
+- If <2 qualifying recent items exist, output exactly:
+  "No qualifying recent items in the past ${windowDays} days."`
 
     const res = await openai.responses.create({
       model: "gpt-4o-mini",
