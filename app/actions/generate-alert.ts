@@ -92,8 +92,7 @@ Write in under 180 words. No recommendations.`
           role: "user",
           content: reportPrompt
         }
-      ],
-      temperature: 0.4
+      ]
     })
 
     const out = reportResponse.choices?.[0]?.message?.content?.trim()
