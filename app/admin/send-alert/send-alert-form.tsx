@@ -218,8 +218,11 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
             <p className="text-sm font-medium text-blue-900 dark:text-blue-100 mb-1">
               AI-Powered Alert Generation
             </p>
+            <p className="text-xs text-blue-800 dark:text-blue-200 mb-2">
+              AI creates a 90-word update with specific news citations from the past 30 days
+            </p>
             <p className="text-xs text-blue-800 dark:text-blue-200">
-              Our AI will create a 90-word educational market update based on your inputs
+              <strong>Note:</strong> Best results with major companies (e.g., NVDA, AAPL, TSLA) that have recent news activity
             </p>
           </div>
         </div>
