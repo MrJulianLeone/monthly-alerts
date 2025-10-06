@@ -55,7 +55,7 @@ export default function AlertsTable({ alerts, userSignupDate, isActive }: Alerts
       <Card className="p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold mb-1">Stock Alerts</h2>
+            <h2 className="text-xl font-semibold mb-1">Monthly Alerts</h2>
             <p className="text-sm text-muted-foreground">
               View all MonthlyAlerts sent to subscribers
             </p>

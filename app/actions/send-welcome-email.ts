@@ -11,7 +11,7 @@ export async function sendWelcomeEmail(email: string, firstName: string, lastNam
     await resend.emails.send({
       from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
       to: email,
-      subject: "Welcome to MonthlyAlerts.com - Your Subscription is Active!",
+      subject: "Welcome to MonthlyAlerts.com!",
       html: `<!DOCTYPE html>
 <html>
 <head>
@@ -23,32 +23,31 @@ export async function sendWelcomeEmail(email: string, firstName: string, lastNam
     
     <div style="margin-bottom: 30px;">
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        Hello ${firstName},
+        Hi there,
       </p>
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        Thank you for subscribing to MonthlyAlerts.com! Your subscription is now active.
+        Thanks for joining MonthlyAlerts.com! You're now part of our community of curious investors who love discovering interesting companies.
       </p>
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        You'll receive monthly AI-curated market research highlighting fast-growing companies and emerging opportunities. Each alert is carefully crafted to provide educational insights and factual analysis.
+        Our newsletter comes at least once a month, sometimes more often when opportunities arise. Each report blends fundamental and technical analysis to give you a clear, well-rounded view of the stocks we review.
       </p>
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        <strong>Important:</strong> Please check your spam or junk folder and mark this email as "Not Spam" to ensure you receive future alerts. Consider adding no-reply@alerts.monthlyalerts.com to your contacts.
+        Please note: our content is for educational purposes only and is not investment advice.
       </p>
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        Your next alert will arrive within the month.
+        Glad to have you with us. Stay tuned for your first alert!
       </p>
       <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        Best regards,<br>
-        The MonthlyAlerts.com Team
+        — The MonthlyAlerts Team
       </p>
     </div>
 
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
       <p style="margin: 0 0 10px 0; font-size: 11px; line-height: 1.5; color: #6b7280;">
-        <strong>Disclaimer:</strong> This is educational market research and not investment advice. All investment decisions should be made based on your own research and consultation with qualified financial advisors.
+        <strong>Disclaimer:</strong> This is educational market research and not investment advice. All investment decisions should be made based on your own research and consultation with qualified financial advisors. Past performance does not guarantee future results.
       </p>
       <p style="margin: 0; font-size: 11px; line-height: 1.5; color: #6b7280;">
-        Manage your subscription: https://monthlyalerts.com/dashboard/manage-subscription
+        You are receiving this email because you registered at MonthlyAlerts.com. To manage your subscription or unsubscribe, visit: https://monthlyalerts.com/dashboard/manage-subscription
       </p>
     </div>
 
