@@ -56,6 +56,10 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
     formData.append("subject", subject)
     formData.append("content", content)
     formData.append("recipientCount", String(recipientCount))
+    formData.append("ticker", ticker)
+    formData.append("companyName", company)
+    formData.append("price", price)
+    formData.append("sentiment", sentiment)
 
     const result = await sendAlert(formData)
 

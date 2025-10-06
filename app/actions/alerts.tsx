@@ -13,6 +13,10 @@ export async function sendAlert(formData: FormData) {
     const subject = formData.get("subject") as string
     const content = formData.get("content") as string
     const recipientCount = Number(formData.get("recipientCount"))
+    const ticker = formData.get("ticker") as string
+    const companyName = formData.get("companyName") as string
+    const price = formData.get("price") as string
+    const sentiment = formData.get("sentiment") as string
 
     if (!subject || !content) {
       return { error: "Subject and content are required" }
@@ -92,8 +96,8 @@ export async function sendAlert(formData: FormData) {
 
     // Save alert to database
     await sql`
-      INSERT INTO alerts (subject, content, recipient_count, created_by)
-      VALUES (${subject}, ${content}, ${subscribers.length}, ${userId}::uuid)
+      INSERT INTO alerts (subject, content, recipient_count, created_by, ticker, company_name, price, sentiment)
+      VALUES (${subject}, ${content}, ${subscribers.length}, ${userId}::uuid, ${ticker}, ${companyName}, ${price}, ${sentiment})
     `
 
     console.log("[SendAlert] Alert saved to database")

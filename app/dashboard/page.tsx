@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, CreditCard, LogOut, Settings, CheckCircle2, XCircle } from "lucide-react"
 import Link from "next/link"
+import AlertsTable from "./alerts-table"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -39,6 +40,19 @@ export default async function DashboardPage({
 
   const subscription = subscriptionResult[0]
   const isActive = subscription?.status === "active"
+
+  // Get user signup date
+  const userResult = await sql`
+    SELECT created_at FROM users WHERE id = ${session.user_id}::uuid
+  `
+  const userSignupDate = userResult[0]?.created_at || new Date().toISOString()
+
+  // Get all alerts (chronologically)
+  const alerts = await sql`
+    SELECT id, ticker, company_name, price, sentiment, sent_at, content, subject
+    FROM alerts
+    ORDER BY sent_at DESC
+  `
 
   return (
     <div className="min-h-screen bg-background">
@@ -160,6 +174,15 @@ export default async function DashboardPage({
               </Link>
             </div>
           </Card>
+        </div>
+
+        {/* Alerts Table */}
+        <div className="mt-6">
+          <AlertsTable 
+            alerts={alerts as any[]} 
+            userSignupDate={userSignupDate}
+            isActive={isActive}
+          />
         </div>
       </div>
     </div>
