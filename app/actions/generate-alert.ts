@@ -32,82 +32,76 @@ export async function generateAlert(
   price: string,
   sentiment: "positive" | "negative"
 ) {
-  const windowDays = 30
-  
   try {
     console.log("[GenerateAlert] Starting with sentiment:", sentiment, "for:", ticker)
 
-    // Build the hardened prompt fresh each call - IDENTICAL for both sentiments
-    const prompt = `You are a factual markets writer.
+    // Get current month and year
+    const now = new Date()
+    const monthYear = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
-Goal: one paragraph ≤100 words about ${company} (${ticker}) at $${price}.
-Use ONLY news from last ${windowDays} days. Reference 2–3 specific news items with dates.
-Do NOT include any market-data dump, headings, bullets, or sections.
-Do not include citations, URLs, or markdown links of any kind in the output.
+    // Build the user prompt with variables
+    const userPrompt = `Generate a newsletter-style company alert for ${company} (${ticker}), currently trading near ${price}. Search the web for up-to-date company and market data before writing.
 
-Forbidden unless attached to a news event:
-open, intraday, high, low, 52-week, range, previous close, change, market cap, float, beta, volume.
+Format:
 
-Rules:
-- Start with: "${company} (${ticker}) trades near $${price}."
-- Follow immediately with: One short sentence (5-10 words) describing what the company does
-- Then include 2-3 recent news items with dates
-- Neutral verbs: announced, reported, filed, completed, disclosed
-- No advice, predictions, targets, or sentiment words (positive/negative/bullish/bearish)
-- If <2 qualifying items: output exactly "No qualifying recent items in the past ${windowDays} days."
-- If your first token would be a heading or list marker, STOP and regenerate internally
+**Monthly Alerts Insight – ${monthYear}**
+### ${company} (${ticker}): [Short Headline Reflecting Sentiment]
+**Price:** ${price} | **Sector:** [detected industry]
 
-Sentiment lens: ${sentiment}
-- If positive: emphasize benefits, opportunities, growth momentum
-- If negative: emphasize challenges, risks, uncertainty
+**Summary:** One paragraph summarizing business, key financial results, and recent performance in the tone of ${sentiment}.
+**Recent Developments:** 2–3 bullet points with the latest corporate or market updates.
+**Why It Matters:** One concise line connecting the developments to investor or market implications.
 
-Output format: a single paragraph, no title, no list, no extra lines.
-Do NOT add disclaimer - that will be added separately.`
+Write in under 180 words. No recommendations.`
 
     // Retry logic - up to 2 attempts
     for (let attempt = 0; attempt < 2; attempt++) {
       console.log(`[GenerateAlert] Attempt ${attempt + 1}/2`)
       
-      const response = await client.responses.create({
-        model: "gpt-4o-mini",
-        tools: [{ 
-          type: "web_search",
-        }],
-        input: prompt,
-        temperature: 0.2, // Keep low to reduce drift
+      const response = await client.chat.completions.create({
+        model: "gpt-5",
+        messages: [
+          {
+            role: "system",
+            content: "You are an equity research writer for a stock alert newsletter. Your job is to produce short, factual company reports using verified web data. Each report should start with a one-sentence description of the company's business, then summarize recent news and performance. The tone should match the sentiment variable (Positive or Negative) but remain professional and data-driven. No investment advice, price targets, or speculation."
+          },
+          {
+            role: "user",
+            content: userPrompt
+          }
+        ],
+        temperature: 0.4,
+        tools: [
+          {
+            type: "web_search",
+            name: "default"
+          }
+        ]
       })
 
-      const out = response.output_text?.trim()
+      const out = response.choices?.[0]?.message?.content?.trim()
 
       if (!out || out.length < 20) {
         console.log("[GenerateAlert] Empty or too short output, retrying...")
         continue
       }
 
-      // Validate output
-      const validationError = violates(out)
+      // Success!
+      console.log("[GenerateAlert] Generated successfully with GPT-5")
       
-      if (!validationError) {
-        // Success!
-        console.log("[GenerateAlert] Generated and validated successfully")
-        console.log("[GenerateAlert] Citations:", response.output[0]?.content?.[0]?.annotations ?? [])
-        
-        const sentimentLabel = sentiment === "positive" ? "Positive Alert" : "Negative Alert"
-        const subject = `${company} (${ticker}) - ${sentimentLabel}`
+      const sentimentLabel = sentiment === "positive" ? "Positive Alert" : "Negative Alert"
+      const subject = `${company} (${ticker}) - ${sentimentLabel}`
 
-        return {
-          success: true,
-          subject,
-          content: out,
-        }
+      return {
+        success: true,
+        subject,
+        content: out,
       }
-
-      console.log(`[GenerateAlert] Validation failed: ${validationError}, retrying...`)
     }
 
-    // Both attempts failed validation
+    // Both attempts failed
     return {
-      error: `Unable to generate valid alert for ${ticker} after 2 attempts. Try a different company.`,
+      error: `Unable to generate valid alert for ${ticker} after 2 attempts. Try again.`,
     }
   } catch (error: any) {
     console.error("[GenerateAlert] Error:", error)
