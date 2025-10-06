@@ -24,7 +24,6 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
   const [company, setCompany] = useState("")
   const [price, setPrice] = useState("")
   const [sentiment, setSentiment] = useState<"positive" | "negative">("positive")
-  const [newsItems, setNewsItems] = useState("")
 
   // Generated content
   const [subject, setSubject] = useState("")
@@ -35,7 +34,7 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
     setLoading(true)
     setError(null)
 
-    const result = await generateAlert(ticker, company, price, sentiment, newsItems)
+    const result = await generateAlert(ticker, company, price, sentiment)
 
     if (result.error) {
       setError(result.error)
@@ -212,22 +211,6 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
         </div>
       </div>
 
-      <div className="space-y-2">
-        <Label htmlFor="newsItems">Recent News Items (Optional)</Label>
-        <Textarea
-          id="newsItems"
-          value={newsItems}
-          onChange={(e) => setNewsItems(e.target.value)}
-          placeholder="Enter recent news items, earnings, or company developments (one per line)&#10;Example:&#10;Q4 earnings beat expectations by 15%&#10;Announced new AI chip partnership&#10;Revenue up 25% year-over-year"
-          rows={4}
-          disabled={loading}
-          className="w-full"
-        />
-        <p className="text-xs text-muted-foreground">
-          Optional: Provide recent news for AI to include. Leave blank for AI to use general knowledge.
-        </p>
-      </div>
-
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
         <div className="flex items-start gap-3">
           <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
@@ -236,10 +219,10 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
               AI-Powered Alert Generation
             </p>
             <p className="text-xs text-blue-800 dark:text-blue-200 mb-2">
-              AI creates a 90-word update with specific news citations from the past 30 days
+              AI searches the web for recent news and creates a 90-word factual update with citations
             </p>
             <p className="text-xs text-blue-800 dark:text-blue-200">
-              <strong>Note:</strong> Best results with major companies (e.g., NVDA, AAPL, TSLA) that have recent news activity
+              <strong>Web Search Enabled:</strong> AI will find and cite actual recent news from the past 30 days
             </p>
           </div>
         </div>
