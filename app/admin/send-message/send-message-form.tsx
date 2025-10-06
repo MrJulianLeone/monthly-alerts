@@ -10,7 +10,7 @@ import { sendMessage } from "@/app/actions/messages"
 import { Send } from "lucide-react"
 import Link from "next/link"
 
-export default function SendMessageForm({ recipientCount }: { recipientCount: number }) {
+export default function SendMessageForm({ userId, recipientCount }: { userId: string; recipientCount: number }) {
   const [step, setStep] = useState<"compose" | "review">("compose")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -30,6 +30,7 @@ export default function SendMessageForm({ recipientCount }: { recipientCount: nu
     setError(null)
 
     const formData = new FormData()
+    formData.append("userId", userId)
     formData.append("subject", subject)
     formData.append("content", content)
 

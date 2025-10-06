@@ -59,7 +59,7 @@ export default async function SendMessagePage() {
           </div>
 
           <Card className="p-6">
-            <SendMessageForm recipientCount={activeSubscriptions} />
+            <SendMessageForm userId={session.user_id} recipientCount={activeSubscriptions} />
           </Card>
         </div>
       </div>

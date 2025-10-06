@@ -9,6 +9,7 @@ export async function sendMessage(formData: FormData) {
   try {
     const resend = new Resend(process.env.RESEND_API_KEY)
 
+    const userId = formData.get("userId") as string
     const subject = formData.get("subject") as string
     const content = formData.get("content") as string
 
@@ -87,7 +88,13 @@ export async function sendMessage(formData: FormData) {
     await Promise.all(emailPromises)
     console.log("[SendMessage] Emails sent successfully")
 
-    // Note: Messages are NOT logged to the alerts table
+    // Save message to database
+    await sql`
+      INSERT INTO messages (subject, content, recipient_count, created_by)
+      VALUES (${subject}, ${content}, ${subscribers.length}, ${userId}::uuid)
+    `
+
+    console.log("[SendMessage] Message saved to database")
     return { success: true, sentTo: subscribers.length }
   } catch (error: any) {
     console.error("[SendMessage] Error:", error)

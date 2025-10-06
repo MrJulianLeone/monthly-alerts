@@ -5,7 +5,7 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, DollarSign, Mail, LogOut, Send, MessageSquare } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare } from "lucide-react"
 import Link from "next/link"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -38,12 +38,15 @@ export default async function AdminDashboardPage() {
   `
   const activeSubscriptions = Number(activeSubscriptionsResult[0].count)
 
-  const monthlyRevenue = (activeSubscriptions * 29.99).toFixed(2)
-
   const totalAlertsResult = await sql`
     SELECT COUNT(*) as count FROM alerts
   `
   const totalAlerts = Number(totalAlertsResult[0].count)
+
+  const totalMessagesResult = await sql`
+    SELECT COUNT(*) as count FROM messages
+  `
+  const totalMessages = Number(totalMessagesResult[0].count)
 
   return (
     <div className="min-h-screen bg-background">
@@ -104,16 +107,6 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/subscriptions">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Monthly Revenue</h3>
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-3xl font-bold">${monthlyRevenue}</p>
-            </Card>
-          </Link>
-
           <Link href="/admin/alerts">
             <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
               <div className="flex items-center justify-between mb-2">
@@ -121,6 +114,16 @@ export default async function AdminDashboardPage() {
                 <Mail className="h-4 w-4 text-muted-foreground" />
               </div>
               <p className="text-3xl font-bold">{totalAlerts}</p>
+            </Card>
+          </Link>
+
+          <Link href="/admin/messages">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Messages Sent</h3>
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{totalMessages}</p>
             </Card>
           </Link>
         </div>
