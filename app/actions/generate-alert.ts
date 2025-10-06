@@ -10,84 +10,53 @@ export async function generateAlert(
   ticker: string,
   company: string,
   price: string,
-  sentiment: "positive" | "negative"
+  sentiment: "positive" | "negative",
+  newsItems: string = ""
 ) {
-  const windowDays = 30 // Fixed at 30 days
-  
   try {
-    console.log("[GenerateAlert] Starting for:", ticker, company, price, sentiment, "windowDays:", windowDays)
+    console.log("[GenerateAlert] Starting for:", ticker, company, price, sentiment)
 
     const prompt = `You are a factual markets writer.
 
-Goal: Write a 90-word update about ${company} (${ticker}) at ${price}.
-Do NOT restate the sentiment label. Do NOT use words like positive, negative, bullish, bearish, favorable, cautious.
+Write a 90-word market update email about ${company} (${ticker}) at ${price}.
 
-Evidence requirement:
-- Use only news published in the last ${windowDays} days.
-- Include 2–3 specific items with date and source, each linked.
-- Prefer company 8-K/10-Q/press releases, earnings, guidance, contracts, regulatory items.
-- If fewer than 2 qualifying items exist, output: "No qualifying recent items in the past ${windowDays} days." and STOP.
+Rules:
+- Do NOT use words like: positive, negative, bullish, bearish, favorable, cautious, optimistic
+- No predictions, targets, or advice words: buy, sell, should, recommend
+- Use neutral verbs: reported, filed, announced, completed
+- Mention current price once
+- Keep factual and educational tone
 
-Structure (exactly):
-Headline: one factual clause (no adjectives).
-Body (≤90 words): 
- • Current price mention once.
- • 2–3 evidence bullets: [YYYY-MM-DD] Source — headline (link).
- • One neutral relevance line ("Why this matters:" + fact).
-Footer: Educational market research. Not investment advice.
+${newsItems ? `Recent news to include:\n${newsItems}\n\nFormat these news items as evidence bullets in your update.` : 'Include any relevant recent company developments you know about.'}
 
-Style rules:
-- No advice, predictions, targets, or directives.
-- No generic phrases ("growing demand," "investor interest").
-- Quantify when possible (dates, amounts, %).
-- Use neutral verbs: "reported," "filed," "announced," "completed."
+Structure:
+- Opening sentence with current price
+- 2-3 brief factual points about recent company activity
+- One line: "Why this matters:" + neutral fact
+- End with: "Educational market research. Not investment advice."
 
-Inputs:
-ticker=${ticker}
-company=${company}
-price=${price}
-window_days=${windowDays}
-sentiment_label=${sentiment}  # for angle selection ONLY; never print this word.
-
-Return BOTH:
-1) The email text.
-2) A JSON block:
-{
-  "ticker": "${ticker}",
-  "timestamp_utc": "...",
-  "sources": [
-    {"title":"...", "url":"...", "date":"YYYY-MM-DD"},
-    ...
-  ]
-}`
+Keep under 90 words total.`
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o",
+      model: "gpt-4o-mini",
       messages: [
         {
           role: "system",
-          content: "You are a factual markets writer who creates evidence-based, educational market updates with specific citations.",
+          content: "You are a factual markets writer who creates concise, educational market updates.",
         },
         {
           role: "user",
           content: prompt,
         },
       ],
-      temperature: 0.3,
-      max_tokens: 500,
+      temperature: 0.5,
+      max_tokens: 300,
     })
 
     const generatedContent = completion.choices[0]?.message?.content
 
     if (!generatedContent) {
       throw new Error("No content generated")
-    }
-
-    // Check if no qualifying items
-    if (generatedContent.includes("No qualifying recent items")) {
-      return {
-        error: `Insufficient recent news found for ${ticker}. The AI requires at least 2 specific news items (press releases, earnings, SEC filings) from the past 30 days. Try a different ticker with recent news activity.`,
-      }
     }
 
     console.log("[GenerateAlert] Generated successfully")

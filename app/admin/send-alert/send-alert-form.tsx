@@ -24,6 +24,7 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
   const [company, setCompany] = useState("")
   const [price, setPrice] = useState("")
   const [sentiment, setSentiment] = useState<"positive" | "negative">("positive")
+  const [newsItems, setNewsItems] = useState("")
 
   // Generated content
   const [subject, setSubject] = useState("")
@@ -34,7 +35,7 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
     setLoading(true)
     setError(null)
 
-    const result = await generateAlert(ticker, company, price, sentiment)
+    const result = await generateAlert(ticker, company, price, sentiment, newsItems)
 
     if (result.error) {
       setError(result.error)
@@ -209,6 +210,22 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
             <option value="negative">Negative</option>
           </select>
         </div>
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="newsItems">Recent News Items (Optional)</Label>
+        <Textarea
+          id="newsItems"
+          value={newsItems}
+          onChange={(e) => setNewsItems(e.target.value)}
+          placeholder="Enter recent news items, earnings, or company developments (one per line)&#10;Example:&#10;Q4 earnings beat expectations by 15%&#10;Announced new AI chip partnership&#10;Revenue up 25% year-over-year"
+          rows={4}
+          disabled={loading}
+          className="w-full"
+        />
+        <p className="text-xs text-muted-foreground">
+          Optional: Provide recent news for AI to include. Leave blank for AI to use general knowledge.
+        </p>
       </div>
 
       <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4">
