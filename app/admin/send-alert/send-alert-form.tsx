@@ -24,6 +24,7 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
   const [company, setCompany] = useState("")
   const [price, setPrice] = useState("")
   const [sentiment, setSentiment] = useState<"positive" | "negative">("positive")
+  const [windowDays, setWindowDays] = useState(7)
 
   // Generated content
   const [subject, setSubject] = useState("")
@@ -34,7 +35,7 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
     setLoading(true)
     setError(null)
 
-    const result = await generateAlert(ticker, company, price, sentiment)
+    const result = await generateAlert(ticker, company, price, sentiment, windowDays)
 
     if (result.error) {
       setError(result.error)
@@ -183,7 +184,7 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-3 gap-4">
         <div className="space-y-2">
           <Label htmlFor="price">Current Price</Label>
           <Input
@@ -208,6 +209,19 @@ export default function SendAlertForm({ userId, recipientCount }: { userId: stri
             <option value="positive">Positive</option>
             <option value="negative">Negative</option>
           </select>
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="windowDays">News Window (Days)</Label>
+          <Input
+            id="windowDays"
+            type="number"
+            value={windowDays}
+            onChange={(e) => setWindowDays(Number(e.target.value))}
+            min="1"
+            max="30"
+            disabled={loading}
+          />
         </div>
       </div>
 
