@@ -39,14 +39,50 @@ export async function generateAlert(
     const now = new Date()
     const monthYear = now.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
 
-    // Build the user prompt with variables
-    const userPrompt = `Generate a newsletter-style company alert for ${company} (${ticker}), currently trading near ${price}. Search the web for up-to-date company and market data before writing.
+    // Step 1: Fetch current news using gpt-4o-mini with web search
+    console.log("[GenerateAlert] Step 1: Fetching recent news with web search...")
+    const newsResponse = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      tools: [{ type: "web_search" }],
+      messages: [
+        { 
+          role: "system", 
+          content: "You are a financial news researcher. Fetch and summarize 3-5 recent verified news items about the requested company. Include specific details like dates, financial figures, and key developments. Focus on factual information from the past 30 days."
+        },
+        { 
+          role: "user", 
+          content: `Recent news about ${company} (${ticker}). Include company business description, sector, recent financial results, and latest corporate developments.`
+        }
+      ]
+    })
+
+    const newsContent = newsResponse.choices?.[0]?.message?.content?.trim()
+    
+    if (!newsContent || newsContent.length < 20) {
+      return {
+        error: `Unable to fetch recent news for ${ticker}. Please try again.`,
+      }
+    }
+
+    console.log("[GenerateAlert] Step 1 complete: News fetched")
+
+    // Step 2: Write newsletter using GPT-5
+    console.log("[GenerateAlert] Step 2: Writing alert with GPT-5...")
+    
+    const reportPrompt = `Company: ${company} (${ticker})
+Price: ${price}
+Sentiment: ${sentiment}
+
+Recent news and data:
+${newsContent}
+
+Generate a newsletter-style company alert using the information above.
 
 Format:
 
 **Monthly Alerts Insight – ${monthYear}**
 ### ${company} (${ticker}): [Short Headline Reflecting Sentiment]
-**Price:** ${price} | **Sector:** [detected industry]
+**Price:** ${price} | **Sector:** [detected industry from news]
 
 **Summary:** One paragraph summarizing business, key financial results, and recent performance in the tone of ${sentiment}.
 **Recent Developments:** 2–3 bullet points with the latest corporate or market updates.
@@ -54,54 +90,39 @@ Format:
 
 Write in under 180 words. No recommendations.`
 
-    // Retry logic - up to 2 attempts
-    for (let attempt = 0; attempt < 2; attempt++) {
-      console.log(`[GenerateAlert] Attempt ${attempt + 1}/2`)
-      
-      const response = await client.chat.completions.create({
-        model: "gpt-5",
-        messages: [
-          {
-            role: "system",
-            content: "You are an equity research writer for a stock alert newsletter. Your job is to produce short, factual company reports using verified web data. Each report should start with a one-sentence description of the company's business, then summarize recent news and performance. The tone should match the sentiment variable (Positive or Negative) but remain professional and data-driven. No investment advice, price targets, or speculation."
-          },
-          {
-            role: "user",
-            content: userPrompt
-          }
-        ],
-        temperature: 0.4,
-        tools: [
-          {
-            type: "web_search",
-            name: "default"
-          }
-        ]
-      })
+    const reportResponse = await client.chat.completions.create({
+      model: "gpt-5",
+      messages: [
+        {
+          role: "system",
+          content: "You are an equity research writer for a stock alert newsletter. Your job is to produce short, factual company reports using verified web data. Each report should start with a one-sentence description of the company's business, then summarize recent news and performance. The tone should match the sentiment variable (Positive or Negative) but remain professional and data-driven. No investment advice, price targets, or speculation."
+        },
+        {
+          role: "user",
+          content: reportPrompt
+        }
+      ],
+      temperature: 0.4
+    })
 
-      const out = response.choices?.[0]?.message?.content?.trim()
+    const out = reportResponse.choices?.[0]?.message?.content?.trim()
 
-      if (!out || out.length < 20) {
-        console.log("[GenerateAlert] Empty or too short output, retrying...")
-        continue
-      }
-
-      // Success!
-      console.log("[GenerateAlert] Generated successfully with GPT-5")
-      
-      const sentimentLabel = sentiment === "positive" ? "Positive Alert" : "Negative Alert"
-      const subject = `${company} (${ticker}) - ${sentimentLabel}`
-
+    if (!out || out.length < 20) {
       return {
-        success: true,
-        subject,
-        content: out,
+        error: `Unable to generate alert content for ${ticker}. Please try again.`,
       }
     }
 
-    // Both attempts failed
+    // Success!
+    console.log("[GenerateAlert] Step 2 complete: Alert generated successfully with GPT-5")
+    
+    const sentimentLabel = sentiment === "positive" ? "Positive Alert" : "Negative Alert"
+    const subject = `${company} (${ticker}) - ${sentimentLabel}`
+
     return {
-      error: `Unable to generate valid alert for ${ticker} after 2 attempts. Try again.`,
+      success: true,
+      subject,
+      content: out,
     }
   } catch (error: any) {
     console.error("[GenerateAlert] Error:", error)
