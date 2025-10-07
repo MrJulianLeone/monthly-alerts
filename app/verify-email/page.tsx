@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useState, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import Link from "next/link"
 import { Card } from "@/components/ui/card"
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { TrendingUp, CheckCircle2, XCircle, Loader2 } from "lucide-react"
 import { verifyEmailToken } from "@/app/actions/email-verification"
 
-export default function VerifyEmailPage() {
+function VerifyEmailContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const token = searchParams.get("token")
@@ -97,6 +97,21 @@ export default function VerifyEmailPage() {
         </Card>
       </div>
     </div>
+  )
+}
+
+export default function VerifyEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-16 w-16 text-primary mx-auto mb-4 animate-spin" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    }>
+      <VerifyEmailContent />
+    </Suspense>
   )
 }
 
