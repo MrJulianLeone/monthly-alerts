@@ -127,7 +127,9 @@ export default async function UsersListPage({
                       )}
                     </td>
                     <td className="p-4">
-                      {user.subscription_status === "active" ? (
+                      {user.is_admin ? (
+                        <Badge variant="outline" className="border-purple-600 text-purple-600">Admin</Badge>
+                      ) : user.subscription_status === "active" ? (
                         <Badge variant="default" className="bg-green-600">Active</Badge>
                       ) : (
                         <Badge variant="secondary">Inactive</Badge>

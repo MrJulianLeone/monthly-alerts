@@ -129,16 +129,19 @@ export default async function SubscriptionsListPage({
                       )}
                     </td>
                     <td className="p-4">
-                      <div className="flex flex-col gap-1">
+                      {sub.is_admin ? (
+                        <Badge variant="outline" className="border-purple-600 text-purple-600 w-fit">
+                          Admin
+                        </Badge>
+                      ) : sub.cancel_at_period_end ? (
+                        <Badge variant="outline" className="text-orange-600 border-orange-600 w-fit">
+                          Cancelling
+                        </Badge>
+                      ) : (
                         <Badge variant="default" className="bg-green-600 w-fit">
                           Active
                         </Badge>
-                        {sub.cancel_at_period_end && (
-                          <Badge variant="outline" className="text-orange-600 border-orange-600 w-fit text-xs">
-                            Canceling
-                          </Badge>
-                        )}
-                      </div>
+                      )}
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {new Date(sub.user_registered).toLocaleDateString()}

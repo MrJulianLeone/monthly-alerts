@@ -121,6 +121,7 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.updated": {
         const subscription = event.data.object as Stripe.Subscription
 
+        // Don't update subscriptions for admin users
         await sql`
           UPDATE subscriptions
           SET 
@@ -130,6 +131,7 @@ export async function POST(req: NextRequest) {
             cancel_at_period_end = ${subscription.cancel_at_period_end || false},
             updated_at = NOW()
           WHERE stripe_subscription_id = ${subscription.id}
+            AND user_id NOT IN (SELECT user_id FROM admin_users)
         `
 
         console.log("[v0] Subscription updated:", subscription.id)
@@ -139,12 +141,14 @@ export async function POST(req: NextRequest) {
       case "customer.subscription.deleted": {
         const subscription = event.data.object as Stripe.Subscription
 
+        // Don't update subscriptions for admin users
         await sql`
           UPDATE subscriptions
           SET 
             status = 'cancelled',
             updated_at = NOW()
           WHERE stripe_subscription_id = ${subscription.id}
+            AND user_id NOT IN (SELECT user_id FROM admin_users)
         `
 
         console.log("[v0] Subscription cancelled:", subscription.id)
@@ -155,12 +159,14 @@ export async function POST(req: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice
 
         if (invoice.subscription) {
+          // Don't update subscriptions for admin users
           await sql`
             UPDATE subscriptions
             SET 
               status = 'active',
               updated_at = NOW()
             WHERE stripe_subscription_id = ${invoice.subscription}
+              AND user_id NOT IN (SELECT user_id FROM admin_users)
           `
 
           console.log("[v0] Payment succeeded for subscription:", invoice.subscription)
@@ -172,12 +178,14 @@ export async function POST(req: NextRequest) {
         const invoice = event.data.object as Stripe.Invoice
 
         if (invoice.subscription) {
+          // Don't update subscriptions for admin users
           await sql`
             UPDATE subscriptions
             SET 
               status = 'past_due',
               updated_at = NOW()
             WHERE stripe_subscription_id = ${invoice.subscription}
+              AND user_id NOT IN (SELECT user_id FROM admin_users)
           `
 
           console.log("[v0] Payment failed for subscription:", invoice.subscription)
