@@ -3,18 +3,43 @@
 import { createUser, verifyUser, createSession, logout as logoutUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
 import { sendWelcomeEmail } from "./send-welcome-email"
+import { validatePassword, validateEmail, validateName, sanitizeText } from "@/lib/validation"
 
 export async function signup(formData: FormData) {
-  const email = formData.get("email") as string
+  const email = (formData.get("email") as string)?.trim()
   const password = formData.get("password") as string
-  const firstName = formData.get("firstName") as string
-  const lastName = formData.get("lastName") as string
+  const firstName = sanitizeText(formData.get("firstName") as string)
+  const lastName = sanitizeText(formData.get("lastName") as string)
 
   console.log("[v0] Signup action called with email:", email)
 
+  // Validate all fields
   if (!email || !password || !firstName || !lastName) {
     console.log("[v0] Missing required fields")
     return { error: "All fields are required" }
+  }
+
+  // Validate email
+  const emailValidation = validateEmail(email)
+  if (!emailValidation.valid) {
+    return { error: emailValidation.error }
+  }
+
+  // Validate password strength
+  const passwordValidation = validatePassword(password)
+  if (!passwordValidation.valid) {
+    return { error: passwordValidation.error }
+  }
+
+  // Validate names
+  const firstNameValidation = validateName(firstName, "First name")
+  if (!firstNameValidation.valid) {
+    return { error: firstNameValidation.error }
+  }
+
+  const lastNameValidation = validateName(lastName, "Last name")
+  if (!lastNameValidation.valid) {
+    return { error: lastNameValidation.error }
   }
 
   try {
@@ -31,7 +56,13 @@ export async function signup(formData: FormData) {
     await sendWelcomeEmail(email, firstName, lastName)
     console.log("[v0] Welcome email sent")
 
-    redirect("/dashboard")
+    // Send email verification
+    console.log("[v0] Sending verification email...")
+    const { sendVerificationEmail } = await import("./email-verification")
+    await sendVerificationEmail(user.id, email, firstName)
+    console.log("[v0] Verification email sent")
+
+    redirect("/dashboard?verify=pending")
   } catch (error: any) {
     console.log("[v0] Signup error:", error)
 
@@ -44,7 +75,7 @@ export async function signup(formData: FormData) {
 }
 
 export async function login(formData: FormData) {
-  const email = formData.get("email") as string
+  const email = (formData.get("email") as string)?.trim()
   const password = formData.get("password") as string
 
   console.log("[v0] Login action called with email:", email)
@@ -52,6 +83,16 @@ export async function login(formData: FormData) {
   if (!email || !password) {
     console.log("[v0] Missing required fields")
     return { error: "Email and password are required" }
+  }
+
+  // Rate limiting check
+  const { checkRateLimit, clearRateLimit } = await import("@/lib/rate-limit")
+  const rateLimit = await checkRateLimit(email, "login", 5, 15)
+  
+  if (!rateLimit.allowed) {
+    console.log("[v0] Rate limit exceeded for:", email)
+    const minutes = Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 60000)
+    return { error: `Too many login attempts. Please try again in ${minutes} minute${minutes > 1 ? 's' : ''}.` }
   }
 
   const user = await verifyUser(email, password)
@@ -62,6 +103,9 @@ export async function login(formData: FormData) {
   }
 
   console.log("[v0] User verified successfully:", user.id)
+
+  // Clear rate limit on successful login
+  await clearRateLimit(email, "login")
 
   await createSession(user.id)
   console.log("[v0] Session created successfully")

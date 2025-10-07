@@ -2,6 +2,7 @@
 
 import { neon } from "@neondatabase/serverless"
 import { Resend } from "resend"
+import { sanitizeHTML, sanitizeText } from "@/lib/validation"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -10,8 +11,8 @@ export async function sendMessage(formData: FormData) {
     const resend = new Resend(process.env.RESEND_API_KEY)
 
     const userId = formData.get("userId") as string
-    const subject = formData.get("subject") as string
-    const content = formData.get("content") as string
+    const subject = sanitizeText(formData.get("subject") as string)
+    const content = sanitizeHTML(formData.get("content") as string)
 
     if (!subject || !content) {
       return { error: "Subject and content are required" }

@@ -2,6 +2,7 @@
 
 import { neon } from "@neondatabase/serverless"
 import { Resend } from "resend"
+import { sanitizeHTML, sanitizeText } from "@/lib/validation"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -10,13 +11,13 @@ export async function sendAlert(formData: FormData) {
     const resend = new Resend(process.env.RESEND_API_KEY)
 
     const userId = formData.get("userId") as string
-    const subject = formData.get("subject") as string
-    const content = formData.get("content") as string
+    const subject = sanitizeText(formData.get("subject") as string)
+    const content = sanitizeHTML(formData.get("content") as string)
     const recipientCount = Number(formData.get("recipientCount"))
-    const ticker = formData.get("ticker") as string
-    const companyName = formData.get("companyName") as string
-    const price = formData.get("price") as string
-    const sentiment = formData.get("sentiment") as string
+    const ticker = sanitizeText(formData.get("ticker") as string)
+    const companyName = sanitizeText(formData.get("companyName") as string)
+    const price = sanitizeText(formData.get("price") as string)
+    const sentiment = sanitizeText(formData.get("sentiment") as string)
 
     if (!subject || !content) {
       return { error: "Subject and content are required" }

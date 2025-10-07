@@ -79,33 +79,25 @@ export default function SignupPage() {
             <div className="space-y-2">
               <Label htmlFor="password">Password</Label>
               <Input id="password" name="password" type="password" required minLength={8} disabled={loading} />
-              <p className="text-xs text-muted-foreground">Must be at least 8 characters</p>
-            </div>
-
-            <div className="flex items-start gap-2 pt-2">
-              <input
-                type="checkbox"
-                id="agreeToTerms"
-                name="agreeToTerms"
-                className="mt-1 h-4 w-4 rounded border-gray-300"
-                required
-                disabled={loading}
-              />
-              <Label htmlFor="agreeToTerms" className="text-sm font-normal cursor-pointer">
-                I agree to the{" "}
-                <Link href="/terms" target="_blank" className="text-primary hover:underline">
-                  Terms of Service
-                </Link>
-                {" "}and{" "}
-                <Link href="/privacy" target="_blank" className="text-primary hover:underline">
-                  Privacy Policy
-                </Link>
-              </Label>
+              <p className="text-xs text-muted-foreground">
+                Must be at least 8 characters with uppercase, lowercase, and a number
+              </p>
             </div>
 
             <Button type="submit" size="lg" className="w-full" disabled={loading}>
               {loading ? "Creating Account..." : "Create Account"}
             </Button>
+
+            <p className="text-xs text-center text-muted-foreground">
+              By creating an account, you agree to our{" "}
+              <Link href="/terms" target="_blank" className="text-primary hover:underline">
+                Terms of Service
+              </Link>
+              {" "}and{" "}
+              <Link href="/privacy" target="_blank" className="text-primary hover:underline">
+                Privacy Policy
+              </Link>
+            </p>
 
             <div className="text-center text-sm">
               <span className="text-muted-foreground">Already have an account? </span>

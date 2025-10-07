@@ -4,6 +4,7 @@ import { getSession, hashPassword } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
+import { validateEmail, validateName, validatePassword, sanitizeText } from "@/lib/validation"
 import bcrypt from "bcryptjs"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -12,12 +13,29 @@ export async function updateProfile(formData: FormData) {
   const session = await getSession()
   if (!session) redirect("/login")
 
-  const firstName = formData.get("firstName") as string
-  const lastName = formData.get("lastName") as string
-  const email = formData.get("email") as string
+  const firstName = sanitizeText(formData.get("firstName") as string)
+  const lastName = sanitizeText(formData.get("lastName") as string)
+  const email = (formData.get("email") as string)?.trim()
 
   if (!firstName || !lastName || !email) {
     return { error: "All fields are required" }
+  }
+
+  // Validate email
+  const emailValidation = validateEmail(email)
+  if (!emailValidation.valid) {
+    return { error: emailValidation.error }
+  }
+
+  // Validate names
+  const firstNameValidation = validateName(firstName, "First name")
+  if (!firstNameValidation.valid) {
+    return { error: firstNameValidation.error }
+  }
+
+  const lastNameValidation = validateName(lastName, "Last name")
+  if (!lastNameValidation.valid) {
+    return { error: lastNameValidation.error }
   }
 
   // Check if email is already taken by another user
@@ -61,8 +79,10 @@ export async function changePassword(formData: FormData) {
     return { error: "New passwords do not match" }
   }
 
-  if (newPassword.length < 8) {
-    return { error: "Password must be at least 8 characters" }
+  // Validate new password strength
+  const passwordValidation = validatePassword(newPassword)
+  if (!passwordValidation.valid) {
+    return { error: passwordValidation.error }
   }
 
   // Verify current password
