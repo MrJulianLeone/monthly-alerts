@@ -103,6 +103,18 @@ export async function POST(req: NextRequest) {
                   await sendSubscriptionEmail(user.email, user.first_name, user.last_name)
                   
                   console.log("[Webhook] Subscription confirmation email sent to:", user.email)
+
+                  // Send admin notification email
+                  const { sendAdminNotification } = await import("@/app/actions/send-admin-notification")
+                  await sendAdminNotification(
+                    user.email,
+                    user.first_name,
+                    user.last_name,
+                    userId,
+                    subscriptionId
+                  )
+                  
+                  console.log("[Webhook] Admin notification email sent")
                 }
               } catch (emailError) {
                 console.error("[Webhook] Failed to send subscription email:", emailError)
