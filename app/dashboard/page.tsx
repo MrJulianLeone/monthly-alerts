@@ -40,6 +40,18 @@ export default async function DashboardPage({
 
   const subscription = subscriptionResult[0]
   const isActive = subscription?.status === "active"
+  const hasEverSubscribed = subscription !== undefined
+
+  // Get all subscription periods for this user
+  const subscriptionPeriods = await sql`
+    SELECT created_at, 
+           CASE 
+             WHEN status = 'active' THEN current_period_end
+             ELSE updated_at
+           END as period_end
+    FROM subscriptions
+    WHERE user_id = ${session.user_id}::uuid
+  `
 
   // Get user signup date
   const userResult = await sql`
@@ -132,6 +144,20 @@ export default async function DashboardPage({
                   </Link>
                 </div>
               </div>
+            ) : hasEverSubscribed ? (
+              <div className="space-y-4">
+                <p className="text-sm text-muted-foreground">
+                  Your subscription has ended. You can still view alerts from when you were subscribed. Resubscribe to receive new alerts.
+                </p>
+                <div className="flex gap-3">
+                  <Link href="/dashboard/subscribe" className="flex-1">
+                    <Button size="lg" className="w-full">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Resubscribe - $29.99/month + tax
+                    </Button>
+                  </Link>
+                </div>
+              </div>
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
@@ -183,6 +209,7 @@ export default async function DashboardPage({
             alerts={alerts as any[]} 
             userSignupDate={userSignupDate}
             isActive={isActive}
+            subscriptionPeriods={subscriptionPeriods as any[]}
           />
         </div>
       </div>

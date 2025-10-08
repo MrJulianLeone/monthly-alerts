@@ -18,23 +18,40 @@ interface Alert {
   subject: string
 }
 
+interface SubscriptionPeriod {
+  created_at: string
+  period_end: string
+}
+
 interface AlertsTableProps {
   alerts: Alert[]
   userSignupDate: string
   isActive: boolean
+  subscriptionPeriods: SubscriptionPeriod[]
 }
 
-export default function AlertsTable({ alerts, userSignupDate, isActive }: AlertsTableProps) {
+export default function AlertsTable({ alerts, userSignupDate, isActive, subscriptionPeriods }: AlertsTableProps) {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null)
 
   // All alerts are already filtered to be after signup, so first one is the free alert
   const firstAlertId = alerts.length > 0 ? alerts[0].id : null
 
+  // Check if an alert was sent during any subscription period
+  const wasSentDuringSubscription = (alertSentAt: string) => {
+    const alertTime = new Date(alertSentAt).getTime()
+    return subscriptionPeriods.some(period => {
+      const periodStart = new Date(period.created_at).getTime()
+      const periodEnd = new Date(period.period_end).getTime()
+      return alertTime >= periodStart && alertTime <= periodEnd
+    })
+  }
+
   // User can view an alert if:
   // 1. It's the first alert after their signup (free), OR
-  // 2. They have an active subscription
-  const canViewAlert = (alertId: string) => {
-    return alertId === firstAlertId || isActive
+  // 2. They have an active subscription, OR
+  // 3. The alert was sent during a previous subscription period
+  const canViewAlert = (alert: Alert) => {
+    return alert.id === firstAlertId || isActive || wasSentDuringSubscription(alert.sent_at)
   }
 
   const formatDate = (dateString: string) => {
@@ -87,7 +104,7 @@ export default function AlertsTable({ alerts, userSignupDate, isActive }: Alerts
               </thead>
               <tbody>
                 {alerts.map((alert) => {
-                  const canView = canViewAlert(alert.id)
+                  const canView = canViewAlert(alert)
                   const isFreeAlert = alert.id === firstAlertId
 
                   return (
