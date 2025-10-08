@@ -5,7 +5,7 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus } from "lucide-react"
 import Link from "next/link"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -24,9 +24,9 @@ export default async function AdminDashboardPage() {
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
 
-  // Fetch statistics (including all users and admin users)
+  // Fetch statistics (only verified users)
   const totalUsersResult = await sql`
-    SELECT COUNT(*) as count FROM users
+    SELECT COUNT(*) as count FROM users WHERE email_verified = TRUE
   `
   const totalUsers = Number(totalUsersResult[0].count)
 
@@ -145,7 +145,7 @@ export default async function AdminDashboardPage() {
         </Card>
 
         {/* Send Message Section */}
-        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
+        <Card className="p-6 mb-6 bg-primary/5 border-primary/20">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-semibold mb-1">Send Message to Subscribers</h2>
@@ -157,6 +157,24 @@ export default async function AdminDashboardPage() {
               <Button>
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Compose Message
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
+        {/* Add User to Subscriber List Section */}
+        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold mb-1">Add User to Subscriber List</h2>
+              <p className="text-sm text-muted-foreground">
+                Manually add verified users to the subscriber list without requiring a Stripe subscription
+              </p>
+            </div>
+            <Link href="/admin/add-subscriber">
+              <Button>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Subscriber
               </Button>
             </Link>
           </div>

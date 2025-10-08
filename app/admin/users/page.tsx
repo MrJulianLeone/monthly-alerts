@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, LogOut, ArrowLeft, Users } from "lucide-react"
 import Link from "next/link"
+import DeleteUserButton from "./delete-user-button"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -107,10 +108,10 @@ export default async function UsersListPage({
                 <tr className="border-b border-border">
                   <th className="text-left p-4 font-medium">Name</th>
                   <th className="text-left p-4 font-medium">Email</th>
-                  <th className="text-left p-4 font-medium">Role</th>
                   <th className="text-left p-4 font-medium">Subscription</th>
                   <th className="text-left p-4 font-medium">Registered</th>
                   <th className="text-left p-4 font-medium">Subscribed</th>
+                  <th className="text-left p-4 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -118,15 +119,11 @@ export default async function UsersListPage({
                   <tr key={user.id} className="border-b border-border last:border-0">
                     <td className="p-4">
                       {user.first_name} {user.last_name}
-                    </td>
-                    <td className="p-4 text-muted-foreground">{user.email}</td>
-                    <td className="p-4">
-                      {user.is_admin ? (
-                        <Badge variant="outline" className="border-purple-600 text-purple-600">Admin</Badge>
-                      ) : (
-                        <Badge variant="secondary">User</Badge>
+                      {user.is_admin && (
+                        <Badge variant="outline" className="ml-2 border-purple-600 text-purple-600">Admin</Badge>
                       )}
                     </td>
+                    <td className="p-4 text-muted-foreground">{user.email}</td>
                     <td className="p-4">
                       {user.is_admin ? (
                         <Badge variant="outline" className="border-purple-600 text-purple-600">Admin</Badge>
@@ -141,6 +138,9 @@ export default async function UsersListPage({
                     </td>
                     <td className="p-4 text-muted-foreground">
                       {user.subscription_date ? new Date(user.subscription_date).toLocaleDateString() : 'N/A'}
+                    </td>
+                    <td className="p-4">
+                      <DeleteUserButton userId={user.id} isAdmin={user.is_admin} />
                     </td>
                   </tr>
                 ))}
