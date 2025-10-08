@@ -27,12 +27,8 @@ interface AlertsTableProps {
 export default function AlertsTable({ alerts, userSignupDate, isActive }: AlertsTableProps) {
   const [selectedAlert, setSelectedAlert] = useState<Alert | null>(null)
 
-  // Find first alert sent after user signup
-  const signupTime = new Date(userSignupDate).getTime()
-  const alertsAfterSignup = alerts.filter(
-    (alert) => new Date(alert.sent_at).getTime() > signupTime
-  )
-  const firstAlertId = alertsAfterSignup.length > 0 ? alertsAfterSignup[0].id : null
+  // All alerts are already filtered to be after signup, so first one is the free alert
+  const firstAlertId = alerts.length > 0 ? alerts[0].id : null
 
   // User can view an alert if:
   // 1. It's the first alert after their signup (free), OR
@@ -55,20 +51,26 @@ export default function AlertsTable({ alerts, userSignupDate, isActive }: Alerts
       <Card className="p-6">
         <div className="flex items-start justify-between mb-6">
           <div>
-            <h2 className="text-xl font-semibold mb-1">Monthly Alerts</h2>
+            <h2 className="text-xl font-semibold mb-1">Your Alerts</h2>
             <p className="text-sm text-muted-foreground">
-              View all MonthlyAlerts sent to subscribers
+              Alerts sent after you joined
             </p>
           </div>
           <Badge variant="outline" className="text-xs">
-            {alerts.length} Total Alerts
+            {alerts.length} {alerts.length === 1 ? 'Alert' : 'Alerts'}
           </Badge>
         </div>
 
         {alerts.length === 0 ? (
-          <div className="text-center py-12 text-muted-foreground">
-            <TrendingUp className="h-12 w-12 mx-auto mb-3 opacity-20" />
-            <p className="text-sm">No alerts have been sent yet</p>
+          <div className="text-center py-12">
+            <TrendingUp className="h-12 w-12 mx-auto mb-4 text-primary opacity-50" />
+            <h3 className="text-lg font-semibold mb-2">Welcome to MonthlyAlerts!</h3>
+            <p className="text-sm text-muted-foreground mb-1">
+              Your first alert is <span className="font-semibold text-foreground">FREE</span> and is on the way.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              We&apos;ll send you an email when your first monthly alert is ready.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">

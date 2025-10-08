@@ -47,10 +47,11 @@ export default async function DashboardPage({
   `
   const userSignupDate = userResult[0]?.created_at || new Date().toISOString()
 
-  // Get all alerts (chronologically)
+  // Get only alerts sent AFTER user signup
   const alerts = await sql`
     SELECT id, ticker, company_name, price, sentiment, sent_at, content, subject
     FROM alerts
+    WHERE sent_at > ${userSignupDate}
     ORDER BY sent_at DESC
   `
 
