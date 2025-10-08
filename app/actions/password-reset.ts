@@ -5,6 +5,7 @@ import { Resend } from "resend"
 import { hashPassword } from "@/lib/auth"
 import { validatePassword } from "@/lib/validation"
 import { checkRateLimit } from "@/lib/rate-limit"
+import { getBaseUrl } from "@/lib/env"
 import crypto from "crypto"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -57,7 +58,8 @@ export async function requestPasswordReset(formData: FormData) {
     `
 
     // Create reset URL
-    const resetUrl = `${process.env.NEXT_PUBLIC_URL}/reset-password?token=${token}`
+    const baseUrl = getBaseUrl()
+    const resetUrl = `${baseUrl}/reset-password?token=${token}`
 
     // Send email
     await resend.emails.send({

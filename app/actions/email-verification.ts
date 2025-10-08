@@ -2,6 +2,7 @@
 
 import { neon } from "@neondatabase/serverless"
 import { Resend } from "resend"
+import { getBaseUrl } from "@/lib/env"
 import crypto from "crypto"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -23,7 +24,8 @@ export async function sendVerificationEmail(userId: string, email: string, first
     `
 
     // Create verification URL
-    const verificationUrl = `${process.env.NEXT_PUBLIC_URL}/verify-email?token=${token}`
+    const baseUrl = getBaseUrl()
+    const verificationUrl = `${baseUrl}/verify-email?token=${token}`
 
     // Send email
     await resend.emails.send({
@@ -112,6 +114,19 @@ export async function verifyEmailToken(token: string) {
 
     const { user_id } = result[0]
 
+    // Get user details for welcome email
+    const userResult = await sql`
+      SELECT email, first_name, last_name
+      FROM users
+      WHERE id = ${user_id}::uuid
+    `
+
+    if (userResult.length === 0) {
+      return { error: "User not found" }
+    }
+
+    const user = userResult[0]
+
     // Mark email as verified
     await sql`
       UPDATE users
@@ -126,6 +141,13 @@ export async function verifyEmailToken(token: string) {
     `
 
     console.log("[EmailVerification] Email verified for user:", user_id)
+
+    // Send welcome email now that email is verified
+    console.log("[EmailVerification] Sending welcome email...")
+    const { sendWelcomeEmail } = await import("./send-welcome-email")
+    await sendWelcomeEmail(user.email, user.first_name, user.last_name)
+    console.log("[EmailVerification] Welcome email sent")
+
     return { success: true, userId: user_id }
   } catch (error: any) {
     console.error("[EmailVerification] Error verifying token:", error)

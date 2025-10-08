@@ -2,7 +2,6 @@
 
 import { createUser, verifyUser, createSession, logout as logoutUser } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { sendWelcomeEmail } from "./send-welcome-email"
 import { validatePassword, validateEmail, validateName, sanitizeText } from "@/lib/validation"
 
 export async function signup(formData: FormData) {
@@ -50,11 +49,6 @@ export async function signup(formData: FormData) {
     console.log("[v0] Creating session...")
     await createSession(user.id)
     console.log("[v0] Session created successfully")
-
-    // Send welcome email to new user
-    console.log("[v0] Sending welcome email...")
-    await sendWelcomeEmail(email, firstName, lastName)
-    console.log("[v0] Welcome email sent")
 
     // Send email verification
     console.log("[v0] Sending verification email...")

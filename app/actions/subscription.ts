@@ -2,6 +2,7 @@
 
 import { stripe } from "@/lib/stripe"
 import { neon } from "@neondatabase/serverless"
+import { getBaseUrl } from "@/lib/env"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -28,6 +29,7 @@ export async function createCheckoutSession(userId: string, userEmail: string) {
     }
 
     // Create hosted checkout session with dynamic pricing
+    const baseUrl = getBaseUrl()
     const session = await stripe.checkout.sessions.create({
       customer: customer.id,
       line_items: [
@@ -46,8 +48,8 @@ export async function createCheckoutSession(userId: string, userEmail: string) {
       ],
       mode: "subscription",
       automatic_tax: { enabled: true },
-      success_url: `${process.env.NEXT_PUBLIC_URL || "https://monthlyalerts.com"}/dashboard?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_URL || "https://monthlyalerts.com"}/dashboard?canceled=true`,
+      success_url: `${baseUrl}/dashboard?success=true`,
+      cancel_url: `${baseUrl}/dashboard?canceled=true`,
     })
 
     console.log("[Subscription] Created session:", session.id)
