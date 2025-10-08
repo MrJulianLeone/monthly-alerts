@@ -32,7 +32,7 @@ export default async function UsersListPage({
   const limit = 20
   const offset = (page - 1) * limit
 
-  // Fetch all users (including admin users)
+  // Fetch all users with verified emails (including admin users)
   const users = await sql`
     SELECT u.id, u.email, u.first_name, u.last_name, u.created_at,
            s.status as subscription_status, s.created_at as subscription_date,
@@ -40,13 +40,14 @@ export default async function UsersListPage({
     FROM users u
     LEFT JOIN subscriptions s ON u.id = s.user_id AND s.status = 'active'
     LEFT JOIN admin_users au ON u.id = au.user_id
+    WHERE u.email_verified = TRUE
     ORDER BY u.created_at DESC
     LIMIT ${limit} OFFSET ${offset}
   `
 
-  // Get total count for pagination
+  // Get total count for pagination (only verified users)
   const totalResult = await sql`
-    SELECT COUNT(*) as count FROM users
+    SELECT COUNT(*) as count FROM users WHERE email_verified = TRUE
   `
   const total = Number(totalResult[0].count)
   const totalPages = Math.ceil(total / limit)
@@ -95,7 +96,7 @@ export default async function UsersListPage({
             <h1 className="text-3xl font-bold">All Users</h1>
           </div>
           <p className="text-muted-foreground">
-            Total: {total} users
+            Total: {total} verified users
           </p>
         </div>
 
