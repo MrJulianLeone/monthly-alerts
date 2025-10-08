@@ -5,9 +5,10 @@ import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { TrendingUp, User, Mail, ArrowLeft, Lock } from "lucide-react"
+import { TrendingUp, User, Mail, ArrowLeft, Lock, Trash2 } from "lucide-react"
 import Link from "next/link"
 import PasswordChangeForm from "./password-change-form"
+import DeleteAccountForm from "./delete-account-form"
 
 export default async function SettingsPage() {
   const session = await getSession()
@@ -111,7 +112,7 @@ export default async function SettingsPage() {
         </Card>
 
         {/* Account Information */}
-        <Card className="p-6">
+        <Card className="p-6 mb-6">
           <h2 className="text-lg font-semibold mb-4">Account Information</h2>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between">
@@ -123,6 +124,18 @@ export default async function SettingsPage() {
               <span>{session.createdAt ? new Date(session.createdAt).toLocaleDateString() : "N/A"}</span>
             </div>
           </div>
+        </Card>
+
+        {/* Delete Account */}
+        <Card className="p-6 border-destructive/50">
+          <h2 className="text-lg font-semibold mb-4 text-destructive">
+            <Trash2 className="h-4 w-4 inline mr-2" />
+            Delete Account
+          </h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            Once you delete your account, there is no going back. Please be certain.
+          </p>
+          <DeleteAccountForm />
         </Card>
       </div>
     </div>

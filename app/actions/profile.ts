@@ -1,10 +1,11 @@
 "use server"
 
-import { getSession, hashPassword } from "@/lib/auth"
+import { getSession, hashPassword, logout } from "@/lib/auth"
 import { neon } from "@neondatabase/serverless"
 import { redirect } from "next/navigation"
 import { revalidatePath } from "next/cache"
 import { validateEmail, validateName, validatePassword, sanitizeText } from "@/lib/validation"
+import { stripe } from "@/lib/stripe"
 import bcrypt from "bcryptjs"
 
 const sql = neon(process.env.DATABASE_URL!)
@@ -109,4 +110,87 @@ export async function changePassword(formData: FormData) {
   `
 
   return { success: true }
+}
+
+export async function deleteAccount(formData: FormData) {
+  const session = await getSession()
+  if (!session) return { error: "Not authenticated" }
+
+  const confirmation = formData.get("confirmation") as string
+
+  if (confirmation !== "DELETE") {
+    return { error: "Please type DELETE to confirm account deletion" }
+  }
+
+  try {
+    const userId = session.user_id
+
+    // Check if user is an admin
+    const adminCheck = await sql`
+      SELECT * FROM admin_users WHERE user_id = ${userId}::uuid
+    `
+
+    if (adminCheck.length > 0) {
+      return { error: "Admin accounts cannot be deleted. Please contact support." }
+    }
+
+    // Get active subscription to cancel with Stripe
+    const subscriptionResult = await sql`
+      SELECT stripe_subscription_id, stripe_customer_id
+      FROM subscriptions
+      WHERE user_id = ${userId}::uuid
+        AND status = 'active'
+        AND stripe_subscription_id NOT LIKE 'manual_admin_add%'
+      LIMIT 1
+    `
+
+    // Cancel Stripe subscription if exists
+    if (subscriptionResult.length > 0 && subscriptionResult[0].stripe_subscription_id) {
+      try {
+        await stripe.subscriptions.cancel(subscriptionResult[0].stripe_subscription_id)
+        console.log("[DeleteAccount] Canceled Stripe subscription:", subscriptionResult[0].stripe_subscription_id)
+      } catch (stripeError: any) {
+        console.error("[DeleteAccount] Error canceling Stripe subscription:", stripeError)
+        // Continue with deletion even if Stripe cancellation fails
+      }
+    }
+
+    // Delete user data (in order to avoid foreign key constraints)
+    
+    // Delete sessions
+    await sql`
+      DELETE FROM sessions WHERE user_id = ${userId}::uuid
+    `
+
+    // Delete subscriptions
+    await sql`
+      DELETE FROM subscriptions WHERE user_id = ${userId}::uuid
+    `
+
+    // Delete email verification tokens
+    await sql`
+      DELETE FROM email_verification_tokens WHERE user_id = ${userId}::uuid
+    `
+
+    // Delete password reset tokens
+    await sql`
+      DELETE FROM password_reset_tokens WHERE user_id = ${userId}::uuid
+    `
+
+    // Delete the user
+    await sql`
+      DELETE FROM users WHERE id = ${userId}::uuid
+    `
+
+    console.log("[DeleteAccount] Account deleted successfully:", session.email)
+
+    // Log out the user
+    await logout()
+
+    // Redirect to home page
+    redirect("/")
+  } catch (error: any) {
+    console.error("[DeleteAccount] Error:", error)
+    return { error: "Failed to delete account. Please try again or contact support." }
+  }
 }
