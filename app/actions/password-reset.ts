@@ -190,10 +190,11 @@ export async function resetPassword(formData: FormData) {
     // Hash new password
     const hashedPassword = await hashPassword(password)
 
-    // Update user password
+    // Update user password and verify email (they proved access by clicking reset link)
     await sql`
       UPDATE users
-      SET password_hash = ${hashedPassword}
+      SET password_hash = ${hashedPassword},
+          email_verified = TRUE
       WHERE id = ${userId}::uuid
     `
 
