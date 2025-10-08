@@ -55,21 +55,25 @@ monthly-alerts/
 │   ├── actions/                  # Server Actions
 │   │   ├── alerts.tsx           # Send alert emails
 │   │   ├── auth.ts              # Login/signup/logout
+│   │   ├── email-verification.ts # Email verification tokens & flow
 │   │   ├── generate-alert.ts    # AI alert generation
 │   │   ├── messages.tsx         # Send message emails
-│   │   ├── profile.ts           # User profile updates
+│   │   ├── password-reset.ts    # Password reset flow
+│   │   ├── profile.ts           # User profile updates & account deletion
+│   │   ├── send-account-setup-email.ts # Account setup invitations
 │   │   ├── send-admin-notification.ts  # New subscriber notifications
 │   │   ├── send-subscription-email.ts  # Subscription confirmation
 │   │   ├── send-welcome-email.ts       # Welcome emails
 │   │   └── subscription.ts      # Subscription management
 │   │
 │   ├── admin/                   # Admin Dashboard
+│   │   ├── add-subscriber/      # Manually add users to subscriber list
 │   │   ├── alerts/              # View all sent alerts
 │   │   ├── messages/            # View all sent messages
 │   │   ├── send-alert/          # Compose & send alerts
 │   │   ├── send-message/        # Compose & send messages
 │   │   ├── subscriptions/       # View all subscriptions
-│   │   ├── users/               # View all users
+│   │   ├── users/               # View/delete verified users
 │   │   └── page.tsx             # Admin dashboard home
 │   │
 │   ├── api/                     # API Routes
@@ -104,9 +108,11 @@ monthly-alerts/
 │
 ├── lib/                         # Utilities
 │   ├── auth.ts                  # Auth helpers
-│   ├── env.ts                   # Environment validation
+│   ├── env.ts                   # Environment validation & base URL
+│   ├── rate-limit.ts            # Rate limiting for login/password reset
 │   ├── stripe.ts                # Stripe client
-│   └── utils.ts                 # General utilities
+│   ├── utils.ts                 # General utilities
+│   └── validation.ts            # Input validation
 │
 ├── scripts/                     # Database Scripts
 │   ├── 001_create_subscriptions_table.sql
@@ -116,7 +122,8 @@ monthly-alerts/
 │   ├── 005_add_admin_user.sql
 │   ├── 006_reset_alerts.sql
 │   ├── 007_create_messages_table.sql
-│   └── 008_add_alert_metadata.sql
+│   ├── 008_add_alert_metadata.sql
+│   └── 009_add_security_tables.sql  # Email verification & password reset
 │
 ├── public/                      # Static assets
 │   ├── favicon files
@@ -144,6 +151,8 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     first_name VARCHAR(100) NOT NULL,
     last_name VARCHAR(100) NOT NULL,
+    name VARCHAR(200),
+    email_verified BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW(),
     updated_at TIMESTAMP DEFAULT NOW()
 );
@@ -212,6 +221,42 @@ CREATE TABLE messages (
 );
 ```
 
+#### 7. `email_verification_tokens`
+```sql
+CREATE TABLE email_verification_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 8. `password_reset_tokens`
+```sql
+CREATE TABLE password_reset_tokens (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(255) UNIQUE NOT NULL,
+    expires_at TIMESTAMP NOT NULL,
+    used BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+#### 9. `rate_limits`
+```sql
+CREATE TABLE rate_limits (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    identifier VARCHAR(255) NOT NULL,
+    action VARCHAR(50) NOT NULL,
+    attempts INTEGER DEFAULT 0,
+    reset_at TIMESTAMP NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(identifier, action)
+);
+```
+
 ---
 
 ## Authentication System
@@ -222,6 +267,8 @@ CREATE TABLE messages (
 - **Cookie**: `session_id` HttpOnly cookie with 30-day expiration
 - **Protection**: Admin routes protected by `isAdmin()` check
 - **User Routes**: Protected by `getSession()` / `requireAuth()`
+- **Email Verification**: Required for most features, auto-verified on password reset
+- **Rate Limiting**: 5 login attempts per 15 minutes, 3 password resets per hour
 
 ### Key Functions (`lib/auth.ts`)
 
@@ -239,17 +286,48 @@ export async function requireAuth()
 export async function deleteSession()
 ```
 
-### Server Actions (`app/actions/auth.ts`)
+### Server Actions
 
+**Authentication** (`app/actions/auth.ts`)
 ```typescript
-// User signup
+// User signup - sends verification email
 export async function signup(formData: FormData)
 
-// User login
+// User login - with rate limiting & error handling
 export async function login(formData: FormData)
 
 // User logout
 export async function logout()
+```
+
+**Email Verification** (`app/actions/email-verification.ts`)
+```typescript
+// Send verification email
+export async function sendVerificationEmail(userId, email, firstName)
+
+// Verify email token - sends welcome email after verification
+export async function verifyEmailToken(token)
+
+// Resend verification email
+export async function resendVerificationEmail(userId)
+```
+
+**Password Reset** (`app/actions/password-reset.ts`)
+```typescript
+// Request password reset - sends reset email
+export async function requestPasswordReset(formData)
+
+// Verify reset token
+export async function verifyResetToken(token)
+
+// Reset password - auto-verifies email
+export async function resetPassword(formData)
+```
+
+**Account Setup** (`app/setup-account/setup-account-action.ts`)
+```typescript
+// Complete account setup for admin-invited users
+export async function setupAccount(formData)
 ```
 
 ---
@@ -306,27 +384,42 @@ export async function logout()
 
 ### Resend API Integration
 
-All emails use Resend API with consistent branding and disclaimer.
+All emails use Resend API with consistent branding and disclaimer. URLs use `getBaseUrl()` helper for proper link generation across environments.
 
 **Email Types:**
 
-1. **Welcome Email** (`send-welcome-email.ts`)
-   - Sent on user registration
-   - No subscription required
+1. **Email Verification** (`email-verification.ts`)
+   - Sent immediately after signup
+   - 24-hour expiration
+   - Required to access most features
 
-2. **Subscription Confirmation** (`send-subscription-email.ts`)
+2. **Welcome Email** (`send-welcome-email.ts`)
+   - Sent AFTER email verification (not on signup)
+   - Welcomes verified users to the platform
+
+3. **Password Reset** (`password-reset.ts`)
+   - Sent when user requests password reset
+   - 1-hour expiration
+   - Auto-verifies email when used
+
+4. **Account Setup Invitation** (`send-account-setup-email.ts`)
+   - Sent when admin adds new user to subscriber list
+   - 7-day expiration
+   - Allows user to set password and name
+
+5. **Subscription Confirmation** (`send-subscription-email.ts`)
    - Sent after successful Stripe checkout
    - Confirms active subscription
 
-3. **Admin Notification** (`send-admin-notification.ts`)
+6. **Admin Notification** (`send-admin-notification.ts`)
    - Sent to all admins when new user subscribes
    - Includes subscriber details and metadata
 
-4. **Monthly Alerts** (`alerts.tsx`)
+7. **Monthly Alerts** (`alerts.tsx`)
    - Sent to all active subscribers + admins
    - AI-generated stock analysis content
 
-5. **Custom Messages** (`messages.tsx`)
+8. **Custom Messages** (`messages.tsx`)
    - Admin-composed messages to subscribers
 
 **Email Template Structure:**
@@ -343,40 +436,48 @@ All emails use Resend API with consistent branding and disclaimer.
 ### Features
 
 1. **Statistics Overview** (`/admin`)
-   - Total users
+   - Total **verified** users (filters out unverified)
    - Active subscriptions
    - Alerts sent
    - Messages sent
 
 2. **User Management** (`/admin/users`)
-   - View all users with pagination
-   - See admin/user roles
-   - Subscription status
-   - Registration dates
+   - View all **verified** users only (with pagination)
+   - Admin badge shown next to name
+   - Subscription status column
+   - Registration and subscription dates
+   - **Delete user** button (cannot delete admins)
 
-3. **Subscription Management** (`/admin/subscriptions`)
+3. **Add Subscriber** (`/admin/add-subscriber`)
+   - Manually add users to subscriber list without Stripe
+   - **Existing users**: Adds subscription immediately
+   - **New users**: Creates account + sends setup invitation email
+   - Auto-verifies email for invited users
+   - Sends 7-day expiration setup link
+
+4. **Subscription Management** (`/admin/subscriptions`)
    - View active subscriptions
    - Display status: Admin / Active / Cancelling
    - Monthly revenue calculation
    - Subscriber details
 
-4. **Alert Management** (`/admin/alerts`)
+5. **Alert Management** (`/admin/alerts`)
    - View all sent alerts
    - See recipient counts
    - Delete alerts
 
-5. **Message Management** (`/admin/messages`)
+6. **Message Management** (`/admin/messages`)
    - View all sent messages
    - See recipient counts
    - Delete messages
 
-6. **Send Alert** (`/admin/send-alert`)
+7. **Send Alert** (`/admin/send-alert`)
    - AI-powered alert generation (OpenAI)
    - Manual composition
    - Preview before sending
    - Sends to all active subscribers + admins
 
-7. **Send Message** (`/admin/send-message`)
+8. **Send Message** (`/admin/send-message`)
    - Compose custom messages
    - Subject + content
    - Sends to all active subscribers + admins
@@ -396,30 +497,40 @@ All emails use Resend API with consistent branding and disclaimer.
 ### Features
 
 1. **Dashboard Home** (`/dashboard`)
-   - Welcome message
-   - Subscription status
-   - Quick access to all features
+   - Welcome message with personalization
+   - Subscription status badge
+   - **Manage Subscription** button (if subscribed)
+   - **Resubscribe** option (if previously subscribed)
+   - Account settings quick access
 
 2. **Alerts View** (`/dashboard`)
-   - Table of received alerts
-   - View subject, date sent
-   - Paginated display
-   - Free users see limited alerts
+   - Shows only alerts sent **after user signup**
+   - Free first alert for all users
+   - Subscription required for subsequent alerts
+   - **Canceled subscribers retain access** to alerts from their subscription period(s)
+   - Modal view with full alert content
+   - Disclaimer and legal footer
 
 3. **Subscription Management** (`/dashboard/subscribe`)
    - Subscribe via Stripe Checkout
+   - $29.99/month + tax
    - One-click subscription button
 
 4. **Cancel Subscription** (`/dashboard/manage-subscription`)
    - Cancel at any time
-   - Access until period end
+   - Access continues until period end
    - Stripe-powered cancellation
+   - Clear billing period information
 
 5. **Settings** (`/dashboard/settings`)
-   - Update name
-   - Update email
-   - Change password
-   - Profile management
+   - **Profile Information**: Update name and email
+   - **Change Password**: Secure password updates
+   - **Account Information**: View account ID and member since date
+   - **Delete Account**: Permanent account deletion with:
+     - Two-step confirmation process
+     - Automatic Stripe subscription cancellation
+     - Complete data removal
+     - Admin accounts protected from deletion
 
 ---
 
@@ -449,6 +560,14 @@ NEXT_PUBLIC_URL=https://yourapp.com
 ### Environment Validation
 
 The `lib/env.ts` file validates all required environment variables at build time.
+
+### Base URL Helper
+
+The `getBaseUrl()` function in `lib/env.ts` provides environment-aware URL generation:
+- Uses `NEXT_PUBLIC_URL` in production
+- Falls back to `VERCEL_URL` for Vercel deployments  
+- Uses `http://localhost:3000` in development
+- Ensures proper email link generation across all environments
 
 ---
 
@@ -592,20 +711,39 @@ All data mutations use Next.js Server Actions for type safety and security.
 ### 2. Session Management
 Custom session system using database-stored sessions and HttpOnly cookies.
 
-### 3. Subscription Status
-Admin users bypass Stripe status updates to maintain permanent access.
+### 3. Email Verification Flow
+- Signup → Email verification → Welcome email
+- Password reset automatically verifies email
+- Admin-invited users start with verified status
 
-### 4. Email Templating
-Consistent HTML email templates with responsive design.
+### 4. Subscription Period Tracking
+Users maintain access to alerts received during any active subscription period, even after cancellation.
 
-### 5. Error Handling
-Try-catch blocks with console logging for debugging without breaking user flow.
+### 5. Alert Filtering
+Each user only sees alerts sent after their signup date, creating personalized timelines.
 
-### 6. Pagination
+### 6. Admin Protection
+- Admin users exempt from Stripe updates
+- Cannot be deleted via admin panel
+- Manual subscription additions don't require Stripe
+
+### 7. Rate Limiting
+Database-backed rate limiting prevents abuse of authentication endpoints.
+
+### 8. Email Templating
+Consistent HTML email templates with responsive design and proper URL generation.
+
+### 9. Error Handling
+Try-catch blocks with console logging and user-friendly error messages.
+
+### 10. Pagination
 Admin tables use URL-based pagination for scalability.
 
-### 7. Type Safety
+### 11. Type Safety
 TypeScript throughout with proper type definitions.
+
+### 12. Two-Step Confirmation
+Critical actions (account deletion) require typed confirmation for safety.
 
 ---
 
@@ -613,12 +751,24 @@ TypeScript throughout with proper type definitions.
 
 1. **Password Security**: Bcrypt with 10 rounds
 2. **Session Security**: HttpOnly cookies, 30-day expiration
-3. **Environment Variables**: Never commit .env files
-4. **Webhook Security**: Stripe signature verification
-5. **SQL Injection**: Parameterized queries via template literals
-6. **CSRF Protection**: Next.js built-in protection
-7. **Admin Routes**: Server-side authentication checks
-8. **Payment Security**: All payment through Stripe (PCI compliant)
+3. **Email Verification**: Required for most features, prevents spam accounts
+4. **Rate Limiting**: 
+   - Login: 5 attempts per 15 minutes
+   - Password Reset: 3 attempts per hour
+   - Prevents brute force attacks
+5. **Token Security**:
+   - Email verification: 24-hour expiration
+   - Password reset: 1-hour expiration
+   - Account setup: 7-day expiration
+   - One-time use enforcement
+6. **Environment Variables**: Never commit .env files
+7. **Webhook Security**: Stripe signature verification
+8. **SQL Injection**: Parameterized queries via template literals
+9. **Input Validation**: Server-side validation for all user inputs
+10. **CSRF Protection**: Next.js built-in protection
+11. **Admin Routes**: Server-side authentication checks
+12. **Payment Security**: All payment through Stripe (PCI compliant)
+13. **Account Deletion**: Protected from accidental admin deletion
 
 ---
 
@@ -723,5 +873,48 @@ This architecture template is designed for MonthlyAlerts.com and can be replicat
 
 ---
 
-*End of Architecture Template*
+## Recent Feature Additions (2025)
+
+### Authentication & Security Enhancements
+- **Email Verification System**: Complete email verification flow with 24-hour token expiration
+- **Password Reset Flow**: Secure password reset with automatic email verification
+- **Rate Limiting**: Protection against brute force attacks on login and password reset
+- **Login Error Handling**: Client-side error display with retry capability
+
+### Admin Features
+- **Verified Users Only**: Admin dashboard filters to show only verified users
+- **Manual Subscriber Addition**: Add users to subscriber list without Stripe
+- **Account Setup Invitations**: Invite new users via email with 7-day setup link
+- **User Deletion**: Admin can delete non-admin users with cascading data cleanup
+- **Enhanced Statistics**: All user counts filtered to verified users only
+
+### User Experience Improvements
+- **Alert Timeline Filtering**: Users only see alerts sent after their signup date
+- **Free First Alert**: All users get one free alert after signup
+- **Subscription Period Tracking**: Canceled users retain access to alerts from their subscription period(s)
+- **Account Deletion**: Users can permanently delete their accounts with two-step confirmation
+- **Welcome Email Timing**: Welcome emails sent after email verification (not on signup)
+- **Resubscribe Options**: Clear messaging for users who have canceled
+
+### Email Improvements
+- **Base URL Helper**: `getBaseUrl()` function ensures proper link generation across environments
+- **Account Setup Emails**: Professional invitation system for admin-added users
+- **Auto-Verification**: Password reset flow automatically verifies email addresses
+
+### Data Management
+- **Subscription Period History**: Track all subscription periods for access control
+- **Cascading Deletes**: Proper cleanup of related records when users/accounts are deleted
+- **Enhanced Validation**: Server-side input validation for all user-submitted data
+
+### Technical Improvements
+- **Environment Validation**: Required environment variables checked at build time
+- **Type Safety**: Enhanced TypeScript definitions throughout
+- **Error Handling**: User-friendly error messages with proper state management
+- **Client/Server Split**: Proper separation of client and server components
+
+---
+
+*End of Architecture Template - Updated January 2025*
+
+
 
