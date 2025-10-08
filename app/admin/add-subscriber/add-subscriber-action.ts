@@ -3,6 +3,8 @@
 import { neon } from "@neondatabase/serverless"
 import { getSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
+import { sendAccountSetupEmail } from "@/app/actions/send-account-setup-email"
+import crypto from "crypto"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -30,21 +32,48 @@ export async function addUserToSubscriberList(formData: FormData) {
   }
 
   try {
-    // Check if user exists and is verified
+    // Check if user exists
     const userResult = await sql`
       SELECT id, email, email_verified, first_name, last_name
       FROM users
       WHERE email = ${email}
     `
 
+    let user
+    let isNewUser = false
+
     if (userResult.length === 0) {
-      return { error: "No user found with this email address" }
-    }
-
-    const user = userResult[0]
-
-    if (!user.email_verified) {
-      return { error: "User email is not verified. Please verify email before adding to subscriber list." }
+      // User doesn't exist - create a new account
+      const tempPassword = crypto.randomBytes(32).toString('hex') // Temporary, will be replaced during setup
+      
+      const newUserResult = await sql`
+        INSERT INTO users (
+          email,
+          password_hash,
+          first_name,
+          last_name,
+          name,
+          email_verified,
+          created_at,
+          updated_at
+        ) VALUES (
+          ${email},
+          ${tempPassword},
+          'New',
+          'User',
+          'New User',
+          TRUE,
+          NOW(),
+          NOW()
+        )
+        RETURNING id, email, first_name, last_name
+      `
+      
+      user = newUserResult[0]
+      isNewUser = true
+      console.log("[AddSubscriber] Created new user account:", user.email)
+    } else {
+      user = userResult[0]
     }
 
     // Check if user already has an active subscription
@@ -81,6 +110,15 @@ export async function addUserToSubscriberList(formData: FormData) {
     `
 
     console.log("[AddSubscriber] User added to subscriber list:", user.email)
+
+    // Send account setup email for new users
+    if (isNewUser) {
+      await sendAccountSetupEmail(user.id, user.email)
+      return { 
+        success: true, 
+        message: `Created account for ${user.email} and sent setup invitation. They can complete their profile and set a password via email.` 
+      }
+    }
     
     return { 
       success: true, 
