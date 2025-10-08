@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import Link from "next/link"
 import { login } from "@/app/actions/auth"
 import { Card } from "@/components/ui/card"
@@ -7,6 +10,30 @@ import { Label } from "@/components/ui/label"
 import { TrendingUp } from "lucide-react"
 
 export default function LoginPage() {
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(false)
+
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
+    setError(null)
+    setLoading(true)
+
+    const formData = new FormData(e.currentTarget)
+
+    try {
+      const result = await login(formData)
+      
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+      }
+      // If successful, the login action will redirect to dashboard
+    } catch (err) {
+      setError("An unexpected error occurred. Please try again.")
+      setLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
@@ -27,10 +54,23 @@ export default function LoginPage() {
             <p className="text-muted-foreground">Sign in to access your dashboard</p>
           </div>
 
-          <form action={login} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-md text-sm text-destructive">
+                {error}
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
-              <Input id="email" name="email" type="email" placeholder="you@example.com" required />
+              <Input 
+                id="email" 
+                name="email" 
+                type="email" 
+                placeholder="you@example.com" 
+                required 
+                disabled={loading}
+              />
             </div>
 
             <div className="space-y-2">
@@ -40,11 +80,17 @@ export default function LoginPage() {
                   Forgot password?
                 </Link>
               </div>
-              <Input id="password" name="password" type="password" required />
+              <Input 
+                id="password" 
+                name="password" 
+                type="password" 
+                required 
+                disabled={loading}
+              />
             </div>
 
-            <Button type="submit" size="lg" className="w-full">
-              Sign In
+            <Button type="submit" size="lg" className="w-full" disabled={loading}>
+              {loading ? "Signing In..." : "Sign In"}
             </Button>
 
             <div className="text-center text-sm">
