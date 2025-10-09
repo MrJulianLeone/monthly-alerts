@@ -44,7 +44,7 @@ export async function generateAlert(
     const newsResponse = await client.responses.create({
       model: "gpt-4o-mini",
       tools: [{ type: "web_search" }],
-      input: `You are a financial news researcher. Fetch and summarize 3-5 recent verified news items about ${company} (${ticker}). Include company business description, sector, recent financial results, and latest corporate developments. Include specific details like dates, financial figures, and key developments. Focus on factual information from the past 30 days.`
+      input: `You are a financial news researcher. Search and summarize recent information about ${company} (${ticker}). Include: company business description and market position, sector and industry context, recent financial results and key metrics, latest corporate developments and news from the past 30 days, and relevant market conditions. Provide specific details with dates and figures. Focus on factual, verifiable information that would be relevant to retail and institutional investors.`
     })
 
     const newsContent = newsResponse.output_text?.trim()
@@ -60,36 +60,38 @@ export async function generateAlert(
     // Step 2: Write newsletter using GPT-5
     console.log("[GenerateAlert] Step 2: Writing alert with GPT-5...")
     
-    const reportPrompt = `Company: ${company} (${ticker})
-Price: ${price}
-Sentiment: ${sentiment}
+    const reportPrompt = `You are writing a professional stock newsletter summary for retail and institutional readers.
 
-Recent news and data:
+Use this exact structure:
+1. Company Overview
+2. Recent Developments
+3. Market Context
+4. Financial Snapshot
+5. Outlook Summary
+
+Tone: factual and balanced.
+Length: 250–300 words.
+Focus on what the company does, why recent events matter, and the relevance for investors.
+Use the web search data provided below.
+Avoid hype, filler, and citations.
+
+Variables:
+- Company: ${company}
+- Ticker: ${ticker}
+- Current Price: ${price}
+- Sentiment: ${sentiment}
+
+Web search data:
 ${newsContent}
 
-Generate a concise, text-based newsletter alert using the information above. Use the ${sentiment} tone.
-
-Format (plain text, no markdown):
-
-${company} (${ticker}) - ${price}
-
-Company Description:
-[2-3 sentences describing what the company does and its market position]
-
-Recent Developments:
-[3-4 bullet points with specific recent news, dates, and developments from the past 30 days]
-
-Summary of Opportunity:
-[2-3 sentences explaining why this matters to investors, using ${sentiment} tone]
-
-Write in under 150 words total. Be factual and concise. No price ranges, intraday data, volume figures, or percentage changes. No investment advice or recommendations.`
+Write the newsletter summary now in plain text format (no markdown, no headers, no bullet points). Follow the 5-section structure but write in flowing paragraphs.`
 
     const reportResponse = await client.chat.completions.create({
       model: "gpt-5",
       messages: [
         {
           role: "system",
-          content: "You are a concise equity research writer for a stock alert newsletter. Write clear, factual company reports in plain text format. Focus on: (1) what the company does, (2) specific recent developments with dates, and (3) why it matters to investors. Match the requested sentiment tone (positive or negative) while staying professional and data-driven. Avoid market data like price ranges, volume, intraday changes, or percentages. No investment advice or price targets."
+          content: "You are a professional equity research writer for a stock newsletter. Write factual, balanced summaries that inform retail and institutional investors. Your writing should be clear, professional, and free of hype or promotional language. Focus on material information: what the company does, recent developments, market conditions, financial data, and forward-looking context. Write in flowing paragraphs without markdown formatting, headers, or bullet points. Maintain objectivity while incorporating the requested sentiment naturally into your analysis."
         },
         {
           role: "user",
