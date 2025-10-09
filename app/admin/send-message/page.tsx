@@ -23,11 +23,10 @@ export default async function SendMessagePage() {
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
 
-  // Get active subscriber count (excluding admin users)
+  // Get active subscriber count
   const activeSubscriptionsResult = await sql`
     SELECT COUNT(*) as count FROM subscriptions s
     WHERE s.status = 'active'
-    AND s.user_id NOT IN (SELECT user_id FROM admin_users)
   `
   const activeSubscriptions = Number(activeSubscriptionsResult[0]?.count || 0)
 
