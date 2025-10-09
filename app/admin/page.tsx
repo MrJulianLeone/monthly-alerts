@@ -5,8 +5,9 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, MousePointerClick } from "lucide-react"
 import Link from "next/link"
+import { getCampaignLeadsCount } from "@/app/actions/campaign"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -41,10 +42,7 @@ export default async function AdminDashboardPage() {
   `
   const totalAlerts = Number(totalAlertsResult[0].count)
 
-  const totalMessagesResult = await sql`
-    SELECT COUNT(*) as count FROM messages
-  `
-  const totalMessages = Number(totalMessagesResult[0].count)
+  const campaignLeads = await getCampaignLeadsCount()
 
   return (
     <div className="min-h-screen bg-background">
@@ -115,15 +113,13 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/messages">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Messages Sent</h3>
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-3xl font-bold">{totalMessages}</p>
-            </Card>
-          </Link>
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Campaign Leads</h3>
+              <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-3xl font-bold">{campaignLeads}</p>
+          </Card>
         </div>
 
         {/* Send Alert Section */}
