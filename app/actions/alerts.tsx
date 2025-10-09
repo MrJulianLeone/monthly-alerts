@@ -53,6 +53,13 @@ export async function sendAlert(formData: FormData) {
     console.log("[SendAlert] Sending emails to", allRecipients.length, "recipients (", subscribers.length, "subscribers +", admins.length, "admins)")
     const subscriberName = subscribers[0]?.first_name || "Subscriber"
     
+    // Format content: convert line breaks to paragraphs for better email readability
+    const formattedContent = content
+      .split('\n\n')
+      .filter(para => para.trim())
+      .map(para => `<p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">${para.replace(/\n/g, '<br>')}</p>`)
+      .join('')
+
     const emailPromises = allRecipients.map((recipient: any) =>
       resend.emails.send({
         from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
@@ -68,9 +75,7 @@ export async function sendAlert(formData: FormData) {
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     
     <div style="margin-bottom: 30px;">
-      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        ${content}
-      </p>
+      ${formattedContent}
     </div>
 
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
@@ -95,14 +100,14 @@ export async function sendAlert(formData: FormData) {
     await Promise.all(emailPromises)
     console.log("[SendAlert] Emails sent successfully")
 
-    // Save alert to database
+    // Save alert to database with total recipients (subscribers + admins)
     await sql`
       INSERT INTO alerts (subject, content, recipient_count, created_by, ticker, company_name, price, sentiment)
-      VALUES (${subject}, ${content}, ${subscribers.length}, ${userId}::uuid, ${ticker}, ${companyName}, ${price}, ${sentiment})
+      VALUES (${subject}, ${content}, ${allRecipients.length}, ${userId}::uuid, ${ticker}, ${companyName}, ${price}, ${sentiment})
     `
 
     console.log("[SendAlert] Alert saved to database")
-    return { success: true, sentTo: subscribers.length }
+    return { success: true, sentTo: allRecipients.length }
   } catch (error: any) {
     console.error("[SendAlert] Error:", error)
     return { error: error.message || "Failed to send alert" }

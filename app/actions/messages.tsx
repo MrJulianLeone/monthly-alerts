@@ -47,6 +47,13 @@ export async function sendMessage(formData: FormData) {
     // Send emails to all recipients
     console.log("[SendMessage] Sending emails to", allRecipients.length, "recipients (", subscribers.length, "subscribers +", admins.length, "admins)")
     
+    // Format content: convert line breaks to paragraphs for better email readability
+    const formattedContent = content
+      .split('\n\n')
+      .filter(para => para.trim())
+      .map(para => `<p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #374151;">${para.replace(/\n/g, '<br>')}</p>`)
+      .join('')
+
     const emailPromises = allRecipients.map((recipient: any) =>
       resend.emails.send({
         from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
@@ -62,9 +69,7 @@ export async function sendMessage(formData: FormData) {
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     
     <div style="margin-bottom: 30px;">
-      <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        ${content}
-      </p>
+      ${formattedContent}
     </div>
 
     <div style="border-top: 1px solid #e5e7eb; padding-top: 20px; margin-top: 30px;">
@@ -89,14 +94,14 @@ export async function sendMessage(formData: FormData) {
     await Promise.all(emailPromises)
     console.log("[SendMessage] Emails sent successfully")
 
-    // Save message to database
+    // Save message to database with total recipients (subscribers + admins)
     await sql`
       INSERT INTO messages (subject, content, recipient_count, created_by)
-      VALUES (${subject}, ${content}, ${subscribers.length}, ${userId}::uuid)
+      VALUES (${subject}, ${content}, ${allRecipients.length}, ${userId}::uuid)
     `
 
     console.log("[SendMessage] Message saved to database")
-    return { success: true, sentTo: subscribers.length }
+    return { success: true, sentTo: allRecipients.length }
   } catch (error: any) {
     console.error("[SendMessage] Error:", error)
     return { error: error.message || "Failed to send message" }
