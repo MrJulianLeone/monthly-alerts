@@ -4,7 +4,14 @@ import { headers } from "next/headers"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export default async function RedditCampaignPage() {
+export default async function CampaignPage({ params }: { params: { id: string } }) {
+  const campaignId = params.id
+
+  // Validate campaign ID is a number
+  if (!/^\d+$/.test(campaignId)) {
+    redirect("/")
+  }
+
   // Get visitor information
   const headersList = headers()
   const ipAddress = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "unknown"
@@ -14,7 +21,7 @@ export default async function RedditCampaignPage() {
   try {
     await sql`
       INSERT INTO campaign_leads (campaign_source, ip_address, user_agent)
-      VALUES ('reddit', ${ipAddress}, ${userAgent})
+      VALUES (${campaignId}, ${ipAddress}, ${userAgent})
     `
   } catch (error) {
     console.error("[Campaign] Error tracking visit:", error)
