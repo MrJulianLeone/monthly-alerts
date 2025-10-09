@@ -7,8 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, MousePointerClick } from "lucide-react"
 import Link from "next/link"
-import { getCampaignLeadsCount, getAllCampaignStats } from "@/app/actions/campaign"
-import AdminCampaignsTable from "@/app/admin/campaigns/admin-campaigns-table"
+import { getCampaignLeadsCount } from "@/app/actions/campaign"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -44,7 +43,6 @@ export default async function AdminDashboardPage() {
   const totalAlerts = Number(totalAlertsResult[0].count)
 
   const campaignLeads = await getCampaignLeadsCount()
-  const campaigns = await getAllCampaignStats()
 
   return (
     <div className="min-h-screen bg-background">
@@ -84,7 +82,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-3 gap-6 mb-8">
+        <div className="grid md:grid-cols-4 gap-6 mb-8">
           <Link href="/admin/users">
             <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
               <div className="flex items-center justify-between mb-2">
@@ -114,11 +112,16 @@ export default async function AdminDashboardPage() {
               <p className="text-3xl font-bold">{totalAlerts}</p>
             </Card>
           </Link>
-        </div>
 
-        {/* Campaign Leads Table */}
-        <div className="mb-8">
-          <AdminCampaignsTable campaigns={campaigns} />
+          <Link href="/admin/campaigns">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Campaign Leads</h3>
+                <MousePointerClick className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{campaignLeads}</p>
+            </Card>
+          </Link>
         </div>
 
         {/* Send Alert Section */}
