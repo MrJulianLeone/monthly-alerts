@@ -9,8 +9,8 @@ export default async function SubscribePage() {
   const session = await getSession()
   if (!session) redirect("/login")
 
-  // Stripe test payment link with pre-filled email
-  const stripePaymentLink = `https://buy.stripe.com/test_4gMcN41Pr5TEe9Ogt6dAk00?prefilled_email=${encodeURIComponent(session.email)}`
+  // Stripe live payment link with pre-filled email
+  const stripePaymentLink = `https://buy.stripe.com/dRm8wPcKi5Zyfdi7xS73G00?prefilled_email=${encodeURIComponent(session.email)}`
 
   return (
     <div className="min-h-screen bg-background">
