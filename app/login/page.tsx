@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TrendingUp } from "lucide-react"
+import { isRedirectError } from "next/dist/client/components/redirect"
 
 export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
@@ -29,6 +30,10 @@ export default function LoginPage() {
       }
       // If successful, the login action will redirect to dashboard
     } catch (err) {
+      // Don't show error for redirect - this is expected behavior
+      if (isRedirectError(err)) {
+        throw err
+      }
       setError("An unexpected error occurred. Please try again.")
       setLoading(false)
     }

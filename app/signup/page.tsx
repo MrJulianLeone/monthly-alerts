@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { TrendingUp } from "lucide-react"
 import { useState } from "react"
+import { isRedirectError } from "next/dist/client/components/redirect"
 
 export default function SignupPage() {
   const [error, setError] = useState<string | null>(null)
@@ -30,6 +31,10 @@ export default function SignupPage() {
         console.log("[v0] Signup successful, redirecting...")
       }
     } catch (err) {
+      // Don't show error for redirect - this is expected behavior
+      if (isRedirectError(err)) {
+        throw err
+      }
       console.log("[v0] Signup exception:", err)
       setError("An unexpected error occurred")
       setLoading(false)
