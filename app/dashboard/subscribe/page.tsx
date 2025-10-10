@@ -44,6 +44,13 @@ export default async function SubscribePage() {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
               <div>
+                <p className="font-medium">First alert is free</p>
+                <p className="text-sm text-muted-foreground">Try before you commit - no charge until after your first alert</p>
+              </div>
+            </div>
+            <div className="flex items-start gap-3">
+              <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
+              <div>
                 <p className="font-medium">Monthly research alerts on interesting companies</p>
                 <p className="text-sm text-muted-foreground">Delivered directly to your inbox</p>
               </div>
