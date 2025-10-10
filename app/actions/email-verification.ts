@@ -42,8 +42,6 @@ export async function sendVerificationEmail(userId: string, email: string, first
   <div style="max-width: 600px; margin: 0 auto; padding: 40px 20px;">
     
     <div style="margin-bottom: 30px;">
-      <h1 style="margin: 0 0 20px 0; font-size: 24px; color: #111827;">Verify Your Email Address</h1>
-      
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
         Hi ${firstName},
       </p>
