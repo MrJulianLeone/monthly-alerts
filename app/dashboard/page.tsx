@@ -112,7 +112,7 @@ export default async function DashboardPage({
 
         <div className="grid md:grid-cols-2 gap-6">
           {/* Subscription Status */}
-          <Card className="p-6">
+          <Card className="p-6 flex flex-col">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold mb-1">Subscription Status</h2>
@@ -132,8 +132,8 @@ export default async function DashboardPage({
             </div>
 
             {isActive ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col flex-grow">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   You have an active subscription. You&apos;ll receive monthly research alerts via email. Check your spam folder for welcome email.
                 </p>
                 <Link href="/dashboard/manage-subscription">
@@ -143,8 +143,8 @@ export default async function DashboardPage({
                 </Link>
               </div>
             ) : hasEverSubscribed ? (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col flex-grow">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   Your subscription has ended. You can still view alerts from when you were subscribed. Resubscribe to receive new alerts.
                 </p>
                 <Link href="/dashboard/subscribe">
@@ -155,8 +155,8 @@ export default async function DashboardPage({
                 </Link>
               </div>
             ) : (
-              <div className="space-y-4">
-                <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col flex-grow">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   Subscribe to receive monthly research alerts about interesting companies.
                 </p>
                 <Link href="/dashboard/subscribe">
@@ -170,7 +170,7 @@ export default async function DashboardPage({
           </Card>
 
           {/* Account Settings */}
-          <Card className="p-6">
+          <Card className="p-6 flex flex-col">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold mb-1">Account Settings</h2>
@@ -179,8 +179,8 @@ export default async function DashboardPage({
               <Settings className="h-5 w-5 text-muted-foreground" />
             </div>
 
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
+            <div className="flex flex-col flex-grow">
+              <div className="grid grid-cols-2 gap-4 mb-4 flex-grow">
                 <div>
                   <p className="text-xs text-muted-foreground mb-1">Email</p>
                   <p className="text-sm font-medium">{session.email}</p>
