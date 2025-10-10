@@ -5,9 +5,11 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, MousePointerClick } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus } from "lucide-react"
 import Link from "next/link"
-import { getCampaignLeadsCount } from "@/app/actions/campaign"
+import { getAllCampaignStats } from "@/app/actions/campaign"
+import AdminCampaignsTable from "./campaigns/admin-campaigns-table"
+import AdminDashboardMessagesCard from "./admin-dashboard-messages-card"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -42,7 +44,20 @@ export default async function AdminDashboardPage() {
   `
   const totalAlerts = Number(totalAlertsResult[0].count)
 
-  const campaignLeads = await getCampaignLeadsCount()
+  const totalMessagesResult = await sql`
+    SELECT COUNT(*) as count FROM messages
+  `
+  const totalMessages = Number(totalMessagesResult[0].count)
+
+  // Fetch all messages for the messages table
+  const messages = await sql`
+    SELECT id, subject, content, sent_at, recipient_count
+    FROM messages
+    ORDER BY sent_at DESC
+  `
+
+  // Fetch campaign stats for the campaign leads table
+  const campaigns = await getAllCampaignStats()
 
   return (
     <div className="min-h-screen bg-background">
@@ -113,15 +128,7 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <Link href="/admin/campaigns">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Campaign Leads</h3>
-                <MousePointerClick className="h-4 w-4 text-muted-foreground" />
-              </div>
-              <p className="text-3xl font-bold">{campaignLeads}</p>
-            </Card>
-          </Link>
+          <AdminDashboardMessagesCard totalMessages={totalMessages} messages={messages as any[]} />
         </div>
 
         {/* Send Alert Section */}
@@ -177,6 +184,9 @@ export default async function AdminDashboardPage() {
             </Link>
           </div>
         </Card>
+
+        {/* Campaign Leads Table */}
+        <AdminCampaignsTable campaigns={campaigns} />
       </div>
     </div>
   )
