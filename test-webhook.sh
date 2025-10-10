@@ -29,3 +29,4 @@ echo ""
 echo "Next step: Create a real subscription to test the full flow"
 echo "Visit: https://monthlyalerts.com/dashboard/subscribe"
 
+
