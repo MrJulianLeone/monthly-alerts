@@ -195,11 +195,16 @@ export default async function HomePage() {
             <Shield className="h-5 w-5 text-muted-foreground shrink-0 mt-0.5" />
             <div>
               <h3 className="font-semibold mb-2">Important Disclaimer</h3>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-3">
                 MonthlyAlerts.com provides informational content only and is not investment advice. All investment
                 decisions should be made based on your own research and consultation with qualified financial advisors.
                 Past performance does not guarantee future results. Investing carries risk, including the
                 potential loss of principal.
+              </p>
+              <p className="text-sm text-muted-foreground">
+                MonthlyAlerts.com does not accept any marketing or promotion incentives from the companies that we highlight.
+                In certain instances we may purchase shares of publicly traded companies after our alerts are issued so that 
+                our interests align with the interests of our subscribers.
               </p>
             </div>
           </div>
