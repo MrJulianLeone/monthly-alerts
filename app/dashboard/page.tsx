@@ -136,27 +136,23 @@ export default async function DashboardPage({
                 <p className="text-sm text-muted-foreground">
                   You have an active subscription. You&apos;ll receive monthly research alerts via email. Check your spam folder for welcome email.
                 </p>
-                <div className="flex gap-3">
-                  <Link href="/dashboard/manage-subscription" className="flex-1">
-                    <Button variant="outline" className="w-full">
-                      Manage Subscription
-                    </Button>
-                  </Link>
-                </div>
+                <Link href="/dashboard/manage-subscription">
+                  <Button variant="outline" size="lg" className="w-full">
+                    Manage Subscription
+                  </Button>
+                </Link>
               </div>
             ) : hasEverSubscribed ? (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
                   Your subscription has ended. You can still view alerts from when you were subscribed. Resubscribe to receive new alerts.
                 </p>
-                <div className="flex gap-3">
-                  <Link href="/dashboard/subscribe" className="flex-1">
-                    <Button size="lg" className="w-full">
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Resubscribe - $29.99/month + tax
-                    </Button>
-                  </Link>
-                </div>
+                <Link href="/dashboard/subscribe">
+                  <Button size="lg" className="w-full">
+                    <CreditCard className="h-4 w-4 mr-2" />
+                    Resubscribe - $29.99/month + tax
+                  </Button>
+                </Link>
               </div>
             ) : (
               <div className="space-y-4">
@@ -195,7 +191,7 @@ export default async function DashboardPage({
                 </div>
               </div>
               <Link href="/dashboard/settings">
-                <Button variant="outline" className="w-full">
+                <Button variant="outline" size="lg" className="w-full">
                   Edit Profile & Change Password
                 </Button>
               </Link>
