@@ -131,59 +131,27 @@ export default async function AdminDashboardPage() {
           <AdminDashboardMessagesCard totalMessages={totalMessages} messages={messages as any[]} />
         </div>
 
-        {/* Send Alert Section */}
-        <Card className="p-6 mb-6 bg-primary/5 border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-1">Send Monthly Alert</h2>
-              <p className="text-sm text-muted-foreground">
-                Generate a research alert to send to all {activeSubscriptions} active subscribers
-              </p>
-            </div>
-            <Link href="/admin/send-alert">
-              <Button>
-                <Send className="h-4 w-4 mr-2" />
-                Compose Alert
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        {/* Send Message Section */}
-        <Card className="p-6 mb-6 bg-primary/5 border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-1">Send Message to Subscribers</h2>
-              <p className="text-sm text-muted-foreground">
-                Compose and send a custom message to all {activeSubscriptions} active subscribers
-              </p>
-            </div>
-            <Link href="/admin/send-message">
-              <Button>
-                <MessageSquare className="h-4 w-4 mr-2" />
-                Compose Message
-              </Button>
-            </Link>
-          </div>
-        </Card>
-
-        {/* Add User to Subscriber List Section */}
-        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-semibold mb-1">Add User to Subscriber List</h2>
-              <p className="text-sm text-muted-foreground">
-                Manually add verified users to the subscriber list without requiring a Stripe subscription
-              </p>
-            </div>
-            <Link href="/admin/add-subscriber">
-              <Button>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Add Subscriber
-              </Button>
-            </Link>
-          </div>
-        </Card>
+        {/* Quick Actions */}
+        <div className="flex flex-wrap gap-4 mb-8">
+          <Link href="/admin/send-alert">
+            <Button>
+              <Send className="h-4 w-4 mr-2" />
+              Send Monthly Alert
+            </Button>
+          </Link>
+          <Link href="/admin/send-message">
+            <Button>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Send Message to Subscribers
+            </Button>
+          </Link>
+          <Link href="/admin/add-subscriber">
+            <Button>
+              <UserPlus className="h-4 w-4 mr-2" />
+              Add User to Subscriber List
+            </Button>
+          </Link>
+        </div>
 
         {/* Campaign Leads Table */}
         <AdminCampaignsTable campaigns={campaigns} />
