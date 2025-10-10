@@ -35,7 +35,7 @@ export default async function SubscribePage() {
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold mb-4">Subscribe to MonthlyAlerts</h1>
             <p className="text-muted-foreground mb-2">
-              Get monthly AI-curated alerts about fast-growing stock opportunities
+              Discover interesting companies through AI-powered research alerts
             </p>
             <p className="text-3xl font-bold text-primary mb-6">$29.99<span className="text-lg font-normal">/month + tax</span></p>
           </div>
@@ -44,7 +44,7 @@ export default async function SubscribePage() {
             <div className="flex items-start gap-3">
               <CheckCircle className="h-5 w-5 text-green-600 mt-0.5 shrink-0" />
               <div>
-                <p className="font-medium">Monthly AI-curated stock alerts</p>
+                <p className="font-medium">Monthly research alerts on interesting companies</p>
                 <p className="text-sm text-muted-foreground">Delivered directly to your inbox</p>
               </div>
             </div>

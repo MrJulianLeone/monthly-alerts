@@ -134,7 +134,7 @@ export default async function DashboardPage({
             {isActive ? (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  You have an active subscription. You&apos;ll receive monthly AI-curated stock alerts via email. Check your spam folder for welcome email.
+                  You have an active subscription. You&apos;ll receive monthly research alerts via email. Check your spam folder for welcome email.
                 </p>
                 <div className="flex gap-3">
                   <Link href="/dashboard/manage-subscription" className="flex-1">
@@ -161,7 +161,7 @@ export default async function DashboardPage({
             ) : (
               <div className="space-y-4">
                 <p className="text-sm text-muted-foreground">
-                  Subscribe to receive monthly AI-curated alerts about fast-growing stock opportunities.
+                  Subscribe to receive monthly research alerts about interesting companies.
                 </p>
                 <Link href="/dashboard/subscribe">
                   <Button size="lg" className="w-full">

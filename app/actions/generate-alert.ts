@@ -60,7 +60,7 @@ export async function generateAlert(
     // Step 2: Write newsletter using GPT-5
     console.log("[GenerateAlert] Step 2: Writing alert with GPT-5...")
     
-    const reportPrompt = `You are writing a professional stock newsletter summary for retail and institutional readers.
+    const reportPrompt = `You are writing a professional company research summary for retail and institutional readers.
 
 Use this exact structure:
 1. Company Overview
@@ -91,7 +91,7 @@ Write the newsletter summary now in plain text format (no markdown, no headers, 
       messages: [
         {
           role: "system",
-          content: "You are a professional equity research writer for a stock newsletter. Write factual, balanced summaries that inform retail and institutional investors. Your writing should be clear, professional, and free of hype or promotional language. Focus on material information: what the company does, recent developments, market conditions, financial data, and forward-looking context. Write in flowing paragraphs without markdown formatting, headers, or bullet points. Maintain objectivity while incorporating the requested sentiment naturally into your analysis."
+          content: "You are a professional equity research writer for a company research newsletter. Write factual, balanced summaries that inform retail and institutional investors. Your writing should be clear, professional, and free of hype or promotional language. Focus on material information: what the company does, recent developments, market conditions, financial data, and forward-looking context. Write in flowing paragraphs without markdown formatting, headers, or bullet points. Maintain objectivity while incorporating the requested sentiment naturally into your analysis."
         },
         {
           role: "user",

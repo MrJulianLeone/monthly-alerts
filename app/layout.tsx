@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "MonthlyAlerts.com",
-  description: "Get monthly AI-curated alerts about emerging stock opportunities",
+  description: "Discover interesting companies through AI-powered research alerts delivered monthly",
   generator: 'v0.app',
   icons: {
     icon: [

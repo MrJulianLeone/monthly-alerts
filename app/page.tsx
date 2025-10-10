@@ -117,7 +117,7 @@ export default async function HomePage() {
             </div>
             <h3 className="font-semibold text-lg mb-2">Register Free</h3>
             <p className="text-muted-foreground text-sm">
-              Create your account to receive your first stock alert completely free. No credit card required.
+              Create your account to receive your first research alert completely free. No credit card required.
             </p>
           </div>
           <div className="text-center">
@@ -198,7 +198,7 @@ export default async function HomePage() {
               <p className="text-sm text-muted-foreground">
                 MonthlyAlerts.com provides informational content only and is not investment advice. All investment
                 decisions should be made based on your own research and consultation with qualified financial advisors.
-                Past performance does not guarantee future results. Investing in stocks carries risk, including the
+                Past performance does not guarantee future results. Investing carries risk, including the
                 potential loss of principal.
               </p>
             </div>

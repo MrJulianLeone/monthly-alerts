@@ -29,7 +29,7 @@ export async function sendWelcomeEmail(email: string, firstName: string, lastNam
         Thanks for joining MonthlyAlerts.com! You're now part of our community of curious investors who love discovering interesting companies.
       </p>
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        Our newsletter comes at least once a month, sometimes more often when opportunities arise. Each report blends fundamental and technical analysis to give you a clear, well-rounded view of the stocks we review.
+        Our newsletter comes at least once a month, sometimes more often when opportunities arise. Each report blends fundamental and technical analysis to give you a clear, well-rounded view of the companies we research.
       </p>
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
         Please note: our content is for educational purposes only and is not investment advice.

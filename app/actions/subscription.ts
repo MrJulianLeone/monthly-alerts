@@ -38,7 +38,7 @@ export async function createCheckoutSession(userId: string, userEmail: string) {
             currency: "usd",
             product_data: {
               name: "MonthlyAlerts Subscription",
-              description: "Monthly AI-curated stock alerts",
+              description: "Monthly research alerts on interesting companies",
             },
             unit_amount: 2999, // $29.99
             recurring: { interval: "month" },

@@ -72,7 +72,7 @@ export default async function AlertsListPage() {
         <div className="mb-8">
           <h1 className="text-3xl font-bold mb-2">Alerts History</h1>
           <p className="text-muted-foreground">
-            Manage all stock alerts sent to subscribers
+            Manage all research alerts sent to subscribers
           </p>
         </div>
 

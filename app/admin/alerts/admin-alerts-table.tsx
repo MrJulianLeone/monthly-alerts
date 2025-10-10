@@ -65,7 +65,7 @@ export default function AdminAlertsTable({ alerts }: AdminAlertsTableProps) {
           <div>
             <h2 className="text-xl font-semibold mb-1">Sent Alerts</h2>
             <p className="text-sm text-muted-foreground">
-              Manage all stock alerts sent to subscribers
+              Manage all research alerts sent to subscribers
             </p>
           </div>
           <Badge variant="outline" className="text-xs">

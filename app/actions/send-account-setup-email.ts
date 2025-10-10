@@ -42,7 +42,7 @@ export async function sendAccountSetupEmail(userId: string, email: string) {
       <h1 style="margin: 0 0 20px 0; font-size: 24px; color: #111827;">Welcome to MonthlyAlerts.com!</h1>
       
       <p style="margin: 0 0 15px 0; font-size: 14px; line-height: 1.6; color: #374151;">
-        You've been added to MonthlyAlerts.com by an administrator. Complete your account setup to access your subscription and start receiving monthly AI-curated stock alerts.
+        You've been added to MonthlyAlerts.com by an administrator. Complete your account setup to access your subscription and start receiving monthly research alerts about interesting companies.
       </p>
 
       <div style="margin: 30px 0;">

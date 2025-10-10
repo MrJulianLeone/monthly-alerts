@@ -130,7 +130,7 @@ export default async function AdminDashboardPage() {
             <div>
               <h2 className="text-xl font-semibold mb-1">Send Monthly Alert</h2>
               <p className="text-sm text-muted-foreground">
-                Generate an AI-powered stock alert to send to all {activeSubscriptions} active subscribers
+                Generate a research alert to send to all {activeSubscriptions} active subscribers
               </p>
             </div>
             <Link href="/admin/send-alert">
