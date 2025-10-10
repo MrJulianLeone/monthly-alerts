@@ -75,15 +75,21 @@ export async function setupAccount(formData: FormData) {
     const fullName = `${firstName} ${lastName}`
 
     // Update user account with name and password
-    await sql`
+    const updateResult = await sql`
       UPDATE users
       SET password_hash = ${hashedPassword},
           first_name = ${firstName},
           last_name = ${lastName},
           name = ${fullName},
           updated_at = NOW()
-      WHERE id = ${userId}::uuid
+      WHERE id = ${userId}
+      RETURNING id
     `
+    
+    if (updateResult.length === 0) {
+      console.error("[AccountSetup] Failed to update user - user not found:", userId)
+      return { error: "User account not found. Please contact support." }
+    }
 
     // Mark token as used
     await sql`
