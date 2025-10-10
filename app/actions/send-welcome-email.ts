@@ -11,7 +11,7 @@ export async function sendWelcomeEmail(email: string, firstName: string, lastNam
     await resend.emails.send({
       from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
       to: email,
-      subject: "Welcome to MonthlyAlerts.com!",
+      subject: "Welcome!",
       html: `<!DOCTYPE html>
 <html>
 <head>

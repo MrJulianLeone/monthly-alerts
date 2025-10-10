@@ -28,7 +28,7 @@ export async function sendAccountSetupEmail(userId: string, email: string) {
     await resend.emails.send({
       from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
       to: email,
-      subject: "Complete Your MonthlyAlerts.com Account Setup",
+      subject: "Complete Your Account Setup",
       html: `<!DOCTYPE html>
 <html>
 <head>

@@ -31,7 +31,7 @@ export async function sendVerificationEmail(userId: string, email: string, first
     await resend.emails.send({
       from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
       to: email,
-      subject: "Verify Your Email Address - MonthlyAlerts.com",
+      subject: "Verify Your Email Address",
       html: `<!DOCTYPE html>
 <html>
 <head>

@@ -65,7 +65,7 @@ export async function requestPasswordReset(formData: FormData) {
     await resend.emails.send({
       from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
       to: email,
-      subject: "Reset Your Password - MonthlyAlerts.com",
+      subject: "Reset Your Password",
       html: `<!DOCTYPE html>
 <html>
 <head>

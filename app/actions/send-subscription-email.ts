@@ -11,7 +11,7 @@ export async function sendSubscriptionEmail(email: string, firstName: string, la
     await resend.emails.send({
       from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
       to: email,
-      subject: "Thank You for Subscribing to MonthlyAlerts.com!",
+      subject: "Thank You for Subscribing!",
       html: `<!DOCTYPE html>
 <html>
 <head>

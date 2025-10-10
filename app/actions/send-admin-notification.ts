@@ -57,7 +57,7 @@ export async function sendAdminNotification(
       resend.emails.send({
         from: "MonthlyAlerts.com <no-reply@alerts.monthlyalerts.com>",
         to: admin.email,
-        subject: "🎉 New Subscription - MonthlyAlerts.com",
+        subject: "🎉 New Subscription",
         html: `<!DOCTYPE html>
 <html>
 <head>

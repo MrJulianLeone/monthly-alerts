@@ -111,7 +111,7 @@ Write the newsletter summary now in plain text format (no markdown, no headers, 
     // Success!
     console.log("[GenerateAlert] Step 2 complete: Alert generated successfully with GPT-5")
     
-    const sentimentLabel = sentiment === "positive" ? "Positive Alert" : "Negative Alert"
+    const sentimentLabel = sentiment === "positive" ? "Positive" : "Negative"
     const subject = `${company} (${ticker}) - ${sentimentLabel}`
 
     return {
