@@ -50,21 +50,45 @@ export async function signup(formData: FormData) {
     await createSession(user.id)
     console.log("[v0] Session created successfully")
 
-    // Send email verification
-    console.log("[v0] Sending verification email...")
-    const { sendVerificationEmail } = await import("./email-verification")
-    await sendVerificationEmail(user.id, email, firstName)
-    console.log("[v0] Verification email sent")
+    // Send email verification (don't block signup if this fails)
+    try {
+      console.log("[v0] Sending verification email...")
+      const { sendVerificationEmail } = await import("./email-verification")
+      const emailResult = await sendVerificationEmail(user.id, email, firstName)
+      if (emailResult?.error) {
+        console.error("[v0] Verification email failed:", emailResult.error)
+      } else {
+        console.log("[v0] Verification email sent")
+      }
+    } catch (emailError: any) {
+      console.error("[v0] Failed to send verification email:", emailError)
+      // Continue anyway - user can resend verification later
+    }
 
     redirect("/dashboard?verify=pending")
   } catch (error: any) {
-    console.log("[v0] Signup error:", error)
+    console.error("[v0] Signup error:", error)
+    console.error("[v0] Error details:", {
+      message: error?.message,
+      code: error?.code,
+      stack: error?.stack
+    })
 
     if (error?.message?.includes("duplicate key") || error?.message?.includes("users_email_key")) {
       return { error: "An account with this email already exists. Please login instead." }
     }
 
-    return { error: "Signup failed. Please try again." }
+    // Provide more specific error messages based on the error type
+    if (error?.message?.includes("DATABASE")) {
+      return { error: "Database connection error. Please try again in a moment." }
+    }
+
+    if (error?.message?.includes("network") || error?.message?.includes("ECONNREFUSED")) {
+      return { error: "Connection error. Please check your internet connection and try again." }
+    }
+
+    // Log the actual error for debugging
+    return { error: `Signup failed: ${error?.message || 'Unknown error'}. Please try again.` }
   }
 }
 
