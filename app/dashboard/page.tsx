@@ -110,9 +110,9 @@ export default async function DashboardPage({
           </Card>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6">
+        <div className="grid md:grid-cols-2 gap-6 md:items-stretch">
           {/* Subscription Status */}
-          <Card className="p-6 flex flex-col">
+          <Card className="p-6 flex flex-col h-full">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold mb-1">Subscription Status</h2>
@@ -170,7 +170,7 @@ export default async function DashboardPage({
           </Card>
 
           {/* Account Settings */}
-          <Card className="p-6 flex flex-col">
+          <Card className="p-6 flex flex-col h-full">
             <div className="flex items-start justify-between mb-4">
               <div>
                 <h2 className="text-xl font-semibold mb-1">Account Settings</h2>
