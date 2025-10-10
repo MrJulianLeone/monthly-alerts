@@ -9,7 +9,6 @@ import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus } from "
 import Link from "next/link"
 import { getAllCampaignStats } from "@/app/actions/campaign"
 import AdminCampaignsTable from "./campaigns/admin-campaigns-table"
-import AdminDashboardMessagesCard from "./admin-dashboard-messages-card"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -48,13 +47,6 @@ export default async function AdminDashboardPage() {
     SELECT COUNT(*) as count FROM messages
   `
   const totalMessages = Number(totalMessagesResult[0].count)
-
-  // Fetch all messages for the messages table
-  const messages = await sql`
-    SELECT id, subject, content, sent_at, recipient_count
-    FROM messages
-    ORDER BY sent_at DESC
-  `
 
   // Fetch campaign stats for the campaign leads table
   const campaigns = await getAllCampaignStats()
@@ -128,7 +120,15 @@ export default async function AdminDashboardPage() {
             </Card>
           </Link>
 
-          <AdminDashboardMessagesCard totalMessages={totalMessages} messages={messages as any[]} />
+          <Link href="/admin/messages">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Messages Sent</h3>
+                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{totalMessages}</p>
+            </Card>
+          </Link>
         </div>
 
         {/* Quick Actions */}

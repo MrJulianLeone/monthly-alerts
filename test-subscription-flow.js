@@ -183,19 +183,68 @@ async function runTests() {
     customerId = customer.id;
     recordTest('Stripe Customer Creation', true, `Customer ID: ${customerId}`);
 
-    // STEP 3: Create Subscription
-    header('STEP 3: Creating Subscription');
+    // Add test payment method to customer (using Stripe test token)
+    log('  Adding test payment method...', 'blue');
+    const testPaymentMethodId = 'pm_card_visa'; // Stripe's test payment method token
+
+    const attachResponse = await stripeRequest(`payment_methods/${testPaymentMethodId}/attach`, 'POST', {
+      customer: customerId,
+    });
+
+    if (attachResponse.error) {
+      log(`Attach Error: ${JSON.stringify(attachResponse, null, 2)}`, 'red');
+      throw new Error('Failed to attach payment method');
+    }
+
+    const updateCustomer = await stripeRequest(`customers/${customerId}`, 'POST', {
+      'invoice_settings[default_payment_method]': testPaymentMethodId,
+    });
+
+    if (updateCustomer.error) {
+      log(`Customer Update Error: ${JSON.stringify(updateCustomer, null, 2)}`, 'red');
+      throw new Error('Failed to set default payment method');
+    }
+
+    log('  ✓ Test payment method attached', 'green');
+
+    // STEP 3: Create Product and Price
+    header('STEP 3: Creating Product and Price');
+
+    const product = await stripeRequest('products', 'POST', {
+      name: 'MonthlyAlerts Test Subscription',
+    });
+
+    if (!product.id) {
+      log(`Product Error: ${JSON.stringify(product, null, 2)}`, 'red');
+      throw new Error('Failed to create product');
+    }
+
+    const price = await stripeRequest('prices', 'POST', {
+      product: product.id,
+      unit_amount: '2999',
+      currency: 'usd',
+      'recurring[interval]': 'month',
+    });
+
+    if (!price.id) {
+      log(`Price Error: ${JSON.stringify(price, null, 2)}`, 'red');
+      throw new Error('Failed to create price');
+    }
+
+    log(`  Product ID: ${product.id}`, 'blue');
+    log(`  Price ID: ${price.id}`, 'blue');
+
+    // STEP 4: Create Subscription
+    header('STEP 4: Creating Subscription');
 
     const subscription = await stripeRequest('subscriptions', 'POST', {
       customer: customerId,
-      'items[0][price_data][currency]': 'usd',
-      'items[0][price_data][product_data][name]': 'MonthlyAlerts Subscription',
-      'items[0][price_data][recurring][interval]': 'month',
-      'items[0][price_data][unit_amount]': '2999',
+      'items[0][price]': price.id,
     });
 
     if (!subscription.id) {
-      throw new Error('Failed to create subscription');
+      log(`Stripe Error Response: ${JSON.stringify(subscription, null, 2)}`, 'red');
+      throw new Error(`Failed to create subscription: ${subscription.error?.message || 'Unknown error'}`);
     }
 
     subscriptionId = subscription.id;
@@ -226,8 +275,8 @@ async function runTests() {
 
     recordTest('Database Subscription Record', true);
 
-    // STEP 4: Cancel Subscription (set cancel_at_period_end)
-    header('STEP 4: Cancelling Subscription (cancel_at_period_end)');
+    // STEP 5: Cancel Subscription (set cancel_at_period_end)
+    header('STEP 5: Cancelling Subscription (cancel_at_period_end)');
 
     const cancelUpdate = await stripeRequest(`subscriptions/${subscriptionId}`, 'POST', {
       cancel_at_period_end: 'true',
@@ -258,8 +307,8 @@ async function runTests() {
       `Database cancel_at_period_end: ${dbCancelCheck}`
     );
 
-    // STEP 5: Simulate Period End (Immediate Cancel)
-    header('STEP 5: Simulating Period End');
+    // STEP 6: Simulate Period End (Immediate Cancel)
+    header('STEP 6: Simulating Period End');
 
     const finalCancel = await stripeRequest(`subscriptions/${subscriptionId}`, 'DELETE');
 
@@ -288,8 +337,8 @@ async function runTests() {
       `Final status: ${finalDbStatus}`
     );
 
-    // STEP 6: Final Verification
-    header('STEP 6: Final Verification');
+    // STEP 7: Final Verification
+    header('STEP 7: Final Verification');
 
     const stripeVerify = await stripeRequest(`subscriptions/${subscriptionId}`, 'GET');
     const dbVerify = dbQuery(`
