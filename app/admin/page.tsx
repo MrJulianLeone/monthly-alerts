@@ -153,6 +153,23 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
 
+        {/* Campaign Tracking Reference */}
+        <Card className="p-4 mb-6 bg-muted/30">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-medium mb-1">Campaign Tracking URL</h3>
+              <code className="text-xs text-muted-foreground">
+                /admin/campaigns
+              </code>
+            </div>
+            <Link href="/admin/campaigns">
+              <Button variant="outline" size="sm">
+                View Full Campaign Tracking
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
         {/* Campaign Leads Table */}
         <AdminCampaignsTable campaigns={campaigns} />
       </div>
