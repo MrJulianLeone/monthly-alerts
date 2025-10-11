@@ -153,34 +153,14 @@ export default async function AdminDashboardPage() {
           </Link>
         </div>
 
-        {/* Campaign Tracking Reference */}
-        <Card className="p-4 mb-6 bg-muted/30">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex-1">
-              <h3 className="text-sm font-semibold mb-2">Campaign Tracking URLs</h3>
-              <div className="space-y-2">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-1">Use this URL format for ads/marketing:</p>
-                  <code className="text-xs bg-background px-2 py-1 rounded border">
-                    https://monthlyalerts.com/campaign/[ID]
-                  </code>
-                </div>
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Example: <code className="bg-background px-1 py-0.5 rounded text-xs">monthlyalerts.com/campaign/1</code>
-                  </p>
-                </div>
-              </div>
-            </div>
-            <Link href="/admin/campaigns">
-              <Button variant="outline" size="sm" className="whitespace-nowrap">
-                View Campaign Analytics
-              </Button>
-            </Link>
-          </div>
-        </Card>
+        {/* Campaign Leads */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-2">Campaign Leads</h2>
+          <p className="text-sm text-muted-foreground">
+            URL: <code className="text-xs bg-muted px-2 py-1 rounded">https://monthlyalerts.com/campaign/[ID]</code>
+          </p>
+        </div>
 
-        {/* Campaign Leads Table */}
         <AdminCampaignsTable campaigns={campaigns} />
       </div>
     </div>
