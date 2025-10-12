@@ -18,6 +18,10 @@ async function isAdmin(userId: string): Promise<boolean> {
   return result.length > 0
 }
 
+// Force dynamic rendering and no caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default async function CampaignsPage() {
   const session = await getSession()
   if (!session) redirect("/login")
