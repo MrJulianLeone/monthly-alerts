@@ -52,7 +52,7 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
             <thead>
               <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
                 <th className="pb-3 pr-4">Campaign ID</th>
-                <th className="pb-3 pr-4">Campaign URL</th>
+                <th className="pb-3 pr-4 hidden md:table-cell">Campaign URL</th>
                 <th className="pb-3 pr-4">Total Hits</th>
                 <th className="pb-3">Last Visit</th>
               </tr>
@@ -65,7 +65,7 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
                       #{campaign.campaign_source}
                     </span>
                   </td>
-                  <td className="py-4 pr-4 text-sm">
+                  <td className="py-4 pr-4 text-sm hidden md:table-cell">
                     <code className="text-xs bg-muted px-2 py-1 rounded">
                       monthlyalerts.com/campaign/{campaign.campaign_source}
                     </code>
