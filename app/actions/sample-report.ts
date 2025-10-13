@@ -78,7 +78,8 @@ export async function uploadSampleReport(formData: FormData) {
     return { success: true, message: "Sample report uploaded successfully" }
   } catch (error) {
     console.error("Error uploading sample report:", error)
-    return { error: "Failed to upload sample report" }
+    const errorMessage = error instanceof Error ? error.message : "Failed to upload sample report"
+    return { error: `Upload failed: ${errorMessage}` }
   }
 }
 
@@ -117,7 +118,8 @@ export async function deleteSampleReport(reportId: string) {
     return { success: true, message: "Sample report deleted successfully" }
   } catch (error) {
     console.error("Error deleting sample report:", error)
-    return { error: "Failed to delete sample report" }
+    const errorMessage = error instanceof Error ? error.message : "Failed to delete sample report"
+    return { error: `Delete failed: ${errorMessage}` }
   }
 }
 
