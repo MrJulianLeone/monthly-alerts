@@ -20,6 +20,19 @@ This feature allows admins to upload a sample PDF report that will be displayed 
 - **Conditional Display**: Only shows when a sample report exists
 - **Auto-Hide**: Automatically hidden when admin deletes the report
 
+## Prerequisites
+
+### Vercel Blob Storage
+
+This feature requires Vercel Blob storage for file uploads (since Vercel's serverless functions don't have persistent filesystem access).
+
+1. Go to your Vercel project dashboard
+2. Navigate to Storage tab
+3. Create a Blob store (if not already created)
+4. Vercel will automatically add the `BLOB_READ_WRITE_TOKEN` environment variable
+
+No additional configuration needed - the token is automatically available to your functions.
+
 ## Database Migration
 
 ### Option 1: Run via API (Recommended for Production)
@@ -71,9 +84,10 @@ psql "$DATABASE_URL" -f scripts/012_create_sample_reports_table.sql
 ## Technical Details
 
 ### File Storage
-- PDFs stored in `/public/uploads/` directory
+- PDFs stored in Vercel Blob storage (cloud storage)
 - Filenames formatted as: `sample-monthly-alert-{timestamp}.pdf`
-- Accessible via public URL: `/uploads/{filename}`
+- Accessible via Vercel Blob public URL (e.g., `https://xxxxx.public.blob.vercel-storage.com/sample-monthly-alert-xxx.pdf`)
+- Files are automatically distributed via CDN for fast global access
 
 ### Database Schema
 ```sql
@@ -102,7 +116,7 @@ CREATE TABLE sample_reports (
 ## Files Modified/Created
 
 ### New Files
-- `app/actions/sample-report.ts` - Server actions
+- `app/actions/sample-report.ts` - Server actions using Vercel Blob
 - `app/admin/upload-sample-report/page.tsx` - Upload page
 - `app/admin/upload-sample-report/upload-sample-report-form.tsx` - Upload form
 - `app/api/migrate-sample-reports/route.ts` - Migration API
@@ -111,6 +125,7 @@ CREATE TABLE sample_reports (
 ### Modified Files
 - `app/admin/page.tsx` - Added upload button and report display
 - `app/page.tsx` - Added sample report link in "How It Works" section
+- `package.json` - Added `@vercel/blob` dependency
 
 ## Security
 

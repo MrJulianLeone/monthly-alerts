@@ -3,9 +3,7 @@
 import { neon } from "@neondatabase/serverless"
 import { getSession } from "@/lib/auth"
 import { redirect } from "next/navigation"
-import { writeFile, unlink, mkdir } from "fs/promises"
-import { join } from "path"
-import { existsSync } from "fs"
+import { put, del } from "@vercel/blob"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -49,42 +47,32 @@ export async function uploadSampleReport(formData: FormData) {
       SELECT * FROM sample_reports ORDER BY uploaded_at DESC
     `
 
-    // Delete old files from filesystem
+    // Delete old files from Vercel Blob
     for (const report of existingReports) {
       try {
-        const oldFilePath = join(process.cwd(), "public", report.file_path)
-        if (existsSync(oldFilePath)) {
-          await unlink(oldFilePath)
-        }
+        await del(report.file_path)
       } catch (error) {
-        console.error("Error deleting old file:", error)
+        console.error("Error deleting old blob:", error)
       }
     }
 
     // Delete old records from database
     await sql`DELETE FROM sample_reports`
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), "public", "uploads")
-    if (!existsSync(uploadsDir)) {
-      await mkdir(uploadsDir, { recursive: true })
-    }
-
     // Generate unique filename
     const timestamp = Date.now()
     const filename = `sample-monthly-alert-${timestamp}.pdf`
-    const filePath = join(uploadsDir, filename)
     
-    // Convert file to buffer and write to filesystem
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    await writeFile(filePath, buffer)
+    // Upload to Vercel Blob
+    const blob = await put(filename, file, {
+      access: "public",
+      addRandomSuffix: false,
+    })
 
     // Save to database
-    const publicPath = `/uploads/${filename}`
     await sql`
       INSERT INTO sample_reports (filename, file_path, uploaded_by)
-      VALUES (${file.name}, ${publicPath}, ${session.user_id}::uuid)
+      VALUES (${file.name}, ${blob.url}, ${session.user_id}::uuid)
     `
 
     return { success: true, message: "Sample report uploaded successfully" }
@@ -116,14 +104,11 @@ export async function deleteSampleReport(reportId: string) {
 
     const report = reportResult[0]
 
-    // Delete file from filesystem
+    // Delete file from Vercel Blob
     try {
-      const filePath = join(process.cwd(), "public", report.file_path)
-      if (existsSync(filePath)) {
-        await unlink(filePath)
-      }
+      await del(report.file_path)
     } catch (error) {
-      console.error("Error deleting file:", error)
+      console.error("Error deleting blob:", error)
     }
 
     // Delete from database
