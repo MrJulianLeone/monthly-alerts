@@ -1,11 +1,13 @@
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
-import { TrendingUp, Mail, Sparkles, Shield, Clock, BarChart3 } from "lucide-react"
+import { TrendingUp, Mail, Sparkles, Shield, Clock, BarChart3, FileText } from "lucide-react"
 import { getSession } from "@/lib/auth"
+import { getCurrentSampleReport } from "@/app/actions/sample-report"
 
 export default async function HomePage() {
   const session = await getSession()
+  const sampleReport = await getCurrentSampleReport()
 
   return (
     <div className="min-h-screen bg-background">
@@ -139,6 +141,31 @@ export default async function HomePage() {
             </p>
           </div>
         </div>
+        
+        {/* Sample Report Link */}
+        {sampleReport && (
+          <div className="max-w-2xl mx-auto mt-12 text-center">
+            <Card className="p-6 bg-accent/5">
+              <div className="flex flex-col items-center gap-4">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">See a Sample MonthlyAlert</h3>
+                  <p className="text-muted-foreground text-sm mb-4">
+                    Download and review a sample of our research alerts to see the quality of insights you&apos;ll receive.
+                  </p>
+                  <Link href={sampleReport.file_path} target="_blank">
+                    <Button variant="outline">
+                      <FileText className="h-4 w-4 mr-2" />
+                      View Sample Report (PDF)
+                    </Button>
+                  </Link>
+                </div>
+              </div>
+            </Card>
+          </div>
+        )}
       </section>
 
       {/* Pricing */}

@@ -5,10 +5,11 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, Upload, FileText, Trash2 } from "lucide-react"
 import Link from "next/link"
 import { getAllCampaignStats } from "@/app/actions/campaign"
 import AdminCampaignsTable from "./campaigns/admin-campaigns-table"
+import { getCurrentSampleReport, deleteSampleReport } from "@/app/actions/sample-report"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -54,6 +55,9 @@ export default async function AdminDashboardPage() {
 
   // Fetch campaign stats for the campaign leads table
   const campaigns = await getAllCampaignStats()
+
+  // Fetch current sample report
+  const sampleReport = await getCurrentSampleReport()
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,7 +159,50 @@ export default async function AdminDashboardPage() {
               Add User to Subscriber List
             </Button>
           </Link>
+          <Link href="/admin/upload-sample-report">
+            <Button>
+              <Upload className="h-4 w-4 mr-2" />
+              Upload Sample MonthlyAlert
+            </Button>
+          </Link>
         </div>
+
+        {/* Sample Report Display */}
+        {sampleReport && (
+          <Card className="p-6 mb-8 bg-accent/5">
+            <div className="flex items-start justify-between gap-4">
+              <div className="flex items-start gap-4 flex-1">
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-lg mb-1">Current Sample MonthlyAlert</h3>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Uploaded {new Date(sampleReport.uploaded_at).toLocaleDateString()}
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    <Link href={sampleReport.file_path} target="_blank">
+                      <Button size="sm" variant="outline">
+                        <FileText className="h-4 w-4 mr-2" />
+                        View PDF
+                      </Button>
+                    </Link>
+                    <form action={async () => {
+                      "use server"
+                      await deleteSampleReport(sampleReport.id)
+                      redirect("/admin")
+                    }}>
+                      <Button size="sm" variant="destructive" type="submit">
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Report
+                      </Button>
+                    </form>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         {/* Campaign Leads */}
         <div className="mb-8">
