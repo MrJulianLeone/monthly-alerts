@@ -7,6 +7,7 @@ const sql = neon(process.env.DATABASE_URL!)
 export interface CampaignStats {
   campaign_source: string
   total_hits: number
+  today_hits: number
   last_visit: string | null
 }
 
@@ -28,6 +29,7 @@ export async function getAllCampaignStats(): Promise<CampaignStats[]> {
       SELECT 
         campaign_source,
         COUNT(*) as total_hits,
+        COUNT(*) FILTER (WHERE DATE(visited_at) = CURRENT_DATE) as today_hits,
         MAX(visited_at) as last_visit
       FROM campaign_leads
       GROUP BY campaign_source
@@ -36,6 +38,7 @@ export async function getAllCampaignStats(): Promise<CampaignStats[]> {
     return result.map((row: any) => ({
       campaign_source: row.campaign_source,
       total_hits: Number(row.total_hits),
+      today_hits: Number(row.today_hits),
       last_visit: row.last_visit
     }))
   } catch (error) {

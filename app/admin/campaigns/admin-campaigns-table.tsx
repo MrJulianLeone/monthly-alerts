@@ -23,6 +23,7 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
   }
 
   const totalHits = campaigns.reduce((sum, campaign) => sum + campaign.total_hits, 0)
+  const todayHits = campaigns.reduce((sum, campaign) => sum + campaign.today_hits, 0)
 
   return (
     <Card className="p-6">
@@ -33,9 +34,14 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
             Track visitor counts for all active campaigns
           </p>
         </div>
-        <Badge variant="outline" className="text-xs">
-          {totalHits} Total Hits
-        </Badge>
+        <div className="flex gap-2">
+          <Badge variant="outline" className="text-xs">
+            {todayHits} Today
+          </Badge>
+          <Badge variant="outline" className="text-xs">
+            {totalHits} Total
+          </Badge>
+        </div>
       </div>
 
       {campaigns.length === 0 ? (
@@ -54,6 +60,7 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
                 <th className="pb-3 pr-4">Campaign ID</th>
                 <th className="pb-3 pr-4 hidden md:table-cell">Campaign URL</th>
                 <th className="pb-3 pr-4">Total Hits</th>
+                <th className="pb-3 pr-4">Today&apos;s Hits</th>
                 <th className="pb-3">Last Visit</th>
               </tr>
             </thead>
@@ -73,6 +80,11 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
                   <td className="py-4 pr-4">
                     <Badge variant="default" className="bg-primary">
                       {campaign.total_hits} {campaign.total_hits === 1 ? 'hit' : 'hits'}
+                    </Badge>
+                  </td>
+                  <td className="py-4 pr-4">
+                    <Badge variant="secondary" className="bg-accent">
+                      {campaign.today_hits} {campaign.today_hits === 1 ? 'hit' : 'hits'}
                     </Badge>
                   </td>
                   <td className="py-4 text-sm text-muted-foreground">
