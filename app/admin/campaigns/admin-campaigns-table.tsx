@@ -101,13 +101,13 @@ function CampaignRow({ campaign }: { campaign: CampaignStats }) {
         </code>
       </td>
       <td className="py-4 pr-4">
-        <Badge variant="default" className="bg-primary">
-          {campaign.total_hits} {campaign.total_hits === 1 ? 'hit' : 'hits'}
+        <Badge variant="secondary" className="bg-accent">
+          {campaign.today_hits} {campaign.today_hits === 1 ? 'hit' : 'hits'}
         </Badge>
       </td>
       <td className="py-4 pr-4">
-        <Badge variant="secondary" className="bg-accent">
-          {campaign.today_hits} {campaign.today_hits === 1 ? 'hit' : 'hits'}
+        <Badge variant="default" className="bg-primary">
+          {campaign.total_hits} {campaign.total_hits === 1 ? 'hit' : 'hits'}
         </Badge>
       </td>
       <td className="py-4 text-sm text-muted-foreground">
@@ -155,8 +155,8 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
               <tr className="border-b border-border text-left text-xs font-medium text-muted-foreground">
                 <th className="pb-3 pr-4">Campaign Name</th>
                 <th className="pb-3 pr-4 hidden md:table-cell">Campaign URL</th>
-                <th className="pb-3 pr-4">Total Hits</th>
                 <th className="pb-3 pr-4">Today&apos;s Hits</th>
+                <th className="pb-3 pr-4">Total Hits</th>
                 <th className="pb-3">Last Visit</th>
               </tr>
             </thead>

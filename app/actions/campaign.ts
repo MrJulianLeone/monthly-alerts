@@ -31,7 +31,10 @@ export async function getAllCampaignStats(): Promise<CampaignStats[]> {
         cl.campaign_source,
         c.campaign_name,
         COUNT(*) as total_hits,
-        COUNT(*) FILTER (WHERE DATE(cl.visited_at) = CURRENT_DATE) as today_hits,
+        COUNT(*) FILTER (
+          WHERE DATE(cl.visited_at AT TIME ZONE 'America/New_York') = 
+                DATE(NOW() AT TIME ZONE 'America/New_York')
+        ) as today_hits,
         MAX(cl.visited_at) as last_visit
       FROM campaign_leads cl
       LEFT JOIN campaigns c ON cl.campaign_source = c.campaign_source
