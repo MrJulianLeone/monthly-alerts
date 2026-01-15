@@ -5,10 +5,11 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, Upload } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, Upload, Eye } from "lucide-react"
 import Link from "next/link"
 import { getAllCampaignStats } from "@/app/actions/campaign"
 import AdminCampaignsTable from "./campaigns/admin-campaigns-table"
+import { getPageViews } from "@/app/actions/page-views"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -29,6 +30,9 @@ export default async function AdminDashboardPage() {
 
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
+
+  // Fetch home page views
+  const homePageViews = await getPageViews("/")
 
   // Fetch statistics (only verified users)
   const totalUsersResult = await sql`
@@ -93,7 +97,15 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-4 gap-6 mb-8">
+        <div className="grid md:grid-cols-5 gap-6 mb-8">
+          <Card className="p-6">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-medium text-muted-foreground">Home Page Views</h3>
+              <Eye className="h-4 w-4 text-muted-foreground" />
+            </div>
+            <p className="text-3xl font-bold">{homePageViews.toLocaleString()}</p>
+          </Card>
+
           <Link href="/admin/users">
             <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
               <div className="flex items-center justify-between mb-2">

@@ -4,8 +4,12 @@ import { Card } from "@/components/ui/card"
 import { TrendingUp, Mail, Sparkles, Shield, Clock, BarChart3, FileText } from "lucide-react"
 import { getSession } from "@/lib/auth"
 import { getCurrentSampleReport } from "@/app/actions/sample-report"
+import { trackPageView } from "@/app/actions/page-views"
 
 export default async function HomePage() {
+  // Track page view
+  await trackPageView("/")
+  
   const session = await getSession()
   const sampleReport = await getCurrentSampleReport()
 
