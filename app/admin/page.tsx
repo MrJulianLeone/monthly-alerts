@@ -100,11 +100,10 @@ export default async function AdminDashboardPage() {
         <div className="grid md:grid-cols-5 gap-6 mb-8">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Home Page Views</h3>
+              <h3 className="text-sm font-medium text-muted-foreground">Home Page Views Today</h3>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </div>
             <p className="text-3xl font-bold">{todayHomePageViews.toLocaleString()}</p>
-            <p className="text-xs text-muted-foreground mt-1">Today</p>
           </Card>
 
           <Link href="/admin/users">
