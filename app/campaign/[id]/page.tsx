@@ -4,8 +4,9 @@ import { headers } from "next/headers"
 
 const sql = neon(process.env.DATABASE_URL!)
 
-export default async function CampaignPage({ params }: { params: { id: string } }) {
-  const campaignId = params.id
+export default async function CampaignPage({ params }: { params: Promise<{ id: string }> }) {
+  // Await params in Next.js 15+
+  const { id: campaignId } = await params
 
   // Validate campaign ID is a number
   if (!/^\d+$/.test(campaignId)) {
@@ -13,7 +14,7 @@ export default async function CampaignPage({ params }: { params: { id: string } 
   }
 
   // Get visitor information
-  const headersList = headers()
+  const headersList = await headers()
   const ipAddress = headersList.get("x-forwarded-for") || headersList.get("x-real-ip") || "unknown"
   const userAgent = headersList.get("user-agent") || "unknown"
 
