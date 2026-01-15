@@ -9,7 +9,7 @@ import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, Upload,
 import Link from "next/link"
 import { getAllCampaignStats } from "@/app/actions/campaign"
 import AdminCampaignsTable from "./campaigns/admin-campaigns-table"
-import { getPageViews } from "@/app/actions/page-views"
+import { getTodayPageViews } from "@/app/actions/page-views"
 
 const sql = neon(process.env.DATABASE_URL!)
 
@@ -31,8 +31,8 @@ export default async function AdminDashboardPage() {
   const adminCheck = await isAdmin(session.user_id)
   if (!adminCheck) redirect("/dashboard")
 
-  // Fetch home page views
-  const homePageViews = await getPageViews("/")
+  // Fetch today's home page views
+  const todayHomePageViews = await getTodayPageViews("/")
 
   // Fetch statistics (only verified users)
   const totalUsersResult = await sql`
@@ -103,7 +103,8 @@ export default async function AdminDashboardPage() {
               <h3 className="text-sm font-medium text-muted-foreground">Home Page Views</h3>
               <Eye className="h-4 w-4 text-muted-foreground" />
             </div>
-            <p className="text-3xl font-bold">{homePageViews.toLocaleString()}</p>
+            <p className="text-3xl font-bold">{todayHomePageViews.toLocaleString()}</p>
+            <p className="text-xs text-muted-foreground mt-1">Today</p>
           </Card>
 
           <Link href="/admin/users">
