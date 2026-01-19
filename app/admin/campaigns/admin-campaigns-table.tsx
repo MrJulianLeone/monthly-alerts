@@ -5,8 +5,9 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { MousePointerClick, Edit2, Check, X } from "lucide-react"
+import { MousePointerClick, Edit2, Check, X, Trash2 } from "lucide-react"
 import { CampaignStats, updateCampaignName } from "@/app/actions/campaign"
+import { deleteCampaign } from "./delete-campaign-action"
 
 interface AdminCampaignsTableProps {
   campaigns: CampaignStats[]
@@ -16,6 +17,7 @@ function CampaignRow({ campaign }: { campaign: CampaignStats }) {
   const [isEditing, setIsEditing] = useState(false)
   const [editName, setEditName] = useState(campaign.campaign_name || "")
   const [isSaving, setIsSaving] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return 'Never'
@@ -45,6 +47,22 @@ function CampaignRow({ campaign }: { campaign: CampaignStats }) {
   const handleCancel = () => {
     setEditName(campaign.campaign_name || "")
     setIsEditing(false)
+  }
+
+  const handleDelete = async () => {
+    if (!confirm(`Are you sure you want to delete all tracking data for ${displayName}? This action cannot be undone.`)) {
+      return
+    }
+    
+    setIsDeleting(true)
+    const result = await deleteCampaign(campaign.campaign_source)
+    setIsDeleting(false)
+    
+    if (result.success) {
+      window.location.reload() // Reload to show updated list
+    } else {
+      alert(result.error || "Failed to delete campaign data")
+    }
   }
 
   const displayName = campaign.campaign_name || `Campaign #${campaign.campaign_source}`
@@ -110,8 +128,20 @@ function CampaignRow({ campaign }: { campaign: CampaignStats }) {
           {campaign.total_hits} {campaign.total_hits === 1 ? 'hit' : 'hits'}
         </Badge>
       </td>
-      <td className="py-4 text-sm text-muted-foreground">
+      <td className="py-4 pr-4 text-sm text-muted-foreground">
         {formatDate(campaign.last_visit)}
+      </td>
+      <td className="py-4 text-right">
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+          onClick={handleDelete}
+          disabled={isDeleting}
+          title="Delete all tracking data for this campaign"
+        >
+          <Trash2 className="h-4 w-4" />
+        </Button>
       </td>
     </tr>
   )
@@ -157,7 +187,8 @@ export default function AdminCampaignsTable({ campaigns }: AdminCampaignsTablePr
                 <th className="pb-3 pr-4 hidden md:table-cell">Campaign URL</th>
                 <th className="pb-3 pr-4">Today&apos;s Hits</th>
                 <th className="pb-3 pr-4">Total Hits</th>
-                <th className="pb-3">Last Visit</th>
+                <th className="pb-3 pr-4">Last Visit</th>
+                <th className="pb-3 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="group">

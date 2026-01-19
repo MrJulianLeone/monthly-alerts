@@ -96,3 +96,24 @@ export async function updateCampaignName(campaignSource: string, campaignName: s
   }
 }
 
+
+export async function deleteCampaignLeads(campaignSource: string) {
+  try {
+    // Delete all tracking entries for this campaign
+    await sql`
+      DELETE FROM campaign_leads 
+      WHERE campaign_source = ${campaignSource}
+    `
+    
+    // Also delete the campaign name if it exists
+    await sql`
+      DELETE FROM campaigns WHERE campaign_source = ${campaignSource}
+    `
+    
+    return { success: true, message: "Campaign tracking data deleted successfully" }
+  } catch (error) {
+    console.error("[Campaign] Error deleting campaign leads:", error)
+    const errorMessage = error instanceof Error ? error.message : "Failed to delete campaign data"
+    return { error: errorMessage }
+  }
+}
