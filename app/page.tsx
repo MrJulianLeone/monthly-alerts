@@ -23,6 +23,9 @@ export default async function HomePage() {
             <span className="font-bold text-xl">MonthlyAlerts.com</span>
           </div>
           <nav className="flex items-center gap-4">
+            <Link href="/research" className="text-sm font-medium text-muted-foreground hover:text-primary">
+              Research
+            </Link>
             {session ? (
               <Link href="/dashboard">
                 <Button variant="default" size="sm">
