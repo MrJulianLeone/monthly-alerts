@@ -96,11 +96,10 @@ export async function updateCampaignName(campaignSource: string, campaignName: s
   }
 }
 
-
 export async function deleteCampaignLeads(campaignSource: string) {
   try {
     // Delete all tracking entries for this campaign
-    await sql`
+    const result = await sql`
       DELETE FROM campaign_leads 
       WHERE campaign_source = ${campaignSource}
     `

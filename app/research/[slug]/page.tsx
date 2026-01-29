@@ -10,11 +10,12 @@ import { getResearchArticleBySlug, getResearchArticles } from "@/app/actions/res
 import { trackPageView } from "@/app/actions/page-views"
 
 interface Props {
-  params: { slug: string }
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const article = await getResearchArticleBySlug(params.slug)
+  const { slug } = await params
+  const article = await getResearchArticleBySlug(slug)
   
   if (!article) {
     return {
@@ -41,14 +42,15 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function ArticlePage({ params }: Props) {
-  const article = await getResearchArticleBySlug(params.slug)
+  const { slug } = await params
+  const article = await getResearchArticleBySlug(slug)
   
   if (!article) {
     notFound()
   }
 
   // Track page view
-  await trackPageView(`/research/${params.slug}`)
+  await trackPageView(`/research/${slug}`)
   
   const session = await getSession()
   const allArticles = await getResearchArticles()
