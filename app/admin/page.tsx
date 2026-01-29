@@ -68,28 +68,21 @@ export default async function AdminDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
-                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                <span className="font-bold text-sm min-[400px]:text-base sm:text-xl">
-                  <span className="min-[400px]:hidden">Alerts</span>
-                  <span className="hidden min-[400px]:inline">MonthlyAlerts</span>
-                </span>
-              </Link>
+        <div className="container max-w-6xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <Link href="/" className="flex items-center gap-1 sm:gap-2">
+              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
               <Badge variant="secondary" className="text-[10px] sm:text-xs">Admin</Badge>
-            </div>
-            <div className="flex items-center gap-1 sm:gap-3">
+            </Link>
+            <div className="flex items-center">
               <Link href="/dashboard">
-                <Button variant="outline" size="sm" className="text-[11px] sm:text-sm h-8 px-2 sm:px-3">
+                <Button variant="ghost" size="sm" className="text-xs sm:text-sm h-8 px-2 sm:px-3">
                   Dashboard
                 </Button>
               </Link>
               <form action={logout}>
                 <Button variant="ghost" size="sm" type="submit" className="h-8 px-2 sm:px-3">
                   <LogOut className="h-4 w-4" />
-                  <span className="hidden sm:inline ml-2">Sign Out</span>
                 </Button>
               </form>
             </div>
