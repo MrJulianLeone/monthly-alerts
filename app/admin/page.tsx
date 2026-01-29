@@ -154,7 +154,7 @@ export default async function AdminDashboardPage() {
           <Link href="/admin/research">
             <Card className="p-4 sm:p-6 hover:border-primary transition-colors cursor-pointer h-full">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Articles</h3>
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Research</h3>
                 <FileText className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
               <p className="text-2xl sm:text-3xl font-bold">{totalArticles}</p>
@@ -165,35 +165,35 @@ export default async function AdminDashboardPage() {
         {/* Quick Actions */}
         <div className="mb-8">
           <h2 className="text-lg font-semibold mb-3 sm:hidden">Quick Actions</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2 sm:gap-3">
-            <Link href="/admin/send-alert" className="w-full lg:w-auto">
-              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+            <Link href="/admin/send-alert">
+              <Button className="w-full justify-center">
                 <Send className="h-4 w-4 mr-2" />
                 Send Alert
               </Button>
             </Link>
-            <Link href="/admin/send-message" className="w-full lg:w-auto">
-              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+            <Link href="/admin/send-message">
+              <Button className="w-full justify-center">
                 <MessageSquare className="h-4 w-4 mr-2" />
                 Send Message
               </Button>
             </Link>
-            <Link href="/admin/add-subscriber" className="w-full lg:w-auto">
-              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+            <Link href="/admin/add-subscriber">
+              <Button className="w-full justify-center">
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add Subscriber
               </Button>
             </Link>
-            <Link href="/admin/upload-sample-report" className="w-full lg:w-auto">
-              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+            <Link href="/admin/upload-sample-report">
+              <Button className="w-full justify-center">
                 <Upload className="h-4 w-4 mr-2" />
                 Upload Sample
               </Button>
             </Link>
-            <Link href="/admin/generate-article" className="w-full lg:w-auto">
-              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+            <Link href="/admin/generate-article">
+              <Button className="w-full justify-center">
                 <FileText className="h-4 w-4 mr-2" />
-                Generate Article
+                New Research
               </Button>
             </Link>
           </div>
