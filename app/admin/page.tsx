@@ -68,25 +68,25 @@ export default async function AdminDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <div className="flex items-center gap-2 sm:gap-4">
+        <div className="container max-w-6xl mx-auto px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
               <Link href="/" className="flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                <span className="font-bold text-xl">MonthlyAlerts.com</span>
+                <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                <span className="font-bold text-lg sm:text-xl">MonthlyAlerts</span>
               </Link>
-              <Badge variant="secondary">Admin</Badge>
+              <Badge variant="secondary" className="text-xs">Admin</Badge>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-1 sm:gap-3">
               <Link href="/dashboard">
-                <Button variant="outline" size="sm">
-                  User Dashboard
+                <Button variant="outline" size="sm" className="text-xs sm:text-sm px-2 sm:px-3">
+                  <span className="hidden sm:inline">User </span>Dashboard
                 </Button>
               </Link>
               <form action={logout}>
-                <Button variant="ghost" size="sm" type="submit">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+                <Button variant="ghost" size="sm" type="submit" className="px-2 sm:px-3">
+                  <LogOut className="h-4 w-4" />
+                  <span className="hidden sm:inline ml-2">Sign Out</span>
                 </Button>
               </form>
             </div>
@@ -102,98 +102,101 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-6 gap-6 mb-8">
-          <Card className="p-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4 mb-8">
+          <Card className="p-4 sm:p-6">
             <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-medium text-muted-foreground">Today's Views</h3>
-              <Eye className="h-4 w-4 text-muted-foreground" />
+              <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Views Today</h3>
+              <Eye className="h-4 w-4 text-muted-foreground hidden sm:block" />
             </div>
-            <p className="text-3xl font-bold">{todayHomePageViews.toLocaleString()}</p>
+            <p className="text-2xl sm:text-3xl font-bold">{todayHomePageViews.toLocaleString()}</p>
           </Card>
 
           <Link href="/admin/users">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+            <Card className="p-4 sm:p-6 hover:border-primary transition-colors cursor-pointer h-full">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Total Users</h3>
-                <Users className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Users</h3>
+                <Users className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
-              <p className="text-3xl font-bold">{totalUsers}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalUsers}</p>
             </Card>
           </Link>
 
           <Link href="/admin/subscriptions">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+            <Card className="p-4 sm:p-6 hover:border-primary transition-colors cursor-pointer h-full">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Active Subscriptions</h3>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Subscribers</h3>
+                <TrendingUp className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
-              <p className="text-3xl font-bold">{activeSubscriptions}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{activeSubscriptions}</p>
             </Card>
           </Link>
 
           <Link href="/admin/alerts">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+            <Card className="p-4 sm:p-6 hover:border-primary transition-colors cursor-pointer h-full">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Alerts Sent</h3>
-                <Mail className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Alerts</h3>
+                <Mail className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
-              <p className="text-3xl font-bold">{totalAlerts}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalAlerts}</p>
             </Card>
           </Link>
 
           <Link href="/admin/messages">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+            <Card className="p-4 sm:p-6 hover:border-primary transition-colors cursor-pointer h-full">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Messages Sent</h3>
-                <MessageSquare className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Messages</h3>
+                <MessageSquare className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
-              <p className="text-3xl font-bold">{totalMessages}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalMessages}</p>
             </Card>
           </Link>
 
           <Link href="/admin/research">
-            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+            <Card className="p-4 sm:p-6 hover:border-primary transition-colors cursor-pointer h-full">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-sm font-medium text-muted-foreground">Research Articles</h3>
-                <FileText className="h-4 w-4 text-muted-foreground" />
+                <h3 className="text-xs sm:text-sm font-medium text-muted-foreground">Articles</h3>
+                <FileText className="h-4 w-4 text-muted-foreground hidden sm:block" />
               </div>
-              <p className="text-3xl font-bold">{totalArticles}</p>
+              <p className="text-2xl sm:text-3xl font-bold">{totalArticles}</p>
             </Card>
           </Link>
         </div>
 
         {/* Quick Actions */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <Link href="/admin/send-alert">
-            <Button>
-              <Send className="h-4 w-4 mr-2" />
-              Send Monthly Alert
-            </Button>
-          </Link>
-          <Link href="/admin/send-message">
-            <Button>
-              <MessageSquare className="h-4 w-4 mr-2" />
-              Send Message to Subscribers
-            </Button>
-          </Link>
-          <Link href="/admin/add-subscriber">
-            <Button>
-              <UserPlus className="h-4 w-4 mr-2" />
-              Add User to Subscriber List
-            </Button>
-          </Link>
-          <Link href="/admin/upload-sample-report">
-            <Button>
-              <Upload className="h-4 w-4 mr-2" />
-              Upload Sample MonthlyAlert
-            </Button>
-          </Link>
-          <Link href="/admin/generate-article">
-            <Button>
-              <FileText className="h-4 w-4 mr-2" />
-              Generate Research Article
-            </Button>
-          </Link>
+        <div className="mb-8">
+          <h2 className="text-lg font-semibold mb-3 sm:hidden">Quick Actions</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:flex lg:flex-wrap gap-2 sm:gap-3">
+            <Link href="/admin/send-alert" className="w-full lg:w-auto">
+              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+                <Send className="h-4 w-4 mr-2" />
+                Send Alert
+              </Button>
+            </Link>
+            <Link href="/admin/send-message" className="w-full lg:w-auto">
+              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+                <MessageSquare className="h-4 w-4 mr-2" />
+                Send Message
+              </Button>
+            </Link>
+            <Link href="/admin/add-subscriber" className="w-full lg:w-auto">
+              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+                <UserPlus className="h-4 w-4 mr-2" />
+                Add Subscriber
+              </Button>
+            </Link>
+            <Link href="/admin/upload-sample-report" className="w-full lg:w-auto">
+              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+                <Upload className="h-4 w-4 mr-2" />
+                Upload Sample
+              </Button>
+            </Link>
+            <Link href="/admin/generate-article" className="w-full lg:w-auto">
+              <Button className="w-full lg:w-auto justify-start sm:justify-center">
+                <FileText className="h-4 w-4 mr-2" />
+                Generate Article
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Campaign Leads */}

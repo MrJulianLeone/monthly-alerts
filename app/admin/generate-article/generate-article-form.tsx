@@ -73,18 +73,22 @@ export default function GenerateArticleForm() {
             <div className="flex-1">
               <p className="font-medium mb-1">Article Published Successfully!</p>
               <p className="text-sm opacity-90 mb-3">&quot;{success.title}&quot;</p>
-              <div className="flex gap-2">
-                <Link href={`/research/${success.slug}`} target="_blank">
-                  <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-500/10">
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    View Article
-                  </Button>
-                </Link>
-                <Link href="/admin/research">
-                  <Button size="sm" variant="outline" className="text-green-600 border-green-600 hover:bg-green-500/10">
-                    View All Articles
-                  </Button>
-                </Link>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <a 
+                  href={`/research/${success.slug}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center h-9 px-3 text-sm font-medium rounded-md border border-green-600 text-green-600 hover:bg-green-500/10 transition-colors"
+                >
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  View Article
+                </a>
+                <a 
+                  href="/admin/research"
+                  className="inline-flex items-center justify-center h-9 px-3 text-sm font-medium rounded-md border border-green-600 text-green-600 hover:bg-green-500/10 transition-colors"
+                >
+                  View All Articles
+                </a>
               </div>
             </div>
           </div>
