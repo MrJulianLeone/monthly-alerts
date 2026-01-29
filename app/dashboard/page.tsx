@@ -72,10 +72,15 @@ export default async function DashboardPage({
       <header className="border-b border-border bg-card">
         <div className="container max-w-6xl mx-auto px-4 py-4">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl">MonthlyAlerts.com</span>
-            </Link>
+            <div className="flex items-center gap-4">
+              <Link href="/" className="flex items-center gap-2">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                <span className="font-bold text-xl">MonthlyAlerts.com</span>
+              </Link>
+              <Link href="/research" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                Research
+              </Link>
+            </div>
             <div className="flex items-center gap-2 sm:gap-4">
               {adminCheck && (
                 <Link href="/admin">

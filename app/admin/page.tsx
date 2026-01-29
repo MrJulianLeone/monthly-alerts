@@ -5,7 +5,7 @@ import { neon } from "@neondatabase/serverless"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, Upload, Eye } from "lucide-react"
+import { TrendingUp, Users, Mail, LogOut, Send, MessageSquare, UserPlus, Upload, Eye, FileText } from "lucide-react"
 import Link from "next/link"
 import { getAllCampaignStats } from "@/app/actions/campaign"
 import AdminCampaignsTable from "./campaigns/admin-campaigns-table"
@@ -56,6 +56,11 @@ export default async function AdminDashboardPage() {
   `
   const totalMessages = Number(totalMessagesResult[0].count)
 
+  const totalArticlesResult = await sql`
+    SELECT COUNT(*) as count FROM research_articles
+  `
+  const totalArticles = Number(totalArticlesResult[0]?.count || 0)
+
   // Fetch campaign stats for the campaign leads table
   const campaigns = await getAllCampaignStats()
 
@@ -97,7 +102,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid md:grid-cols-5 gap-6 mb-8">
+        <div className="grid md:grid-cols-6 gap-6 mb-8">
           <Card className="p-6">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-sm font-medium text-muted-foreground">Today's Views</h3>
@@ -145,6 +150,16 @@ export default async function AdminDashboardPage() {
               <p className="text-3xl font-bold">{totalMessages}</p>
             </Card>
           </Link>
+
+          <Link href="/admin/research">
+            <Card className="p-6 hover:border-primary transition-colors cursor-pointer">
+              <div className="flex items-center justify-between mb-2">
+                <h3 className="text-sm font-medium text-muted-foreground">Research Articles</h3>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </div>
+              <p className="text-3xl font-bold">{totalArticles}</p>
+            </Card>
+          </Link>
         </div>
 
         {/* Quick Actions */}
@@ -171,6 +186,12 @@ export default async function AdminDashboardPage() {
             <Button>
               <Upload className="h-4 w-4 mr-2" />
               Upload Sample MonthlyAlert
+            </Button>
+          </Link>
+          <Link href="/admin/generate-article">
+            <Button>
+              <FileText className="h-4 w-4 mr-2" />
+              Generate Research Article
             </Button>
           </Link>
         </div>
