@@ -17,31 +17,24 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <Link href="/" className="flex items-center gap-2">
-              <TrendingUp className="h-6 w-6 text-primary" />
-              <span className="font-bold text-xl">MonthlyAlerts.com</span>
+        <div className="container max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <TrendingUp className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl">MonthlyAlerts.com</span>
+          </Link>
+          {session ? (
+            <Link href="/dashboard">
+              <Button variant="default" size="sm">
+                Dashboard
+              </Button>
             </Link>
-            <nav className="flex items-center gap-4">
-              <Link href="/research" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                Research
-              </Link>
-              {session ? (
-                <Link href="/dashboard">
-                  <Button variant="default" size="sm">
-                    Dashboard
-                  </Button>
-                </Link>
-              ) : (
-                <Link href="/login">
-                  <Button variant="default" size="sm">
-                    Login
-                  </Button>
-                </Link>
-              )}
-            </nav>
-          </div>
+          ) : (
+            <Link href="/signup">
+              <Button variant="default" size="sm">
+                Register
+              </Button>
+            </Link>
+          )}
         </div>
       </header>
 
@@ -257,6 +250,9 @@ export default async function HomePage() {
             </div>
             <p className="text-sm text-muted-foreground">© 2025 MonthlyAlerts.com. All rights reserved.</p>
             <div className="flex gap-6 text-sm">
+              <Link href="/research" className="text-muted-foreground hover:text-foreground">
+                Research
+              </Link>
               <Link href="/terms" className="text-muted-foreground hover:text-foreground">
                 Terms
               </Link>

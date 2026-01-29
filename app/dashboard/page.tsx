@@ -70,32 +70,25 @@ export default async function DashboardPage({
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-4 py-3">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-            <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center gap-2">
-                <TrendingUp className="h-6 w-6 text-primary" />
-                <span className="font-bold text-xl">MonthlyAlerts.com</span>
-              </Link>
-              <Link href="/research" className="text-sm font-medium text-muted-foreground hover:text-primary">
-                Research
-              </Link>
-            </div>
-            <div className="flex items-center gap-3">
-              {adminCheck && (
-                <Link href="/admin">
-                  <Button variant="outline" size="sm">
-                    Admin
-                  </Button>
-                </Link>
-              )}
-              <form action={logout}>
-                <Button variant="ghost" size="sm" type="submit">
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Sign Out
+        <div className="container max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <TrendingUp className="h-6 w-6 text-primary" />
+            <span className="font-bold text-xl">MonthlyAlerts.com</span>
+          </Link>
+          <div className="flex items-center gap-3">
+            {adminCheck && (
+              <Link href="/admin">
+                <Button variant="outline" size="sm">
+                  Admin
                 </Button>
-              </form>
-            </div>
+              </Link>
+            )}
+            <form action={logout}>
+              <Button variant="ghost" size="sm" type="submit">
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign Out
+              </Button>
+            </form>
           </div>
         </div>
       </header>
