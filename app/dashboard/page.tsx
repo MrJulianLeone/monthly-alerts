@@ -70,8 +70,8 @@ export default async function DashboardPage({
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-4 py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div className="container max-w-6xl mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
             <div className="flex items-center gap-4">
               <Link href="/" className="flex items-center gap-2">
                 <TrendingUp className="h-6 w-6 text-primary" />
@@ -81,11 +81,11 @@ export default async function DashboardPage({
                 Research
               </Link>
             </div>
-            <div className="flex items-center gap-2 sm:gap-4">
+            <div className="flex items-center gap-3">
               {adminCheck && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm">
-                    Admin Dashboard
+                    Admin
                   </Button>
                 </Link>
               )}

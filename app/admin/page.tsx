@@ -68,21 +68,25 @@ export default async function AdminDashboardPage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-2 sm:px-4 py-2 sm:py-4">
-          <div className="flex items-center justify-between gap-2">
-            <Link href="/" className="flex items-center gap-1 sm:gap-2">
-              <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-              <Badge variant="secondary" className="text-[10px] sm:text-xs">Admin</Badge>
-            </Link>
-            <div className="flex items-center">
+        <div className="container max-w-6xl mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <div className="flex items-center gap-3">
+              <Link href="/" className="flex items-center gap-2">
+                <TrendingUp className="h-6 w-6 text-primary" />
+                <span className="font-bold text-xl">MonthlyAlerts.com</span>
+              </Link>
+              <Badge variant="secondary">Admin</Badge>
+            </div>
+            <div className="flex items-center gap-3">
               <Link href="/dashboard">
-                <Button variant="ghost" size="sm" className="text-xs sm:text-sm h-8 px-2 sm:px-3">
-                  Dashboard
+                <Button variant="outline" size="sm">
+                  User Dashboard
                 </Button>
               </Link>
               <form action={logout}>
-                <Button variant="ghost" size="sm" type="submit" className="h-8 px-2 sm:px-3">
-                  <LogOut className="h-4 w-4" />
+                <Button variant="ghost" size="sm" type="submit">
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Sign Out
                 </Button>
               </form>
             </div>

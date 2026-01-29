@@ -17,32 +17,31 @@ export default async function HomePage() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="border-b border-border bg-card">
-        <div className="container max-w-6xl mx-auto px-3 sm:px-4 py-3 sm:py-4 flex items-center justify-between gap-2">
-          <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
-            <TrendingUp className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-            <span className="font-bold text-base sm:text-xl">
-              <span className="sm:hidden">Alerts</span>
-              <span className="hidden sm:inline">MonthlyAlerts.com</span>
-            </span>
-          </Link>
-          <nav className="flex items-center gap-2 sm:gap-4">
-            <Link href="/research" className="text-xs sm:text-sm font-medium text-muted-foreground hover:text-primary">
-              Research
+        <div className="container max-w-6xl mx-auto px-4 py-3">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            <Link href="/" className="flex items-center gap-2">
+              <TrendingUp className="h-6 w-6 text-primary" />
+              <span className="font-bold text-xl">MonthlyAlerts.com</span>
             </Link>
-            {session ? (
-              <Link href="/dashboard">
-                <Button variant="default" size="sm" className="text-xs sm:text-sm h-8 px-2 sm:px-3">
-                  Dashboard
-                </Button>
+            <nav className="flex items-center gap-4">
+              <Link href="/research" className="text-sm font-medium text-muted-foreground hover:text-primary">
+                Research
               </Link>
-            ) : (
-              <Link href="/login">
-                <Button variant="default" size="sm" className="text-xs sm:text-sm h-8 px-2 sm:px-3">
-                  Login
-                </Button>
-              </Link>
-            )}
-          </nav>
+              {session ? (
+                <Link href="/dashboard">
+                  <Button variant="default" size="sm">
+                    Dashboard
+                  </Button>
+                </Link>
+              ) : (
+                <Link href="/login">
+                  <Button variant="default" size="sm">
+                    Login
+                  </Button>
+                </Link>
+              )}
+            </nav>
+          </div>
         </div>
       </header>
 
