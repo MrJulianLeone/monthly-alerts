@@ -4,7 +4,8 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { TrendingUp, Calendar, ArrowLeft, Share2, Shield } from "lucide-react"
+import { TrendingUp, Calendar, ArrowLeft, Shield } from "lucide-react"
+import ShareButton from "./share-button"
 import { getSession } from "@/lib/auth"
 import { getResearchArticleBySlug, getResearchArticles } from "@/app/actions/research"
 import { trackPageView } from "@/app/actions/page-views"
@@ -238,17 +239,7 @@ export default async function ArticlePage({ params }: Props) {
                     <h4 className="font-medium mb-1">Share this research</h4>
                     <p className="text-sm text-muted-foreground">Help others discover this analysis</p>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => {
-                    if (typeof navigator !== 'undefined' && navigator.share) {
-                      navigator.share({
-                        title: article.title,
-                        url: window.location.href
-                      })
-                    }
-                  }}>
-                    <Share2 className="h-4 w-4 mr-2" />
-                    Share
-                  </Button>
+                  <ShareButton title={article.title} />
                 </div>
               </div>
             </div>
