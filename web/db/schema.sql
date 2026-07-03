@@ -26,6 +26,7 @@ $$ LANGUAGE plpgsql;
 CREATE TABLE users (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email              citext UNIQUE NOT NULL,
+  name               text,                          -- collected at onboarding for all accounts
   password_hash      text,                          -- null for OAuth-only accounts
   auth_provider      text NOT NULL DEFAULT 'email'
                        CHECK (auth_provider IN ('email', 'apple', 'google')),
@@ -112,6 +113,8 @@ CREATE INDEX auth_tokens_user_purpose_idx ON auth_tokens (user_id, purpose);
 CREATE TABLE parent_invites (
   id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   parent_email   citext NOT NULL,
+  child_name     text,                              -- entered by the child at onboarding
+  child_dob      date,                              -- drives routing + prefills parent setup
   token_hash     text UNIQUE NOT NULL,
   status         text NOT NULL DEFAULT 'pending'
                    CHECK (status IN ('pending', 'completed', 'expired')),

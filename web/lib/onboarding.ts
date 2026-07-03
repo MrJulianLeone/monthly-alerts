@@ -109,10 +109,11 @@ export async function createCoachedUser(input: NewCoachedUser): Promise<string> 
   const role = adminEmails.includes(input.email.toLowerCase()) ? "admin" : "user";
 
   const userRows = (await db`
-    INSERT INTO users (email, password_hash, auth_provider, apple_sub, google_sub,
+    INSERT INTO users (email, name, password_hash, auth_provider, apple_sub, google_sub,
                        role, parent_id, date_of_birth, email_verified_at, last_active_at)
     VALUES (
       ${input.email},
+      ${input.displayName},
       ${input.password ? hashPassword(input.password) : null},
       ${input.authProvider ?? "email"},
       ${input.appleSub ?? null},

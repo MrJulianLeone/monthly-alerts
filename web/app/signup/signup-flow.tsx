@@ -4,19 +4,28 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, ErrorText, Field, Input, Select } from "@/components/ui";
 
-type Step = "age-gate" | "under16" | "under16-sent" | "profile";
+type Step = "identity" | "too-young" | "under16" | "under16-sent" | "profile";
+
+function ageFromDob(dob: string): number {
+  const birth = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 export function SignupFlow() {
   const router = useRouter();
-  const [step, setStep] = useState<Step>("age-gate");
+  const [step, setStep] = useState<Step>("identity");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [name, setName] = useState("");
+  const [dateOfBirth, setDateOfBirth] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [form, setForm] = useState({
-    displayName: "",
     email: "",
     password: "",
-    dateOfBirth: "",
     gender: "",
     goal: "",
     weightKg: "",
@@ -26,6 +35,20 @@ export function SignupFlow() {
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [key]: e.target.value });
 
+  // The system routes based on the entered birthday — no age question asked.
+  function routeByAge(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    const age = ageFromDob(dateOfBirth);
+    if (age < 0 || age > 120) {
+      setError("Please check the date of birth");
+      return;
+    }
+    if (age < 11) setStep("too-young");
+    else if (age < 16) setStep("under16");
+    else setStep("profile");
+  }
+
   async function sendParentInvite(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
@@ -33,7 +56,7 @@ export function SignupFlow() {
     const res = await fetch("/api/onboarding/parent-invite", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ parentEmail }),
+      body: JSON.stringify({ parentEmail, childName: name, childDob: dateOfBirth }),
     });
     setBusy(false);
     if (!res.ok) {
@@ -51,10 +74,10 @@ export function SignupFlow() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        displayName: form.displayName,
+        displayName: name,
         email: form.email,
         password: form.password,
-        dateOfBirth: form.dateOfBirth,
+        dateOfBirth,
         gender: form.gender || null,
         goal: form.goal || null,
         weightKg: form.weightKg ? Number(form.weightKg) : null,
@@ -71,19 +94,42 @@ export function SignupFlow() {
     router.refresh();
   }
 
-  if (step === "age-gate") {
+  if (step === "identity") {
     return (
       <Card>
-        <h1 className="text-xl font-semibold text-neutral-900">Are you 16 or older?</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">Let&apos;s get started</h1>
         <p className="mt-2 text-sm text-neutral-500">
-          This is the only question we need before getting started.
+          Tell us your name and birthday — your coach uses this to personalize everything.
         </p>
-        <div className="mt-6 grid grid-cols-2 gap-3">
-          <Button onClick={() => setStep("profile")}>Yes, I&apos;m 16+</Button>
-          <Button variant="secondary" onClick={() => setStep("under16")}>
-            No, I&apos;m under 16
+        <form onSubmit={routeByAge} className="mt-6 space-y-4">
+          <Field label="Your name">
+            <Input required value={name} onChange={(e) => setName(e.target.value)} placeholder="Alex" />
+          </Field>
+          <Field label="Your birthday">
+            <Input
+              type="date"
+              required
+              value={dateOfBirth}
+              onChange={(e) => setDateOfBirth(e.target.value)}
+            />
+          </Field>
+          <ErrorText>{error}</ErrorText>
+          <Button type="submit" className="w-full" disabled={!name.trim() || !dateOfBirth}>
+            Continue
           </Button>
-        </div>
+        </form>
+      </Card>
+    );
+  }
+
+  if (step === "too-young") {
+    return (
+      <Card>
+        <h1 className="text-xl font-semibold text-neutral-900">See you soon</h1>
+        <p className="mt-2 text-sm leading-relaxed text-neutral-500">
+          MonthlyAlerts supports ages 11 and up. We&apos;d love to be your coach when you&apos;re
+          a little older.
+        </p>
       </Card>
     );
   }
@@ -91,10 +137,12 @@ export function SignupFlow() {
   if (step === "under16") {
     return (
       <Card>
-        <h1 className="text-xl font-semibold text-neutral-900">A parent sets you up</h1>
+        <h1 className="text-xl font-semibold text-neutral-900">
+          Almost there, {name.trim().split(" ")[0]}
+        </h1>
         <p className="mt-2 text-sm text-neutral-500">
-          Enter your parent&apos;s email. They&apos;ll receive a secure link to create your
-          account, complete your profile, and set your login.
+          Since you&apos;re under 16, a parent finishes your setup. Enter their email — they&apos;ll
+          get a secure link, and we&apos;ll keep your name and birthday on file.
         </p>
         <form onSubmit={sendParentInvite} className="mt-6 space-y-4">
           <Field label="Parent's email">
@@ -130,22 +178,18 @@ export function SignupFlow() {
 
   return (
     <Card>
-      <h1 className="text-xl font-semibold text-neutral-900">Create your account</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">
+        Welcome, {name.trim().split(" ")[0]}
+      </h1>
       <p className="mt-2 text-sm text-neutral-500">
-        Quick profile — your coach uses this to personalize your challenges.
+        Create your login and add a few optional details for better coaching.
       </p>
       <form onSubmit={signup} className="mt-6 space-y-4">
-        <Field label="Name">
-          <Input required value={form.displayName} onChange={set("displayName")} placeholder="Alex" />
-        </Field>
         <Field label="Email">
           <Input type="email" required value={form.email} onChange={set("email")} />
         </Field>
         <Field label="Password (8+ characters)">
           <Input type="password" required minLength={8} value={form.password} onChange={set("password")} />
-        </Field>
-        <Field label="Date of birth">
-          <Input type="date" required value={form.dateOfBirth} onChange={set("dateOfBirth")} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Gender">

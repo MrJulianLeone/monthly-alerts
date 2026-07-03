@@ -21,20 +21,30 @@ export async function POST(request: NextRequest) {
     return jsonError("This account already has a coaching profile", 409);
   }
 
-  const body = await request.json().catch(() => null);
-  if (!body?.displayName || typeof body.displayName !== "string") {
-    return jsonError("Display name is required");
-  }
-  if (!body?.dateOfBirth || isNaN(Date.parse(body.dateOfBirth))) {
+  const body = await request.json().catch(() => ({}));
+
+  // Name and birthday were collected at onboarding — reuse them by default.
+  const stored = (await sql()`
+    SELECT name, date_of_birth FROM users WHERE id = ${auth.user.id}
+  `) as { name: string | null; date_of_birth: string | Date | null }[];
+  const displayName =
+    (typeof body?.displayName === "string" && body.displayName.trim()) || stored[0]?.name;
+  const storedDob = stored[0]?.date_of_birth
+    ? new Date(stored[0].date_of_birth).toISOString().slice(0, 10)
+    : null;
+  const dateOfBirth = body?.dateOfBirth || storedDob;
+
+  if (!displayName) return jsonError("Display name is required");
+  if (!dateOfBirth || isNaN(Date.parse(dateOfBirth))) {
     return jsonError("Date of birth is required");
   }
-  const age = ageFromDob(body.dateOfBirth);
+  const age = ageFromDob(dateOfBirth);
   if (age < 16) return jsonError("Self-enrollment requires being 16 or older", 403);
   if (age > 120) return jsonError("Please check the date of birth");
 
   await enrollExistingUser(auth.user.id, {
-    displayName: body.displayName.trim().slice(0, 60),
-    dateOfBirth: body.dateOfBirth,
+    displayName: String(displayName).slice(0, 60),
+    dateOfBirth,
     gender: ["male", "female", "other"].includes(body.gender) ? body.gender : null,
     heightCm:
       typeof body.heightCm === "number" && body.heightCm > 80 && body.heightCm < 260

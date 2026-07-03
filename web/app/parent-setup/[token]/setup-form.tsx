@@ -11,11 +11,13 @@ export function ParentSetupForm({ token }: { token: string }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
+    parentName: "",
+    parentDob: "",
     parentPassword: "",
-    displayName: "",
+    childName: "",
+    childDob: "",
     email: "",
     password: "",
-    dateOfBirth: "",
     gender: "",
     goal: "",
     weightKg: "",
@@ -28,6 +30,12 @@ export function ParentSetupForm({ token }: { token: string }) {
         if (!res.ok) return setState("invalid");
         const data = await res.json();
         setParentEmail(data.parentEmail);
+        // The child's name and birthday were entered during onboarding.
+        setForm((f) => ({
+          ...f,
+          childName: data.childName ?? "",
+          childDob: data.childDob ?? "",
+        }));
         setState("ready");
       })
       .catch(() => setState("invalid"));
@@ -44,12 +52,16 @@ export function ParentSetupForm({ token }: { token: string }) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        parentPassword: form.parentPassword,
+        parent: {
+          name: form.parentName,
+          dateOfBirth: form.parentDob,
+          password: form.parentPassword,
+        },
         child: {
-          displayName: form.displayName,
+          displayName: form.childName,
+          dateOfBirth: form.childDob,
           email: form.email,
           password: form.password,
-          dateOfBirth: form.dateOfBirth,
           gender: form.gender || null,
           goal: form.goal || null,
           weightKg: form.weightKg ? Number(form.weightKg) : null,
@@ -82,16 +94,28 @@ export function ParentSetupForm({ token }: { token: string }) {
     );
   }
 
+  const childFirstName = form.childName.trim().split(" ")[0] || "your child";
+
   return (
     <Card>
-      <h1 className="text-xl font-semibold text-neutral-900">Set up your child&apos;s coach</h1>
+      <h1 className="text-xl font-semibold text-neutral-900">
+        Set up {childFirstName}&apos;s coach
+      </h1>
       <p className="mt-2 text-sm leading-relaxed text-neutral-500">
-        MonthlyAlerts gives your child daily meal and exercise guidance and sends you a
-        monthly progress summary. Complete their profile and set login credentials below.
-        Your parent account: <span className="font-medium text-neutral-900">{parentEmail}</span>
+        MonthlyAlerts gives {childFirstName} daily meal and exercise guidance and sends you a
+        monthly progress summary. {childFirstName}&apos;s name and birthday are already on file
+        from onboarding. Your parent account:{" "}
+        <span className="font-medium text-neutral-900">{parentEmail}</span>
       </p>
       <form onSubmit={submit} className="mt-6 space-y-4">
-        <Field label="Your parent-account password (8+ characters)">
+        <p className="text-sm font-semibold text-neutral-900">About you</p>
+        <Field label="Your name">
+          <Input required value={form.parentName} onChange={set("parentName")} />
+        </Field>
+        <Field label="Your birthday">
+          <Input type="date" required value={form.parentDob} onChange={set("parentDob")} />
+        </Field>
+        <Field label="Your password (8+ characters)">
           <Input
             type="password"
             required
@@ -101,18 +125,20 @@ export function ParentSetupForm({ token }: { token: string }) {
           />
         </Field>
         <hr className="border-neutral-200" />
-        <p className="text-sm font-semibold text-neutral-900">Child profile</p>
-        <Field label="Child's name">
-          <Input required value={form.displayName} onChange={set("displayName")} />
-        </Field>
+        <p className="text-sm font-semibold text-neutral-900">Your child</p>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="Child's name">
+            <Input required value={form.childName} onChange={set("childName")} />
+          </Field>
+          <Field label="Child's birthday">
+            <Input type="date" required value={form.childDob} onChange={set("childDob")} />
+          </Field>
+        </div>
         <Field label="Child's login email">
           <Input type="email" required value={form.email} onChange={set("email")} />
         </Field>
         <Field label="Child's password (8+ characters)">
           <Input type="password" required minLength={8} value={form.password} onChange={set("password")} />
-        </Field>
-        <Field label="Date of birth (must be 11–15)">
-          <Input type="date" required value={form.dateOfBirth} onChange={set("dateOfBirth")} />
         </Field>
         <div className="grid grid-cols-2 gap-3">
           <Field label="Gender">
