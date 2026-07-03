@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireUser, jsonError } from "@/lib/api";
 import { addChatMessage } from "@/lib/coach";
+import { recordChallengeProgress } from "@/lib/progress";
 import { unlockNextChallenge } from "@/lib/progression";
 import { trackEvent } from "@/lib/geo";
 
@@ -44,6 +45,7 @@ export async function POST(request: NextRequest) {
     INSERT INTO challenge_logs (challenge_id, user_id, completed_value, perceived_difficulty)
     VALUES (${active.id}, ${auth.user.id}, ${completedValue}, ${difficulty})
   `;
+  await recordChallengeProgress(auth.user.id, completedValue);
 
   await addChatMessage(auth.user.id, "user", "challenge_complete", null, {
     challenge_id: active.id,

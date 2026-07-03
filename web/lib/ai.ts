@@ -18,9 +18,17 @@ export type MealAnalysis = {
   items: string[];
 };
 
-/** GPT-4o vision analysis of a meal photo: short, useful, balance-focused. */
+/**
+ * GPT-4o vision analysis of a meal photo: short, useful, balance-focused.
+ *
+ * The image is passed inline (a base64 `data:` URL) and is never persisted:
+ * once OpenAI returns the structured categorization, the raw photo is
+ * discarded. Only the returned analysis (feedback, balance, items) is stored.
+ * A public https URL also works, but callers should prefer inline data so no
+ * image bytes are retained anywhere.
+ */
 export async function analyzeMealPhoto(
-  photoUrl: string,
+  image: string,
   context: { age: number; goal: string | null }
 ): Promise<MealAnalysis> {
   const response = await openai().chat.completions.create({
@@ -38,7 +46,7 @@ export async function analyzeMealPhoto(
               context.goal ?? "general fitness"
             }". Respond as JSON: {"feedback": "2-3 sentence practical coaching feedback focused on balance and avoiding over/under-eating", "balance": one of "balanced"|"needs_protein"|"needs_vegetables"|"heavy"|"light"|"unclear", "items": ["visible food items"]}. If the photo is not food, say so politely in feedback and use balance "unclear".`,
           },
-          { type: "image_url", image_url: { url: photoUrl, detail: "low" } },
+          { type: "image_url", image_url: { url: image, detail: "low" } },
         ],
       },
     ],
