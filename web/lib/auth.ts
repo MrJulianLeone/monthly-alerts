@@ -3,7 +3,10 @@ import { cookies, headers } from "next/headers";
 import { sql } from "@/lib/db";
 
 const SESSION_COOKIE = "ma_session";
-const SESSION_DAYS = 30;
+const SESSION_DAYS = 365;
+
+const USER_COOKIE = "ma_user";
+const USER_COOKIE_DAYS = 365;
 
 export type SessionUser = {
   id: string;
@@ -106,6 +109,42 @@ export async function clearSessionCookie() {
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (token) await deleteSession(token).catch(() => {});
   cookieStore.delete(SESSION_COOKIE);
+  cookieStore.delete(USER_COOKIE);
+}
+
+// ---------------------------------------------------------------------------
+// Remembered-user cookie (username + status, long-lived)
+// ---------------------------------------------------------------------------
+
+export type RememberedUser = { name: string; status: string };
+
+/**
+ * Long-lived cookie remembering who is signed in (username + account status/
+ * role). Set at every login/signup and cleared only on logout, so returning
+ * visitors are sent straight to their app.
+ */
+export async function setUserCookie(name: string, status: string) {
+  const cookieStore = await cookies();
+  cookieStore.set(USER_COOKIE, JSON.stringify({ name, status }), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    expires: new Date(Date.now() + USER_COOKIE_DAYS * 24 * 60 * 60 * 1000),
+  });
+}
+
+export async function getRememberedUser(): Promise<RememberedUser | null> {
+  const cookieStore = await cookies();
+  const raw = cookieStore.get(USER_COOKIE)?.value;
+  if (!raw) return null;
+  try {
+    const parsed = JSON.parse(raw);
+    if (typeof parsed?.name !== "string" || typeof parsed?.status !== "string") return null;
+    return { name: parsed.name, status: parsed.status };
+  } catch {
+    return null;
+  }
 }
 
 // ---------------------------------------------------------------------------

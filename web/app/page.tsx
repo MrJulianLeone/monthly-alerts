@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { redirect } from "next/navigation";
+import { getRememberedUser } from "@/lib/auth";
+import { homeForRole } from "@/lib/page-auth";
 
 const features = [
   {
@@ -19,7 +22,11 @@ const features = [
   },
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+  // Signed-in visitors go straight to their app until they log out.
+  const remembered = await getRememberedUser();
+  if (remembered) redirect(homeForRole(remembered.status));
+
   return (
     <main>
       <section className="mx-auto max-w-3xl px-6 pb-20 pt-24 text-center">
