@@ -1,116 +1,59 @@
-# MonthlyAlerts.com
+# MonthlyAlerts
 
-AI-powered stock newsletter platform that sends monthly alerts about fast-growing companies to subscribers.
+**MonthlyAlerts.com** — a simple, professional personal health coach delivered through a chat interface. Users receive daily guidance for meals and exercise, and a clear **monthly progress summary** — the core deliverable of the product.
 
-## 🚀 Live Site
+## Monorepo Structure
 
-- **Production**: [https://monthlyalerts.com](https://monthlyalerts.com)
-- **Admin Dashboard**: [https://monthlyalerts.com/admin](https://monthlyalerts.com/admin)
-
-## 📋 Features
-
-- **Landing Page** - Professional marketing site with pricing
-- **User Authentication** - Secure signup/login with bcrypt password hashing
-- **Stripe Integration** - $29/month recurring subscriptions
-- **Email Alerts** - Send monthly stock alerts via Resend
-- **Admin Dashboard** - Manage subscribers and send alerts
-- **Mobile-First Design** - Responsive UI with Tailwind CSS
-
-## 🛠️ Tech Stack
-
-- **Framework**: Next.js 15 (App Router)
-- **Database**: Neon (PostgreSQL)
-- **Payments**: Stripe
-- **Email**: Resend
-- **Styling**: Tailwind CSS + shadcn/ui
-- **Deployment**: Vercel
-
-## 🔧 Environment Variables
-
-Required in Vercel dashboard or `.env.local`:
-
-```env
-# Database
-DATABASE_URL=postgresql://...
-POSTGRES_URL=postgresql://...
-
-# Stripe
-STRIPE_SECRET_KEY=sk_...
-STRIPE_PUBLISHABLE_KEY=pk_...
-NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_...
-STRIPE_WEBHOOK_SECRET=whsec_...
-
-# Resend
-RESEND_API_KEY=re_...
-
-# App URL
-NEXT_PUBLIC_URL=https://monthlyalerts.com
+```
+/web      Next.js backend (API routes) + parent & admin web dashboards (deployed on Vercel)
+/mobile   React Native + Expo mobile app (chat-first user experience)
 ```
 
-## 📦 Installation
+## Product Overview
+
+- **Chat-first coaching** — the main screen is a clean chat interface with an AI Coach. Only two user actions: **Snap Meal** (camera) and **I Did It** (challenge completion). No free-text input.
+- **Exercise system** — sequential challenges (finish one, the next unlocks), bodyweight + dumbbell exercises, progressive overload personalized by performance, age, gender, and date of birth.
+- **Nutrition system** — meal photo → GPT-4o vision analysis → short, useful feedback focused on balance. Meal-logging streaks accelerate exercise progression.
+- **Monthly summaries** — at the end of each month, a clear report (email + in-app) shows trends in meals logged, challenges completed, streaks, weight changes, and overall improvement.
+- **Leaderboards** — invite-only via referrals, max 3 per user, shows active friends (last 7–14 days), goal of 5 friends per leaderboard.
+- **Onboarding** — single entry point with an age gate (16+). Under-16 users require parent-managed setup via a secure email link. DOB required for all users.
+- **Parent & admin dashboards** — parent web dashboard with profile/goal management, logs, and monthly summary emails (Resend). Admin dashboard with IP-based geolocation analytics.
+- **Monetization** — first 30 days free, then a Stripe monthly subscription prompt.
+- **Notifications** — max 2–3 smart daily push notifications (meal nudge, challenge, evening check-in).
+
+## Tech Stack
+
+| Layer | Technology |
+| --- | --- |
+| Web / API | Next.js (App Router) on Vercel |
+| Mobile | React Native + Expo |
+| Database | Neon Postgres |
+| AI | OpenAI (GPT-4o-mini for coaching, GPT-4o for meal vision) |
+| Email | Resend |
+| Payments | Stripe (monthly subscriptions) |
+
+## Database
+
+The full schema lives at [`web/db/schema.sql`](web/db/schema.sql).
+
+Apply it locally (requires `DATABASE_URL`):
 
 ```bash
-# Install dependencies
-npm install --legacy-peer-deps
+cd web
+node scripts/migrate.mjs          # apply schema
+node scripts/migrate.mjs --wipe   # drop everything, then apply schema
+```
 
-# Run development server
+On Vercel (where `DATABASE_URL` is injected), the same can be done through the protected endpoint `POST /api/admin/migrate` with the `x-migrate-secret` header (`MIGRATE_SECRET` env var).
+
+## Development
+
+```bash
+# Web
+cd web
+npm install
 npm run dev
 
-# Build for production
-npm run build
+# Mobile (coming soon)
+cd mobile
 ```
-
-## 🗄️ Database Setup
-
-Run SQL scripts in order in your Neon dashboard:
-
-1. `scripts/004_create_auth_tables.sql` - Users & sessions
-2. `scripts/001_create_subscriptions_table.sql` - Subscriptions
-3. `scripts/002_create_alerts_table.sql` - Alert history
-4. `scripts/003_create_admin_users_table.sql` - Admin access
-5. `scripts/005_add_admin_user.sql` - Add your admin email
-
-## 🎯 Stripe Setup
-
-1. Create product in [Stripe Dashboard](https://dashboard.stripe.com/products)
-   - Name: "MonthlyAlerts Subscription"
-   - Price: $29/month recurring
-
-2. Set up webhook at [Stripe Webhooks](https://dashboard.stripe.com/webhooks)
-   - URL: `https://monthlyalerts.com/api/webhooks/stripe`
-   - Events: `checkout.session.completed`, `customer.subscription.*`, `invoice.payment_*`
-
-## 📧 Resend Setup
-
-1. Sign up at [Resend](https://resend.com)
-2. Verify domain: `monthlyalerts.com`
-3. Create API key
-4. Add to environment variables
-
-## 👨‍💼 Admin Access
-
-1. Sign up for an account at [monthlyalerts.com/signup](https://monthlyalerts.com/signup)
-2. Run SQL to grant admin access:
-   ```sql
-   INSERT INTO admin_users (user_id)
-   SELECT id FROM users WHERE email = 'your-email@example.com';
-   ```
-3. Access admin dashboard at [monthlyalerts.com/admin](https://monthlyalerts.com/admin)
-
-## 🚢 Deployment
-
-Automatic deployment via Vercel:
-
-```bash
-git push origin main
-```
-
-Or manual deployment:
-
-```bash
-vercel --prod
-```
-
-## 📄 License
-
-Private - All rights reserved © 2025 MonthlyAlerts.com
