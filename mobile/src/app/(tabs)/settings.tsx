@@ -3,6 +3,7 @@ import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
 import { api, API_URL, setToken } from "../../lib/api";
+import { lbToKg } from "../../lib/units";
 import { Button, Card, ErrorText, FieldLabel, Heading, Input } from "../../components/ui";
 import { colors, spacing } from "../../lib/theme";
 
@@ -40,7 +41,7 @@ export default function SettingsScreen() {
     setError("");
     setSaved(false);
     try {
-      await api("/api/profile", { method: "PATCH", body: { weightKg: Number(weight) } });
+      await api("/api/profile", { method: "PATCH", body: { weightKg: lbToKg(Number(weight)) } });
       setSaved(true);
       setWeight("");
     } catch (e) {
@@ -97,7 +98,7 @@ export default function SettingsScreen() {
             Optional — weight trends appear in your monthly summary.
           </Text>
           <View style={{ marginTop: spacing.md }}>
-            <FieldLabel>Weight (kg)</FieldLabel>
+            <FieldLabel>Weight (lbs)</FieldLabel>
             <Input keyboardType="numeric" value={weight} onChangeText={setWeight} />
             <ErrorText>{error}</ErrorText>
             {saved && <Text style={styles.saved}>Saved.</Text>}

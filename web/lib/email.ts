@@ -1,4 +1,5 @@
 import { Resend } from "resend";
+import { kgToLb } from "@/lib/units";
 
 let client: Resend | null = null;
 
@@ -123,7 +124,7 @@ export async function sendMonthlySummaryEmail(
           stats.weight_delta_kg !== null
             ? statRow(
                 "Weight change",
-                `${stats.weight_delta_kg > 0 ? "+" : ""}${stats.weight_delta_kg.toFixed(1)} kg`
+                `${stats.weight_delta_kg > 0 ? "+" : ""}${kgToLb(stats.weight_delta_kg).toFixed(1)} lbs`
               )
             : ""
         }

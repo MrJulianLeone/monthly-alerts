@@ -3,13 +3,14 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, ErrorText, Field, Input, Select } from "@/components/ui";
+import { ftInToCm, lbToKg } from "@/lib/units";
 
 export function ChildProfileForm({
   childId,
   initial,
 }: {
   childId: string;
-  initial: { displayName: string; goal: string; weightKg: string; heightCm: string };
+  initial: { displayName: string; goal: string; weightLb: string; heightFt: string; heightIn: string };
 }) {
   const router = useRouter();
   const [form, setForm] = useState(initial);
@@ -32,8 +33,11 @@ export function ChildProfileForm({
       body: JSON.stringify({
         displayName: form.displayName,
         goal: form.goal || undefined,
-        weightKg: form.weightKg ? Number(form.weightKg) : undefined,
-        heightCm: form.heightCm ? Number(form.heightCm) : undefined,
+        weightKg: form.weightLb ? lbToKg(Number(form.weightLb)) : undefined,
+        heightCm:
+          form.heightFt || form.heightIn
+            ? ftInToCm(Number(form.heightFt || 0), Number(form.heightIn || 0))
+            : undefined,
       }),
     });
     setBusy(false);
@@ -59,12 +63,15 @@ export function ChildProfileForm({
           <option value="build_habits">Build habits</option>
         </Select>
       </Field>
+      <Field label="Weight (lbs)">
+        <Input type="number" min={45} max={880} value={form.weightLb} onChange={set("weightLb")} />
+      </Field>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Weight (kg)">
-          <Input type="number" min={20} max={400} value={form.weightKg} onChange={set("weightKg")} />
+        <Field label="Height (ft)">
+          <Input type="number" min={2} max={8} value={form.heightFt} onChange={set("heightFt")} />
         </Field>
-        <Field label="Height (cm)">
-          <Input type="number" min={80} max={260} value={form.heightCm} onChange={set("heightCm")} />
+        <Field label="Height (in)">
+          <Input type="number" min={0} max={11} value={form.heightIn} onChange={set("heightIn")} />
         </Field>
       </div>
       <ErrorText>{error}</ErrorText>

@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { sql } from "@/lib/db";
 import { requirePageUser } from "@/lib/page-auth";
 import { Card, PageHeading, Stat } from "@/components/ui";
+import { cmToFtIn, kgToLb } from "@/lib/units";
 import { ChildProfileForm } from "./profile-form";
 import { SendSummaryButton } from "./send-summary-button";
 
@@ -45,6 +46,7 @@ export default async function ChildDetailPage({
   ]);
 
   const name = (child.display_name as string) ?? "Child";
+  const childHeight = child.height_cm ? cmToFtIn(Number(child.height_cm)) : null;
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
@@ -66,8 +68,9 @@ export default async function ChildDetailPage({
               initial={{
                 displayName: name,
                 goal: (child.goal as string) ?? "",
-                weightKg: child.weight_kg ? String(child.weight_kg) : "",
-                heightCm: child.height_cm ? String(child.height_cm) : "",
+                weightLb: child.weight_kg ? String(kgToLb(Number(child.weight_kg))) : "",
+                heightFt: childHeight ? String(childHeight.feet) : "",
+                heightIn: childHeight ? String(childHeight.inches) : "",
               }}
             />
           </Card>
