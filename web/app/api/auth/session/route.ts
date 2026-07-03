@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   if ("response" in auth) return auth.response;
 
   const rows = (await sql()`
-    SELECT u.id, u.email, u.role, u.date_of_birth,
+    SELECT u.id, u.email, u.name, u.role, u.date_of_birth,
            p.display_name, p.gender, p.height_cm, p.weight_kg, p.goal, p.timezone,
            s.status AS subscription_status, s.trial_ends_at,
            st.current_streak, st.longest_streak

@@ -4,13 +4,19 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, ErrorText, Field, Input, Select } from "@/components/ui";
 
-export function EnrollForm() {
+export function EnrollForm({
+  initialName = "",
+  initialDob = "",
+}: {
+  initialName?: string;
+  initialDob?: string;
+}) {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
-    displayName: "",
-    dateOfBirth: "",
+    displayName: initialName,
+    dateOfBirth: initialDob,
     gender: "",
     goal: "",
     weightKg: "",

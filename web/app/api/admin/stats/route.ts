@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
       WHERE city IS NOT NULL AND created_at > now() - interval '30 days'
       GROUP BY country, city ORDER BY events DESC LIMIT 20`,
     sql()`
-      SELECT u.email, u.created_at, u.role, p.display_name
+      SELECT u.email, u.created_at, u.role, COALESCE(p.display_name, u.name) AS display_name
       FROM users u LEFT JOIN profiles p ON p.user_id = u.id
       WHERE u.deleted_at IS NULL
       ORDER BY u.created_at DESC LIMIT 20`,

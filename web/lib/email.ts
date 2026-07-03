@@ -8,7 +8,8 @@ function resend(): Resend {
 }
 
 function from(): string {
-  const email = process.env.RESEND_FROM_EMAIL ?? "coach@monthlyalerts.com";
+  // Default must be on the Resend-verified sending domain (alerts.monthlyalerts.com).
+  const email = process.env.RESEND_FROM_EMAIL ?? "coach@alerts.monthlyalerts.com";
   const name = process.env.RESEND_FROM_NAME ?? "MonthlyAlerts";
   return `${name} <${email}>`;
 }
@@ -29,7 +30,13 @@ const button = (href: string, label: string) => `
 <a href="${href}" style="display:inline-block;background:#171717;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">${label}</a>`;
 
 async function send(to: string, subject: string, html: string) {
-  return resend().emails.send({ from: from(), to, subject, html });
+  // The Resend SDK reports failures via the error field instead of throwing —
+  // without this check, failed sends would look like successes to callers.
+  const { data, error } = await resend().emails.send({ from: from(), to, subject, html });
+  if (error) {
+    throw new Error(`Email to ${to} failed: ${error.message}`);
+  }
+  return data;
 }
 
 // ---------------------------------------------------------------------------

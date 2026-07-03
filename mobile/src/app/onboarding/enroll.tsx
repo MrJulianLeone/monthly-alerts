@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   KeyboardAvoidingView,
   Platform,
@@ -65,6 +65,22 @@ export default function Enroll() {
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // Name and birthday were collected when this account was created — prefill.
+  useEffect(() => {
+    api<{ user: { name: string | null; date_of_birth: string | null } | null }>(
+      "/api/auth/session"
+    )
+      .then((session) => {
+        if (!session.user) return;
+        setForm((f) => ({
+          ...f,
+          displayName: f.displayName || session.user?.name || "",
+          dateOfBirth: f.dateOfBirth || (session.user?.date_of_birth ?? "").slice(0, 10),
+        }));
+      })
+      .catch(() => {});
+  }, []);
 
   const set = (key: string) => (value: string) => setForm({ ...form, [key]: value });
 

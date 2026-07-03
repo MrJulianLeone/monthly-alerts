@@ -8,7 +8,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { useRouter } from "expo-router";
+import { useLocalSearchParams, useRouter } from "expo-router";
 import { api, ApiError, setToken } from "../../lib/api";
 import { Button, ErrorText, FieldLabel, Heading, Input, Subtext } from "../../components/ui";
 import { colors, radius, spacing } from "../../lib/theme";
@@ -50,14 +50,15 @@ function Chips({
   );
 }
 
-/** 16+ self-signup: email/password + quick profile (DOB required). */
+/** 16+ self-signup. Name and birthday carry over from the first screen. */
 export default function Signup() {
   const router = useRouter();
+  const params = useLocalSearchParams<{ name?: string; dob?: string }>();
   const [form, setForm] = useState({
-    displayName: "",
+    displayName: params.name ? String(params.name) : "",
     email: "",
     password: "",
-    dateOfBirth: "",
+    dateOfBirth: params.dob ? String(params.dob) : "",
     gender: "",
     goal: "",
     weightKg: "",
@@ -105,12 +106,18 @@ export default function Signup() {
         behavior={Platform.OS === "ios" ? "padding" : undefined}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <Heading>Create your account</Heading>
-          <Subtext>Your coach uses this to personalize your challenges.</Subtext>
+          <Heading>
+            {form.displayName ? `Welcome, ${form.displayName.trim().split(" ")[0]}` : "Create your account"}
+          </Heading>
+          <Subtext>Create your login and add a few optional details for better coaching.</Subtext>
 
           <View style={styles.form}>
-            <FieldLabel>Name</FieldLabel>
-            <Input placeholder="Alex" value={form.displayName} onChangeText={set("displayName")} />
+            {!params.name && (
+              <>
+                <FieldLabel>Name</FieldLabel>
+                <Input placeholder="Alex" value={form.displayName} onChangeText={set("displayName")} />
+              </>
+            )}
 
             <FieldLabel>Email</FieldLabel>
             <Input
@@ -124,13 +131,17 @@ export default function Signup() {
             <FieldLabel>Password (8+ characters)</FieldLabel>
             <Input secureTextEntry value={form.password} onChangeText={set("password")} />
 
-            <FieldLabel>Date of birth (YYYY-MM-DD)</FieldLabel>
-            <Input
-              placeholder="1995-06-15"
-              autoCapitalize="none"
-              value={form.dateOfBirth}
-              onChangeText={set("dateOfBirth")}
-            />
+            {!params.dob && (
+              <>
+                <FieldLabel>Date of birth (YYYY-MM-DD)</FieldLabel>
+                <Input
+                  placeholder="1995-06-15"
+                  autoCapitalize="none"
+                  value={form.dateOfBirth}
+                  onChangeText={set("dateOfBirth")}
+                />
+              </>
+            )}
 
             <FieldLabel>Gender (optional)</FieldLabel>
             <Chips options={GENDERS} value={form.gender} onChange={set("gender")} />

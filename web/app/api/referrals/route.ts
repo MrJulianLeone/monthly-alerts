@@ -42,12 +42,19 @@ export async function POST(request: NextRequest) {
 
   const token = generateToken();
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 24 * 60 * 60 * 1000);
-  await sql()`
+  const inserted = (await sql()`
     INSERT INTO referrals (referrer_id, leaderboard_id, invitee_email, token_hash, expires_at)
     VALUES (${auth.user.id}, ${leaderboardId}, ${email}, ${hashToken(token)}, ${expiresAt.toISOString()})
-  `;
+    RETURNING id
+  `) as { id: string }[];
 
-  await sendReferralEmail(email, referrerName, membership[0].name, token);
+  try {
+    await sendReferralEmail(email, referrerName, membership[0].name, token);
+  } catch (error) {
+    await sql()`DELETE FROM referrals WHERE id = ${inserted[0].id}`.catch(() => {});
+    console.error("Referral email failed:", error);
+    return jsonError("We couldn't send the invitation email right now. Please try again.", 502);
+  }
   await trackEvent(request, "referral_sent", auth.user.id);
 
   return NextResponse.json({ ok: true }, { status: 201 });

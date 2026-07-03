@@ -1,12 +1,17 @@
 import { useState } from "react";
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { useLocalSearchParams } from "expo-router";
 import { api, ApiError } from "../../lib/api";
 import { Button, ErrorText, FieldLabel, Heading, Input, Subtext } from "../../components/ui";
 import { colors, spacing } from "../../lib/theme";
 
-/** Under-16 path: child enters the parent's email; parent completes setup. */
+/**
+ * Under-16 path: the child's name and birthday (entered on the first screen)
+ * ride along with the invite so the parent doesn't re-enter them.
+ */
 export default function ParentEmail() {
+  const { name, dob } = useLocalSearchParams<{ name: string; dob: string }>();
   const [email, setEmail] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -16,7 +21,9 @@ export default function ParentEmail() {
     setBusy(true);
     setError("");
     try {
-      await api("/api/onboarding/parent-invite", { body: { parentEmail: email.trim() } });
+      await api("/api/onboarding/parent-invite", {
+        body: { parentEmail: email.trim(), childName: name, childDob: dob },
+      });
       setSent(true);
     } catch (e) {
       setError(e instanceof ApiError ? e.message : "Something went wrong");
@@ -41,10 +48,10 @@ export default function ParentEmail() {
           </View>
         ) : (
           <View>
-            <Heading>A parent sets you up</Heading>
+            <Heading>Almost there{name ? `, ${String(name).split(" ")[0]}` : ""}</Heading>
             <Subtext>
-              Enter your parent&apos;s email. They&apos;ll get a secure link to create your account,
-              fill in your profile, and set your login.
+              Since you&apos;re under 16, a parent finishes your setup. Enter their email —
+              they&apos;ll get a secure link, and we&apos;ll keep your name and birthday on file.
             </Subtext>
             <View style={styles.form}>
               <FieldLabel>Parent&apos;s email</FieldLabel>
