@@ -10,10 +10,12 @@ export async function GET(request: NextRequest) {
   const [totals, byCountry, byCity, recentSignups, recentEvents] = await Promise.all([
     sql()`
       SELECT
-        (SELECT count(*)::int FROM users WHERE role = 'user' AND deleted_at IS NULL) AS total_users,
+        (SELECT count(*)::int FROM users u JOIN profiles p ON p.user_id = u.id
+          WHERE u.deleted_at IS NULL) AS total_users,
         (SELECT count(*)::int FROM users WHERE role = 'parent' AND deleted_at IS NULL) AS total_parents,
-        (SELECT count(*)::int FROM users WHERE role = 'user' AND deleted_at IS NULL
-          AND last_active_at > now() - interval '7 days') AS active_7d,
+        (SELECT count(*)::int FROM users u JOIN profiles p ON p.user_id = u.id
+          WHERE u.deleted_at IS NULL
+          AND u.last_active_at > now() - interval '7 days') AS active_7d,
         (SELECT count(*)::int FROM meal_logs) AS total_meals,
         (SELECT count(*)::int FROM challenge_logs) AS total_challenges,
         (SELECT count(*)::int FROM subscriptions WHERE status = 'active') AS active_subscriptions,
