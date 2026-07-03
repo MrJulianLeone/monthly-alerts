@@ -1,0 +1,53 @@
+{
+  "expo": {
+    "name": "MonthlyAlerts",
+    "slug": "monthlyalerts",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "scheme": "monthlyalerts",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "bundleIdentifier": "com.monthlyalerts.app",
+      "supportsTablet": false,
+      "usesAppleSignIn": true,
+      "infoPlist": {
+        "NSCameraUsageDescription": "MonthlyAlerts uses the camera so you can snap photos of your meals for coaching feedback."
+      }
+    },
+    "android": {
+      "package": "com.monthlyalerts.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#171717",
+        "foregroundImage": "./assets/images/android-icon-foreground.png"
+      },
+      "permissions": ["CAMERA"]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#171717",
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 76
+        }
+      ],
+      "expo-secure-store",
+      "expo-apple-authentication",
+      [
+        "expo-image-picker",
+        {
+          "cameraPermission": "MonthlyAlerts uses the camera so you can snap photos of your meals for coaching feedback."
+        }
+      ],
+      "expo-notifications"
+    ],
+    "extra": {
+      "apiUrl": "https://monthlyalerts.com"
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
