@@ -29,12 +29,23 @@ export async function POST(request: NextRequest) {
 
   const token = generateToken();
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 24 * 60 * 60 * 1000);
-  await sql()`
+  const inserted = (await sql()`
     INSERT INTO parent_invites (parent_email, token_hash, expires_at)
     VALUES (${parentEmail}, ${hashToken(token)}, ${expiresAt.toISOString()})
-  `;
+    RETURNING id
+  `) as { id: string }[];
 
-  await sendParentSetupEmail(parentEmail, token);
+  try {
+    await sendParentSetupEmail(parentEmail, token);
+  } catch (error) {
+    // Don't leave an unusable pending invite behind, and tell the user the truth.
+    await sql()`DELETE FROM parent_invites WHERE id = ${inserted[0].id}`.catch(() => {});
+    console.error("Parent setup email failed:", error);
+    return jsonError(
+      "We couldn't send the email to your parent right now. Please try again in a few minutes.",
+      502
+    );
+  }
   await trackEvent(request, "parent_invite_sent");
 
   return NextResponse.json({ ok: true, message: "Setup email sent to your parent." }, { status: 201 });
