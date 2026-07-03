@@ -14,6 +14,7 @@
 - **Chat-first coaching** — the main screen is a clean chat interface with an AI Coach. Only two user actions: **Snap Meal** (camera → GPT-4o vision feedback) and **I Did It** (challenge completion). No free-text input.
 - **Exercise system** — sequential challenges (finish one, the next unlocks immediately), bodyweight + dumbbell exercises, progressive overload personalized by performance, age, gender, and date of birth.
 - **Nutrition system** — meal photo → GPT-4o vision analysis → short, useful feedback focused on balance. The photo is analyzed inline and never stored; only the structured result is kept. Meal-logging streaks accelerate exercise progression.
+- **Daily calorie tracking** — each meal is given a calorie estimate, added to a per-user/per-day running log (`daily_calorie_logs`), and the coach immediately replies in chat with how many calories remain for the day against the user's personal daily goal. The goal is auto-estimated from the user's profile (age, sex, height, weight, goal) or set explicitly in Settings; today's standing is exposed at `GET /api/calories` and on the session payload.
 - **Progress tracking** — a running, cumulative per-user summary (meals logged, distinct logging days, balanced-meal rate, challenges completed, cumulative volume) is maintained in `O(1)` on each action, so review and goal alignment never require scanning or retaining raw history.
 - **Monthly summaries** — at the end of each month (and on demand), a clear report (email via Resend + in-app) shows trends in meals logged, challenges completed, streaks, weight changes, and overall improvement, with an AI-written narrative.
 - **Leaderboards** — invite-only via email referrals, max 3 per user, shows active friends (last 14 days), leave anytime, goal of 5 friends per leaderboard.
@@ -52,7 +53,7 @@ npm run db:wipe      # drop everything, then apply schema (destructive)
 
 On Vercel, `POST /api/admin/migrate` (header `x-migrate-secret: $MIGRATE_SECRET`) does the same.
 
-For existing databases, apply the incremental migration in [`web/db/migrations/`](web/db/migrations) (makes `meal_logs.photo_url` optional, adds `progress_stats`, and backfills it) without wiping data.
+For existing databases, apply the incremental migrations in [`web/db/migrations/`](web/db/migrations) without wiping data: `0001` makes `meal_logs.photo_url` optional and adds/backfills `progress_stats`; `0002` adds `profiles.daily_calorie_goal`, `meal_logs.estimated_calories`, the `daily_calorie_logs` running log, and the `calorie_summary` chat kind.
 
 ## Scheduled Jobs (Vercel Cron, see web/vercel.json)
 

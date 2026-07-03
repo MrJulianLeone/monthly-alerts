@@ -13,6 +13,11 @@ export type Message = {
     challenge_id?: string;
     balance?: string;
     items?: string[];
+    calories?: number | null;
+    meal_calories?: number | null;
+    calories_consumed?: number;
+    calorie_goal?: number;
+    calories_remaining?: number;
   } | null;
   created_at: string;
 };
@@ -348,6 +353,7 @@ function ChatBubble({ message }: { message: Message }) {
   if (message.kind === "meal_photo") {
     const balance = message.metadata?.balance ?? "unclear";
     const items = message.metadata?.items ?? [];
+    const calories = message.metadata?.calories;
     return (
       <div className="flex justify-end">
         <div className="max-w-[82%] rounded-2xl rounded-br-md bg-neutral-900 px-4 py-3 text-white">
@@ -357,6 +363,42 @@ function ChatBubble({ message }: { message: Message }) {
           <p className="mt-0.5 text-sm font-semibold">{BALANCE_LABELS[balance] ?? "Meal logged"}</p>
           {items.length > 0 && (
             <p className="mt-1 text-xs leading-relaxed text-neutral-300">{items.join(", ")}</p>
+          )}
+          {typeof calories === "number" && calories > 0 && (
+            <p className="mt-1 text-xs font-medium text-neutral-400">≈ {calories} kcal</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  if (message.kind === "calorie_summary") {
+    const remaining = message.metadata?.calories_remaining;
+    const goal = message.metadata?.calorie_goal;
+    const consumed = message.metadata?.calories_consumed;
+    const over = typeof remaining === "number" && remaining < 0;
+    return (
+      <div className="flex justify-start">
+        <div className="max-w-[82%] rounded-2xl rounded-bl-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-neutral-900">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-emerald-700">
+            Daily calories
+          </p>
+          {typeof remaining === "number" && (
+            <p className="mt-0.5 text-lg font-semibold text-neutral-900">
+              {over
+                ? `${Math.abs(remaining)} kcal over`
+                : `${remaining} kcal left`}
+            </p>
+          )}
+          {typeof consumed === "number" && typeof goal === "number" && (
+            <p className="text-xs text-neutral-600">
+              {consumed} / {goal} kcal today
+            </p>
+          )}
+          {message.content && (
+            <p className="mt-1.5 whitespace-pre-line text-sm leading-relaxed text-neutral-700">
+              {message.content}
+            </p>
           )}
         </div>
       </div>

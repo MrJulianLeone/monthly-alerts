@@ -21,7 +21,15 @@ type Message = {
   sender: "coach" | "user";
   kind: string;
   content: string | null;
-  metadata: { challenge_id?: string; balance?: string; items?: string[] };
+  metadata: {
+    challenge_id?: string;
+    balance?: string;
+    items?: string[];
+    calories?: number | null;
+    calorie_goal?: number;
+    calories_consumed?: number;
+    calories_remaining?: number;
+  };
   created_at: string;
 };
 
@@ -136,12 +144,40 @@ export default function ChatScreen() {
     if (item.kind === "meal_photo") {
       const balance = item.metadata.balance ?? "unclear";
       const items = item.metadata.items ?? [];
+      const calories = item.metadata.calories;
       return (
         <View style={[styles.bubbleRow, styles.rowUser]}>
           <View style={[styles.bubble, styles.bubbleUser]}>
             <Text style={styles.mealTag}>MEAL LOGGED</Text>
             <Text style={styles.bubbleUserText}>{BALANCE_LABELS[balance] ?? "Meal logged"}</Text>
             {items.length > 0 && <Text style={styles.mealItems}>{items.join(", ")}</Text>}
+            {typeof calories === "number" && calories > 0 && (
+              <Text style={styles.mealItems}>≈ {calories} kcal</Text>
+            )}
+          </View>
+        </View>
+      );
+    }
+    if (item.kind === "calorie_summary") {
+      const remaining = item.metadata.calories_remaining;
+      const goal = item.metadata.calorie_goal;
+      const consumed = item.metadata.calories_consumed;
+      const over = typeof remaining === "number" && remaining < 0;
+      return (
+        <View style={[styles.bubbleRow, styles.rowCoach]}>
+          <View style={[styles.bubble, styles.bubbleCalorie]}>
+            <Text style={styles.calorieTag}>DAILY CALORIES</Text>
+            {typeof remaining === "number" && (
+              <Text style={styles.calorieHeadline}>
+                {over ? `${Math.abs(remaining)} kcal over` : `${remaining} kcal left`}
+              </Text>
+            )}
+            {typeof consumed === "number" && typeof goal === "number" && (
+              <Text style={styles.calorieSub}>
+                {consumed} / {goal} kcal today
+              </Text>
+            )}
+            {!!item.content && <Text style={styles.calorieBody}>{item.content}</Text>}
           </View>
         </View>
       );
@@ -258,6 +294,17 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   mealItems: { color: colors.primaryText, fontSize: 13, lineHeight: 18, marginTop: 4, opacity: 0.8 },
+  bubbleCalorie: { backgroundColor: "#ecfdf5", borderColor: "#a7f3d0", borderWidth: 1 },
+  calorieTag: {
+    color: "#047857",
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  calorieHeadline: { color: colors.text, fontSize: 18, fontWeight: "700" },
+  calorieSub: { color: colors.textSecondary, fontSize: 13, marginTop: 2 },
+  calorieBody: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 6 },
   actions: {
     borderTopColor: colors.border,
     borderTopWidth: 1,

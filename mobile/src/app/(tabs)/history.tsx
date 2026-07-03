@@ -9,7 +9,8 @@ import { colors, radius, spacing } from "../../lib/theme";
 type Meal = {
   id: string;
   ai_feedback: string | null;
-  ai_analysis: { balance?: string; items?: string[] } | null;
+  ai_analysis: { balance?: string; items?: string[]; calories?: number | null } | null;
+  estimated_calories: number | null;
   logged_at: string;
 };
 
@@ -106,7 +107,12 @@ export default function HistoryScreen() {
                 <Text style={styles.cardTitle}>
                   {BALANCE_LABELS[item.ai_analysis?.balance ?? "unclear"] ?? "Meal logged"}
                 </Text>
-                <Text style={styles.cardMeta}>{new Date(item.logged_at).toLocaleString()}</Text>
+                <Text style={styles.cardMeta}>
+                  {new Date(item.logged_at).toLocaleString()}
+                  {typeof (item.estimated_calories ?? item.ai_analysis?.calories) === "number"
+                    ? ` · ≈ ${item.estimated_calories ?? item.ai_analysis?.calories} kcal`
+                    : ""}
+                </Text>
                 <Text style={styles.cardBodySmall} numberOfLines={3}>
                   {item.ai_feedback}
                 </Text>

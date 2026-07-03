@@ -6,6 +6,7 @@ export type ChatKind =
   | "meal_photo"
   | "challenge_prompt"
   | "challenge_complete"
+  | "calorie_summary"
   | "monthly_summary"
   | "system";
 
