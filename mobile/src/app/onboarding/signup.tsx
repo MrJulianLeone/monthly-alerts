@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { api, ApiError, setToken } from "../../lib/api";
+import { lbToKg } from "../../lib/units";
 import { Button, ErrorText, FieldLabel, Heading, Input, Subtext } from "../../components/ui";
 import { colors, radius, spacing } from "../../lib/theme";
 
@@ -54,13 +55,14 @@ function Chips({
 export default function Signup() {
   const router = useRouter();
   const [form, setForm] = useState({
-    displayName: "",
+    firstName: "",
+    lastName: "",
     email: "",
     password: "",
     dateOfBirth: "",
     gender: "",
     goal: "",
-    weightKg: "",
+    weightLb: "",
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -73,13 +75,14 @@ export default function Signup() {
     try {
       const result = await api<{ token: string }>("/api/auth/signup", {
         body: {
-          displayName: form.displayName.trim(),
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
           email: form.email.trim(),
           password: form.password,
           dateOfBirth: form.dateOfBirth,
           gender: form.gender || null,
           goal: form.goal || null,
-          weightKg: form.weightKg ? Number(form.weightKg) : null,
+          weightKg: form.weightLb ? lbToKg(Number(form.weightLb)) : null,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       });
@@ -93,7 +96,8 @@ export default function Signup() {
   }
 
   const valid =
-    form.displayName.trim() &&
+    form.firstName.trim() &&
+    form.lastName.trim() &&
     form.email.includes("@") &&
     form.password.length >= 8 &&
     /^\d{4}-\d{2}-\d{2}$/.test(form.dateOfBirth);
@@ -109,8 +113,11 @@ export default function Signup() {
           <Subtext>Your coach uses this to personalize your challenges.</Subtext>
 
           <View style={styles.form}>
-            <FieldLabel>Name</FieldLabel>
-            <Input placeholder="Alex" value={form.displayName} onChangeText={set("displayName")} />
+            <FieldLabel>First name</FieldLabel>
+            <Input placeholder="Alex" value={form.firstName} onChangeText={set("firstName")} />
+
+            <FieldLabel>Last name</FieldLabel>
+            <Input placeholder="Smith" value={form.lastName} onChangeText={set("lastName")} />
 
             <FieldLabel>Email</FieldLabel>
             <Input
@@ -138,8 +145,8 @@ export default function Signup() {
             <FieldLabel>Goal (optional)</FieldLabel>
             <Chips options={GOALS} value={form.goal} onChange={set("goal")} />
 
-            <FieldLabel>Weight in kg (optional)</FieldLabel>
-            <Input keyboardType="numeric" value={form.weightKg} onChangeText={set("weightKg")} />
+            <FieldLabel>Weight in lbs (optional)</FieldLabel>
+            <Input keyboardType="numeric" value={form.weightLb} onChangeText={set("weightLb")} />
 
             <ErrorText>{error}</ErrorText>
             <Button

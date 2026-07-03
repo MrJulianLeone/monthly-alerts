@@ -22,8 +22,18 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null);
-  if (!body?.displayName || typeof body.displayName !== "string") {
-    return jsonError("Display name is required");
+  // Names arrive as separate first/last fields; older clients may still send
+  // a single displayName. Either way, profiles store one display_name.
+  const displayName =
+    typeof body?.firstName === "string" && body.firstName.trim()
+      ? [body.firstName.trim(), typeof body.lastName === "string" ? body.lastName.trim() : ""]
+          .filter(Boolean)
+          .join(" ")
+      : typeof body?.displayName === "string" && body.displayName.trim()
+        ? body.displayName.trim()
+        : null;
+  if (!displayName) {
+    return jsonError("First and last name are required");
   }
   if (!body?.dateOfBirth || isNaN(Date.parse(body.dateOfBirth))) {
     return jsonError("Date of birth is required");
@@ -33,7 +43,7 @@ export async function POST(request: NextRequest) {
   if (age > 120) return jsonError("Please check the date of birth");
 
   await enrollExistingUser(auth.user.id, {
-    displayName: body.displayName.trim().slice(0, 60),
+    displayName: displayName.slice(0, 60),
     dateOfBirth: body.dateOfBirth,
     gender: ["male", "female", "other"].includes(body.gender) ? body.gender : null,
     heightCm:

@@ -3,18 +3,21 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, ErrorText, Field, Input, Select } from "@/components/ui";
+import { ftInToCm, lbToKg } from "@/lib/units";
 
 export function EnrollForm() {
   const router = useRouter();
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
-    displayName: "",
+    firstName: "",
+    lastName: "",
     dateOfBirth: "",
     gender: "",
     goal: "",
-    weightKg: "",
-    heightCm: "",
+    weightLb: "",
+    heightFt: "",
+    heightIn: "",
   });
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -28,12 +31,16 @@ export function EnrollForm() {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        displayName: form.displayName,
+        firstName: form.firstName.trim(),
+        lastName: form.lastName.trim(),
         dateOfBirth: form.dateOfBirth,
         gender: form.gender || null,
         goal: form.goal || null,
-        weightKg: form.weightKg ? Number(form.weightKg) : null,
-        heightCm: form.heightCm ? Number(form.heightCm) : null,
+        weightKg: form.weightLb ? lbToKg(Number(form.weightLb)) : null,
+        heightCm:
+          form.heightFt || form.heightIn
+            ? ftInToCm(Number(form.heightFt || 0), Number(form.heightIn || 0))
+            : null,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
       }),
     });
@@ -54,9 +61,14 @@ export function EnrollForm() {
         progress summary. Your parent dashboard stays exactly as it is. First 30 days free.
       </p>
       <form onSubmit={enroll} className="mt-6 space-y-4">
-        <Field label="Your name">
-          <Input required value={form.displayName} onChange={set("displayName")} />
-        </Field>
+        <div className="grid grid-cols-2 gap-3">
+          <Field label="First name">
+            <Input required value={form.firstName} onChange={set("firstName")} />
+          </Field>
+          <Field label="Last name">
+            <Input required value={form.lastName} onChange={set("lastName")} />
+          </Field>
+        </div>
         <Field label="Date of birth">
           <Input type="date" required value={form.dateOfBirth} onChange={set("dateOfBirth")} />
         </Field>
@@ -79,12 +91,15 @@ export function EnrollForm() {
             </Select>
           </Field>
         </div>
+        <Field label="Weight (lbs, optional)">
+          <Input type="number" min={45} max={880} value={form.weightLb} onChange={set("weightLb")} placeholder="150" />
+        </Field>
         <div className="grid grid-cols-2 gap-3">
-          <Field label="Weight (kg, optional)">
-            <Input type="number" min={20} max={400} value={form.weightKg} onChange={set("weightKg")} />
+          <Field label="Height (ft, optional)">
+            <Input type="number" min={2} max={8} value={form.heightFt} onChange={set("heightFt")} placeholder="5" />
           </Field>
-          <Field label="Height (cm, optional)">
-            <Input type="number" min={80} max={260} value={form.heightCm} onChange={set("heightCm")} />
+          <Field label="Height (in, optional)">
+            <Input type="number" min={0} max={11} value={form.heightIn} onChange={set("heightIn")} placeholder="10" />
           </Field>
         </div>
         <ErrorText>{error}</ErrorText>

@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
   if (!body) return jsonError("Invalid request body");
 
-  const { email, password, displayName, dateOfBirth, gender, heightCm, weightKg, goal, timezone } = body;
+  const { email, password, firstName, lastName, dateOfBirth, gender, heightCm, weightKg, goal, timezone } = body;
 
   if (!email || typeof email !== "string" || !/^\S+@\S+\.\S+$/.test(email)) {
     return jsonError("A valid email is required");
@@ -21,8 +21,19 @@ export async function POST(request: NextRequest) {
   if (!password || typeof password !== "string" || password.length < 8) {
     return jsonError("Password must be at least 8 characters");
   }
-  if (!displayName || typeof displayName !== "string") {
-    return jsonError("Display name is required");
+  // Names arrive as separate first/last fields; older clients may still send
+  // a single displayName. Either way, profiles store one display_name.
+  const displayName =
+    typeof firstName === "string" && firstName.trim()
+      ? [firstName.trim(), typeof lastName === "string" ? lastName.trim() : ""]
+          .filter(Boolean)
+          .join(" ")
+          .slice(0, 60)
+      : typeof body.displayName === "string" && body.displayName.trim()
+        ? body.displayName.trim().slice(0, 60)
+        : null;
+  if (!displayName) {
+    return jsonError("First and last name are required");
   }
   if (!dateOfBirth || isNaN(Date.parse(dateOfBirth))) {
     return jsonError("Date of birth is required");
