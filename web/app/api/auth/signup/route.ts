@@ -6,8 +6,8 @@ import { jsonError } from "@/lib/api";
 import { trackEvent } from "@/lib/geo";
 
 /**
- * Self-signup for users 16+. The age gate is the first onboarding screen;
- * under-16 users must go through POST /api/onboarding/parent-invite instead.
+ * Self-signup for users 16+. Onboarding starts by collecting name and date of
+ * birth; under-16 users are routed to POST /api/onboarding/parent-invite instead.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
