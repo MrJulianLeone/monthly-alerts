@@ -2,6 +2,7 @@
 
 React Native + Expo app for MonthlyAlerts — the chat-first personal health coach.
 
+<<<<<<< HEAD
 ## Screens
 
 - **Onboarding** — single entry point with the 16+ age gate. Under-16 users send a
@@ -32,3 +33,9 @@ The API base URL comes from `expo.extra.apiUrl` in `app.json`
   the backend caps smart nudges at 2–3 per day.
 - Building for the App Store / Play Store requires an Expo (EAS) account:
   `npx eas build`.
+=======
+This folder is a placeholder in the monorepo. The Expo app (starting with the
+chat UI: AI Coach feed, "Snap Meal" camera action, "I Did It" challenge button,
+and bottom navigation for Leaderboard / History / Refer Friends / Settings)
+is the next build step after the backend API routes.
+>>>>>>> origin/main
