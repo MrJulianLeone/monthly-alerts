@@ -6,6 +6,7 @@ export type ChatKind =
   | "meal_photo"
   | "challenge_prompt"
   | "challenge_complete"
+  | "calorie_summary"
   | "monthly_summary"
   | "system";
 
@@ -71,7 +72,7 @@ export async function remindActiveChallenge(
     userId,
     "coach",
     "challenge_prompt",
-    `Your current challenge is still on: ${challenge.name} — ${challenge.target_value} ${unitLabel}. Tap "I Did It" when you finish.`,
+    `Your current challenge is still on: ${challenge.name} — ${challenge.target_value} ${unitLabel}. Open the Challenge menu to mark it complete, get an explanation, or swap it.`,
     { challenge_id: challenge.id }
   );
   return challenge;

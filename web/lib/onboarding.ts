@@ -73,7 +73,7 @@ export async function enrollExistingUser(
       "challenge_prompt",
       `Your first challenge: ${challenge.exercise.name} — ${challenge.target} ${
         challenge.exercise.unit === "seconds" ? "seconds" : "reps"
-      }. Tap "I Did It" when you finish.`,
+      }. Open the Challenge menu to mark it complete when you finish.`,
       { challenge_id: challenge.id }
     );
   }
@@ -163,7 +163,7 @@ export async function createCoachedUser(input: NewCoachedUser): Promise<string> 
       "challenge_prompt",
       `Your first challenge: ${challenge.exercise.name} — ${challenge.target} ${
         challenge.exercise.unit === "seconds" ? "seconds" : "reps"
-      }. Tap "I Did It" when you finish.`,
+      }. Open the Challenge menu to mark it complete when you finish.`,
       { challenge_id: challenge.id }
     );
   }

@@ -9,6 +9,7 @@ export function ParentSetupForm({ token }: { token: string }) {
   const router = useRouter();
   const [state, setState] = useState<"loading" | "invalid" | "ready">("loading");
   const [parentEmail, setParentEmail] = useState("");
+  const [parentHasAccount, setParentHasAccount] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [form, setForm] = useState({
@@ -31,6 +32,7 @@ export function ParentSetupForm({ token }: { token: string }) {
         if (!res.ok) return setState("invalid");
         const data = await res.json();
         setParentEmail(data.parentEmail);
+        setParentHasAccount(Boolean(data.parentHasAccount));
         setState("ready");
       })
       .catch(() => setState("invalid"));
@@ -98,15 +100,22 @@ export function ParentSetupForm({ token }: { token: string }) {
         Your parent account: <span className="font-medium text-neutral-900">{parentEmail}</span>
       </p>
       <form onSubmit={submit} className="mt-6 space-y-4">
-        <Field label="Your parent-account password (8+ characters)">
-          <Input
-            type="password"
-            required
-            minLength={8}
-            value={form.parentPassword}
-            onChange={set("parentPassword")}
-          />
-        </Field>
+        {parentHasAccount ? (
+          <p className="rounded-lg bg-neutral-50 px-3 py-2.5 text-sm text-neutral-600">
+            You already have a MonthlyAlerts account — no new account or password needed.
+            Your existing login gains parent dashboard access when you finish this setup.
+          </p>
+        ) : (
+          <Field label="Create your parent-account password (8+ characters)">
+            <Input
+              type="password"
+              required
+              minLength={8}
+              value={form.parentPassword}
+              onChange={set("parentPassword")}
+            />
+          </Field>
+        )}
         <hr className="border-neutral-200" />
         <p className="text-sm font-semibold text-neutral-900">Child profile</p>
         <div className="grid grid-cols-2 gap-3">

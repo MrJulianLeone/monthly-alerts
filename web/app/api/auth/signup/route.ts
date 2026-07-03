@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { ageFromDob, createSession, setSessionCookie, setUserCookie } from "@/lib/auth";
+import { ageFromDob, createSession, hashToken, setSessionCookie, setUserCookie } from "@/lib/auth";
 import { createCoachedUser } from "@/lib/onboarding";
 import { jsonError } from "@/lib/api";
 import { trackEvent } from "@/lib/geo";
@@ -63,6 +63,14 @@ export async function POST(request: NextRequest) {
     goal: goal ?? null,
     timezone: timezone ?? "UTC",
   });
+
+  // Signed up through a family invite link — mark the invitation accepted.
+  if (typeof body.familyToken === "string" && body.familyToken) {
+    await sql()`
+      UPDATE family_invites SET status = 'accepted', accepted_at = now()
+      WHERE token_hash = ${hashToken(body.familyToken)} AND status = 'pending'
+    `.catch(() => {});
+  }
 
   const session = await createSession(userId, {
     userAgent: request.headers.get("user-agent"),

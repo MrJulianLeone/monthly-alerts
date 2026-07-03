@@ -11,6 +11,17 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* iOS Safari auto-zooms the page when a focused form control renders text
+ * smaller than 16px. Keep controls at 16px on touch devices so the app never
+ * zooms and the fixed bottom toolbar stays exactly where it belongs. */
+@media (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
 /* ---------------------------------------------------------------------------
  * Dark mode
  * The app's palette is built from a small set of neutral utilities, so dark

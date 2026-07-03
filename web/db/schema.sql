@@ -58,6 +58,7 @@ CREATE TABLE profiles (
   weight_kg                numeric(5,1),
   goal                     text CHECK (goal IN
                              ('lose_weight', 'build_strength', 'get_fit', 'build_habits')),
+  daily_calorie_goal       integer,                       -- personal daily calorie target (null = auto-estimated)
   timezone                 text NOT NULL DEFAULT 'UTC',
   onboarding_completed_at  timestamptz,
   created_at               timestamptz NOT NULL DEFAULT now(),
@@ -139,6 +140,7 @@ CREATE TABLE chat_messages (
                 'meal_photo',         -- user snapped a meal
                 'challenge_prompt',   -- coach issues the next challenge
                 'challenge_complete', -- user tapped "I Did It"
+                'calorie_summary',    -- coach reports remaining calories for the day
                 'monthly_summary',    -- in-app monthly report card
                 'system')),
   content    text,
@@ -212,12 +214,32 @@ CREATE TABLE meal_logs (
   meal_type   text CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
   ai_feedback text,                                 -- short, useful coach feedback
   ai_analysis jsonb NOT NULL DEFAULT '{}'::jsonb,   -- structured vision output (balance, items)
+  estimated_calories integer,                       -- coach's kcal estimate for this meal
   ai_model    text,                                 -- e.g. 'gpt-4o'
   logged_at   timestamptz NOT NULL DEFAULT now(),
   created_at  timestamptz NOT NULL DEFAULT now()
 );
 
 CREATE INDEX meal_logs_user_time_idx ON meal_logs (user_id, logged_at DESC);
+
+-- Running daily calorie log, one row per user per calendar day (user timezone).
+-- Accumulates calories from each logged meal so the coach can report the
+-- remaining calories against the user's personal daily goal in real time.
+CREATE TABLE daily_calorie_logs (
+  user_id           uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  log_date          date NOT NULL,                  -- calendar day in the user's timezone
+  calories_consumed integer NOT NULL DEFAULT 0,     -- running total for the day
+  meals_logged      integer NOT NULL DEFAULT 0,     -- meals counted toward the day
+  calorie_goal      integer,                        -- goal snapshot the day was measured against
+  updated_at        timestamptz NOT NULL DEFAULT now(),
+  created_at        timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (user_id, log_date)
+);
+
+CREATE INDEX daily_calorie_logs_user_date_idx ON daily_calorie_logs (user_id, log_date DESC);
+
+CREATE TRIGGER daily_calorie_logs_updated_at BEFORE UPDATE ON daily_calorie_logs
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- Meal-logging streaks; consistent streaks accelerate exercise progression.
 CREATE TABLE streaks (
@@ -284,6 +306,24 @@ CREATE TABLE leaderboard_members (
 );
 
 CREATE INDEX leaderboard_members_user_idx ON leaderboard_members (user_id);
+
+-- Family invitations (adult accounts): tokenized so the invitee lands in a
+-- pre-filled signup — no re-entering emails, no duplicate accounts. If the
+-- invitee is under 16, the inviter's email is used as the parent email.
+CREATE TABLE family_invites (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  inviter_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invitee_email citext NOT NULL,
+  token_hash    text UNIQUE NOT NULL,
+  status        text NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending', 'accepted', 'expired')),
+  accepted_at   timestamptz,
+  expires_at    timestamptz NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX family_invites_inviter_idx ON family_invites (inviter_id);
+CREATE INDEX family_invites_invitee_email_idx ON family_invites (invitee_email);
 
 -- Refer-a-friend invitations; invitee must accept to join the leaderboard.
 CREATE TABLE referrals (

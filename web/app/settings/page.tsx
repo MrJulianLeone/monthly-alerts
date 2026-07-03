@@ -2,10 +2,12 @@ import Link from "next/link";
 import { sql } from "@/lib/db";
 import { requirePageUser } from "@/lib/page-auth";
 import { ageFromDob } from "@/lib/auth";
+import { resolveDailyCalorieGoal } from "@/lib/calories";
 import { Stat } from "@/components/ui";
 import { AppShell } from "@/components/app-shell";
 import { LogoutButton } from "@/components/logout-button";
 import { WeightForm } from "./weight-form";
+import { CalorieGoalForm } from "./calorie-goal-form";
 import { InviteForms } from "./invite-forms";
 import { ThemeToggle } from "./theme-toggle";
 
@@ -24,7 +26,8 @@ export default async function SettingsPage() {
 
   const [profileRows, summaries] = await Promise.all([
     sql()`
-      SELECT p.display_name, p.goal, st.current_streak, st.longest_streak,
+      SELECT p.display_name, p.goal, p.gender, p.height_cm, p.weight_kg, p.daily_calorie_goal,
+             st.current_streak, st.longest_streak,
              s.status AS subscription_status, s.trial_ends_at,
              (SELECT count(*)::int FROM meal_logs m WHERE m.user_id = ${user.id}) AS meals_total,
              (SELECT count(*)::int FROM challenge_logs c WHERE c.user_id = ${user.id}) AS challenges_total
@@ -45,6 +48,16 @@ export default async function SettingsPage() {
   const subscriptionStatus = (profile?.subscription_status as string) ?? null;
   const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at as string) : null;
   const trialActive = trialEndsAt !== null && trialEndsAt > new Date();
+
+  const explicitCalorieGoal =
+    profile?.daily_calorie_goal != null ? Number(profile.daily_calorie_goal) : null;
+  const calorieGoal = resolveDailyCalorieGoal(explicitCalorieGoal, {
+    age: user.date_of_birth ? ageFromDob(user.date_of_birth) : 25,
+    gender: (profile?.gender as string | null) ?? null,
+    heightCm: profile?.height_cm != null ? Number(profile.height_cm) : null,
+    weightKg: profile?.weight_kg != null ? Number(profile.weight_kg) : null,
+    goal: (profile?.goal as string | null) ?? null,
+  });
 
   if (!profile) {
     return (
@@ -119,6 +132,9 @@ export default async function SettingsPage() {
 
         {/* Appearance */}
         <ThemeToggle />
+
+        {/* Daily calorie goal */}
+        <CalorieGoalForm currentGoal={calorieGoal} isAutoEstimated={explicitCalorieGoal === null} />
 
         {/* Weight */}
         <WeightForm />

@@ -9,6 +9,7 @@ import {
   setUserCookie,
 } from "@/lib/auth";
 import { createCoachedUser } from "@/lib/onboarding";
+import { sendChildWelcomeEmail } from "@/lib/email";
 import { jsonError } from "@/lib/api";
 import { trackEvent } from "@/lib/geo";
 
@@ -31,7 +32,18 @@ export async function GET(_request: NextRequest, { params }: Params) {
   const { token } = await params;
   const invite = await findInvite(token);
   if (!invite) return jsonError("This setup link is invalid or has expired", 404);
-  return NextResponse.json({ valid: true, parentEmail: invite.parent_email });
+
+  // Existing parents reuse their account — the setup form must not ask them
+  // to create another one.
+  const existing = (await sql()`
+    SELECT 1 FROM users WHERE email = ${invite.parent_email} AND deleted_at IS NULL
+  `) as unknown[];
+
+  return NextResponse.json({
+    valid: true,
+    parentEmail: invite.parent_email,
+    parentHasAccount: existing.length > 0,
+  });
 }
 
 /**
@@ -122,6 +134,15 @@ export async function POST(request: NextRequest, { params }: Params) {
         parent_user_id = ${parentId}, child_user_id = ${childId}
     WHERE id = ${invite.id}
   `;
+
+  // Let the child know their account is ready and where to log in. The
+  // password is never emailed — the parent set it and shares it directly.
+  // Account creation succeeded, so a failed email must not fail the request.
+  try {
+    await sendChildWelcomeEmail(child.email, childName.split(" ")[0], invite.parent_email);
+  } catch (error) {
+    console.error("Child welcome email failed:", error);
+  }
 
   const session = await createSession(parentId, {
     userAgent: request.headers.get("user-agent"),

@@ -4,6 +4,11 @@ import { requireUser, jsonError } from "@/lib/api";
 import { analyzeMealPhoto } from "@/lib/ai";
 import { addChatMessage, updateMealStreak, remindActiveChallenge } from "@/lib/coach";
 import { recordMealProgress } from "@/lib/progress";
+import {
+  recordDailyCalories,
+  resolveDailyCalorieGoal,
+  remainingCaloriesMessage,
+} from "@/lib/calories";
 import { ageFromDob } from "@/lib/auth";
 import { trackEvent } from "@/lib/geo";
 
@@ -34,19 +39,28 @@ export async function POST(request: NextRequest) {
   const imageDataUrl = `data:${mime};base64,${bytes.toString("base64")}`;
 
   const profileRows = (await sql()`
-    SELECT goal FROM profiles WHERE user_id = ${auth.user.id}
-  `) as { goal: string | null }[];
+    SELECT goal, gender, height_cm, weight_kg, daily_calorie_goal
+    FROM profiles WHERE user_id = ${auth.user.id}
+  `) as {
+    goal: string | null;
+    gender: string | null;
+    height_cm: number | null;
+    weight_kg: number | null;
+    daily_calorie_goal: number | null;
+  }[];
+  const profile = profileRows[0] ?? null;
+  const age = auth.user.date_of_birth ? ageFromDob(auth.user.date_of_birth) : 25;
 
   const analysis = await analyzeMealPhoto(imageDataUrl, {
-    age: auth.user.date_of_birth ? ageFromDob(auth.user.date_of_birth) : 25,
-    goal: profileRows[0]?.goal ?? null,
+    age,
+    goal: profile?.goal ?? null,
   });
 
   const mealRows = (await sql()`
-    INSERT INTO meal_logs (user_id, meal_type, ai_feedback, ai_analysis, ai_model)
+    INSERT INTO meal_logs (user_id, meal_type, ai_feedback, ai_analysis, estimated_calories, ai_model)
     VALUES (${auth.user.id},
             ${typeof mealType === "string" && mealType ? mealType : null},
-            ${analysis.feedback}, ${JSON.stringify(analysis)}, 'gpt-4o')
+            ${analysis.feedback}, ${JSON.stringify(analysis)}, ${analysis.calories}, 'gpt-4o')
     RETURNING id
   `) as { id: string }[];
   const mealId = mealRows[0].id;
@@ -54,11 +68,23 @@ export async function POST(request: NextRequest) {
   const streak = await updateMealStreak(auth.user.id);
   await recordMealProgress(auth.user.id, analysis.balance);
 
+  // Update the running daily calorie log and compute what's left for today
+  // against this user's personal goal (explicit or auto-estimated).
+  const dailyGoal = resolveDailyCalorieGoal(profile?.daily_calorie_goal, {
+    age,
+    gender: profile?.gender ?? null,
+    heightCm: profile?.height_cm != null ? Number(profile.height_cm) : null,
+    weightKg: profile?.weight_kg != null ? Number(profile.weight_kg) : null,
+    goal: profile?.goal ?? null,
+  });
+  const daily = await recordDailyCalories(auth.user.id, analysis.calories ?? 0, dailyGoal);
+
   // No image is stored; the meal bubble is rendered from the categorization.
   await addChatMessage(auth.user.id, "user", "meal_photo", null, {
     meal_log_id: mealId,
     balance: analysis.balance,
     items: analysis.items.slice(0, 6),
+    calories: analysis.calories,
   });
   const feedbackWithStreak =
     streak >= 2 ? `${analysis.feedback} You're on a ${streak}-day logging streak — keep it up.` : analysis.feedback;
@@ -66,13 +92,29 @@ export async function POST(request: NextRequest) {
     meal_log_id: mealId,
   });
 
+  // Report remaining calories for the day based on the running log + goal.
+  await addChatMessage(
+    auth.user.id,
+    "coach",
+    "calorie_summary",
+    remainingCaloriesMessage(daily, analysis.calories),
+    {
+      meal_log_id: mealId,
+      meal_calories: analysis.calories,
+      calories_consumed: daily.calories_consumed,
+      calorie_goal: daily.calorie_goal,
+      calories_remaining: daily.remaining,
+      meals_logged_today: daily.meals_logged,
+    }
+  );
+
   // Keep the active challenge current at the bottom of the chat after each meal.
   const challenge = await remindActiveChallenge(auth.user.id);
 
   await trackEvent(request, "meal_logged", auth.user.id);
 
   return NextResponse.json(
-    { mealId, feedback: feedbackWithStreak, analysis, streak, challenge },
+    { mealId, feedback: feedbackWithStreak, analysis, streak, calories: daily, challenge },
     { status: 201 }
   );
 }
@@ -86,7 +128,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "30", 10) || 30, 100);
 
   const meals = (await sql()`
-    SELECT id, meal_type, ai_feedback, ai_analysis, logged_at
+    SELECT id, meal_type, ai_feedback, ai_analysis, estimated_calories, logged_at
     FROM meal_logs WHERE user_id = ${auth.user.id}
     ORDER BY logged_at DESC LIMIT ${limit}
   `) as Record<string, unknown>[];

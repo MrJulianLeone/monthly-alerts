@@ -16,6 +16,8 @@ export type MealAnalysis = {
   feedback: string;
   balance: "balanced" | "needs_protein" | "needs_vegetables" | "heavy" | "light" | "unclear";
   items: string[];
+  /** Best-effort total calorie estimate for the meal (kcal), or null if not food. */
+  calories: number | null;
 };
 
 /**
@@ -44,7 +46,7 @@ export async function analyzeMealPhoto(
             type: "text",
             text: `Analyze this meal photo for a ${context.age}-year-old whose goal is "${
               context.goal ?? "general fitness"
-            }". Respond as JSON: {"feedback": "2-3 sentence practical coaching feedback focused on balance and avoiding over/under-eating", "balance": one of "balanced"|"needs_protein"|"needs_vegetables"|"heavy"|"light"|"unclear", "items": ["visible food items"]}. If the photo is not food, say so politely in feedback and use balance "unclear".`,
+            }". Respond as JSON: {"feedback": "2-3 sentence practical coaching feedback focused on balance and avoiding over/under-eating", "balance": one of "balanced"|"needs_protein"|"needs_vegetables"|"heavy"|"light"|"unclear", "items": ["visible food items"], "calories": integer estimate of the total calories (kcal) in the meal based on the visible portions}. Estimate calories to your best judgment even if approximate. If the photo is not food, say so politely in feedback, use balance "unclear", and set calories to null.`,
           },
           { type: "image_url", image_url: { url: image, detail: "low" } },
         ],
@@ -53,6 +55,7 @@ export async function analyzeMealPhoto(
   });
   try {
     const parsed = JSON.parse(response.choices[0].message.content ?? "{}");
+    const rawCalories = Number(parsed.calories);
     return {
       feedback:
         typeof parsed.feedback === "string" && parsed.feedback.length > 0
@@ -69,6 +72,10 @@ export async function analyzeMealPhoto(
         ? parsed.balance
         : "unclear",
       items: Array.isArray(parsed.items) ? parsed.items.slice(0, 10) : [],
+      calories:
+        Number.isFinite(rawCalories) && rawCalories > 0
+          ? Math.min(5000, Math.round(rawCalories))
+          : null,
     };
   } catch {
     return {
@@ -76,6 +83,7 @@ export async function analyzeMealPhoto(
         "Meal logged. Keep aiming for a balanced plate with protein and vegetables.",
       balance: "unclear",
       items: [],
+      calories: null,
     };
   }
 }

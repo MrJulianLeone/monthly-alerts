@@ -27,6 +27,14 @@ export async function PATCH(request: NextRequest) {
       ? body.displayName.trim().slice(0, 60)
       : undefined;
   const timezone = typeof body.timezone === "string" ? body.timezone : undefined;
+  // Allow clearing the goal back to auto-estimate by passing null explicitly.
+  const dailyCalorieGoalProvided =
+    body.dailyCalorieGoal === null ||
+    (typeof body.dailyCalorieGoal === "number" &&
+      body.dailyCalorieGoal >= 800 &&
+      body.dailyCalorieGoal <= 6000);
+  const dailyCalorieGoal =
+    typeof body.dailyCalorieGoal === "number" ? Math.round(body.dailyCalorieGoal) : null;
 
   await sql()`
     UPDATE profiles SET
@@ -35,7 +43,9 @@ export async function PATCH(request: NextRequest) {
       weight_kg = COALESCE(${weightKg ?? null}, weight_kg),
       height_cm = COALESCE(${heightCm ?? null}, height_cm),
       display_name = COALESCE(${displayName ?? null}, display_name),
-      timezone = COALESCE(${timezone ?? null}, timezone)
+      timezone = COALESCE(${timezone ?? null}, timezone),
+      daily_calorie_goal = CASE WHEN ${dailyCalorieGoalProvided}
+        THEN ${dailyCalorieGoal} ELSE daily_calorie_goal END
     WHERE user_id = ${auth.user.id}
   `;
 
@@ -47,7 +57,7 @@ export async function PATCH(request: NextRequest) {
   }
 
   const rows = (await sql()`
-    SELECT display_name, gender, height_cm, weight_kg, goal, timezone
+    SELECT display_name, gender, height_cm, weight_kg, goal, daily_calorie_goal, timezone
     FROM profiles WHERE user_id = ${auth.user.id}
   `) as Record<string, unknown>[];
 
