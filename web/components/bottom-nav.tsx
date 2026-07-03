@@ -14,8 +14,9 @@ type BottomNavProps = {
 
 /**
  * Fixed bottom navigation bar (x.com-style): icon tabs for the main app
- * destinations — Coach chat, Leaderboard, Settings — plus the two core
- * actions: snap a meal photo and confirm a challenge.
+ * destinations — Coach chat and Leaderboard — plus the two core actions:
+ * snap a meal photo and confirm a challenge. Settings lives in the chat
+ * header instead of the bottom bar.
  */
 export function BottomNav({ active, onPhoto, onChallenge }: BottomNavProps) {
   return (
@@ -43,9 +44,6 @@ export function BottomNav({ active, onPhoto, onChallenge }: BottomNavProps) {
           label="Did It"
         >
           <CheckIcon />
-        </NavItem>
-        <NavItem href="/settings" label="Settings" active={active === "settings"}>
-          <GearIcon filled={active === "settings"} />
         </NavItem>
       </div>
     </nav>
@@ -157,7 +155,7 @@ function CheckIcon() {
   );
 }
 
-function GearIcon({ filled = false }: { filled?: boolean }) {
+export function GearIcon({ filled = false }: { filled?: boolean }) {
   return (
     <svg
       viewBox="0 0 24 24"
