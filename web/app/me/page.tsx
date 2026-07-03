@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { sql } from "@/lib/db";
 import { requirePageUser } from "@/lib/page-auth";
-import { Card, PageHeading, Stat } from "@/components/ui";
+import { Card, Stat } from "@/components/ui";
 
 export const metadata = { title: "My progress — MonthlyAlerts" };
 export const dynamic = "force-dynamic";
@@ -33,10 +34,22 @@ export default async function MePage() {
 
   return (
     <main className="mx-auto max-w-3xl px-6 py-12">
-      <PageHeading
-        title={`Hello, ${(profile?.display_name as string) ?? "there"}`}
-        subtitle="Your daily coaching lives in the MonthlyAlerts mobile app — this page tracks your progress."
-      />
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
+            Hello, {(profile?.display_name as string) ?? "there"}
+          </h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            Track your progress here, or jump into your coach chat any time.
+          </p>
+        </div>
+        <Link
+          href="/chat"
+          className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-700"
+        >
+          Open coach chat &rarr;
+        </Link>
+      </div>
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Current streak" value={`${(profile?.current_streak as number) ?? 0} days`} />

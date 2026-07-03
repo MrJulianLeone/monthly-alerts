@@ -17,6 +17,11 @@ export async function SiteHeader() {
               <Link href={homeForRole(user.role)} className="font-medium text-neutral-600 hover:text-neutral-900">
                 Dashboard
               </Link>
+              {user.role === "user" && (
+                <Link href="/chat" className="font-medium text-neutral-600 hover:text-neutral-900">
+                  Coach chat
+                </Link>
+              )}
               <LogoutButton />
             </>
           ) : (
