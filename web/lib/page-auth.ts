@@ -12,5 +12,5 @@ export async function requirePageUser(role?: "parent" | "admin"): Promise<Sessio
 export function homeForRole(role: string): string {
   if (role === "admin") return "/admin";
   if (role === "parent") return "/parent";
-  return "/me";
+  return "/chat";
 }

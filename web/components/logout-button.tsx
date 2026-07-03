@@ -2,11 +2,15 @@
 
 import { useRouter } from "next/navigation";
 
-export function LogoutButton() {
+export function LogoutButton({
+  className = "font-medium text-neutral-600 hover:text-neutral-900",
+}: {
+  className?: string;
+}) {
   const router = useRouter();
   return (
     <button
-      className="font-medium text-neutral-600 hover:text-neutral-900"
+      className={className}
       onClick={async () => {
         await fetch("/api/auth/logout", { method: "POST" });
         router.push("/");

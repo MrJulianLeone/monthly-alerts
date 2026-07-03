@@ -13,10 +13,10 @@ export default function SubscribeSuccessPage() {
           your next monthly summary is on its way at the end of the month.
         </p>
         <Link
-          href="/me"
+          href="/chat"
           className="mt-6 inline-block rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-700"
         >
-          View my progress
+          Open my coach chat
         </Link>
       </Card>
     </main>

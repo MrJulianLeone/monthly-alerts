@@ -27,7 +27,7 @@ export function LoginForm() {
       return;
     }
     const { role } = await res.json();
-    router.push(role === "admin" ? "/admin" : role === "parent" ? "/parent" : "/me");
+    router.push(role === "admin" ? "/admin" : role === "parent" ? "/parent" : "/chat");
     router.refresh();
   }
 

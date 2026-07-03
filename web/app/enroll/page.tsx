@@ -12,7 +12,7 @@ export default async function EnrollPage() {
   const existing = (await sql()`
     SELECT 1 FROM profiles WHERE user_id = ${user.id}
   `) as unknown[];
-  if (existing.length > 0) redirect("/me");
+  if (existing.length > 0) redirect("/chat");
 
   return (
     <main className="mx-auto max-w-md px-6 py-16">
