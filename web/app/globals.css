@@ -10,3 +10,59 @@ body {
   color: var(--foreground);
   -webkit-font-smoothing: antialiased;
 }
+
+/* ---------------------------------------------------------------------------
+ * Dark mode
+ * The app's palette is built from a small set of neutral utilities, so dark
+ * mode remaps those utilities globally under html.dark (toggled from
+ * Settings, persisted in localStorage, system preference as the default).
+ * ------------------------------------------------------------------------- */
+
+html.dark {
+  --background: #0a0a0a;
+  --foreground: #ededed;
+  color-scheme: dark;
+}
+
+/* Surfaces */
+.dark .bg-white { background-color: #171717; }
+.dark .bg-white\/90 { background-color: rgb(23 23 23 / 0.9); }
+.dark .bg-white\/95 { background-color: rgb(23 23 23 / 0.95); }
+.dark .bg-neutral-50 { background-color: #1f1f1f; }
+.dark .bg-neutral-100 { background-color: #262626; }
+.dark .bg-neutral-300 { background-color: #404040; }
+.dark .bg-green-50 { background-color: rgb(74 222 128 / 0.08); }
+.dark .bg-amber-50 { background-color: rgb(251 191 36 / 0.08); }
+.dark .shadow-sm { --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.4); }
+
+/* Primary (inverted in dark: light buttons/bubbles with dark text) */
+.dark .bg-neutral-900 { background-color: #ededed; }
+.dark .text-white { color: #171717; }
+.dark .hover\:bg-neutral-700:hover { background-color: #d4d4d4; }
+
+/* Text */
+.dark .text-neutral-900 { color: #ededed; }
+.dark .text-neutral-700 { color: #d4d4d4; }
+.dark .text-neutral-600 { color: #a3a3a3; }
+.dark .text-neutral-500 { color: #8c8c8c; }
+.dark .text-neutral-400 { color: #6f6f6f; }
+.dark .hover\:text-neutral-900:hover { color: #ffffff; }
+.dark .text-red-600 { color: #f87171; }
+.dark .text-green-600 { color: #4ade80; }
+.dark .text-green-700 { color: #4ade80; }
+.dark .text-amber-600 { color: #fbbf24; }
+.dark .text-amber-700 { color: #fbbf24; }
+
+/* Borders & focus rings */
+.dark .border-neutral-100 { border-color: #1f1f1f; }
+.dark .border-neutral-200 { border-color: #262626; }
+.dark .border-neutral-300 { border-color: #3a3a3a; }
+.dark .border-neutral-900 { border-color: #ededed; }
+.dark .border-red-200 { border-color: #7f1d1d; }
+.dark .focus\:border-neutral-900:focus { border-color: #ededed; }
+.dark .focus\:ring-neutral-900:focus { --tw-ring-color: #ededed; }
+
+/* Subtle hovers */
+.dark .hover\:bg-neutral-50:hover { background-color: #262626; }
+.dark .hover\:bg-neutral-100:hover { background-color: #262626; }
+.dark .hover\:bg-red-50:hover { background-color: rgb(248 113 113 / 0.1); }

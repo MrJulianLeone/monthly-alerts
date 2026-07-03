@@ -92,6 +92,28 @@ export async function sendReferralEmail(
   );
 }
 
+/** Adult users inviting family members to join MonthlyAlerts. */
+export async function sendFamilyInviteEmail(inviteeEmail: string, inviterName: string) {
+  const link = `${appUrl()}/signup`;
+  await send(
+    inviteeEmail,
+    `${inviterName} invited you to MonthlyAlerts`,
+    wrapper(`
+      <h1 style="font-size:22px;margin:0 0 16px">Join your family on MonthlyAlerts</h1>
+      <p style="font-size:15px;line-height:1.6;color:#404040">
+        ${inviterName} is using MonthlyAlerts — a personal health coach with daily meal
+        and exercise guidance and a monthly progress summary — and invited you to join
+        them as family.
+      </p>
+      <p style="font-size:15px;line-height:1.6;color:#404040">
+        Create your account below and your coach kicks things off right away. The first
+        30 days are completely free.
+      </p>
+      <p style="margin:24px 0">${button(link, "Join MonthlyAlerts")}</p>
+    `)
+  );
+}
+
 /** The monthly progress summary — the core deliverable. */
 export async function sendMonthlySummaryEmail(
   to: string,
