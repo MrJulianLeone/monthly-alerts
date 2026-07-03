@@ -1,0 +1,7 @@
+{
+  "crons": [
+    { "path": "/api/cron/monthly-summaries", "schedule": "0 6 1 * *" },
+    { "path": "/api/cron/notifications", "schedule": "0 */2 * * *" },
+    { "path": "/api/cron/billing-prompts", "schedule": "30 8 * * *" }
+  ]
+}
