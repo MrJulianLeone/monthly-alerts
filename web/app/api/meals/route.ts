@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireUser, jsonError } from "@/lib/api";
 import { analyzeMealPhoto } from "@/lib/ai";
-import { addChatMessage, updateMealStreak } from "@/lib/coach";
+import { addChatMessage, updateMealStreak, remindActiveChallenge } from "@/lib/coach";
 import { recordMealProgress } from "@/lib/progress";
 import { ageFromDob } from "@/lib/auth";
 import { trackEvent } from "@/lib/geo";
@@ -66,10 +66,13 @@ export async function POST(request: NextRequest) {
     meal_log_id: mealId,
   });
 
+  // Keep the active challenge current at the bottom of the chat after each meal.
+  const challenge = await remindActiveChallenge(auth.user.id);
+
   await trackEvent(request, "meal_logged", auth.user.id);
 
   return NextResponse.json(
-    { mealId, feedback: feedbackWithStreak, analysis, streak },
+    { mealId, feedback: feedbackWithStreak, analysis, streak, challenge },
     { status: 201 }
   );
 }
