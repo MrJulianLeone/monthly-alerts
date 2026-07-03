@@ -2,14 +2,17 @@ import { useCallback, useState } from "react";
 import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect, useRouter } from "expo-router";
-import { api, API_URL, setToken } from "../../lib/api";
+import { api, ApiError, API_URL, setToken } from "../../lib/api";
 import { lbToKg } from "../../lib/units";
-import { Button, Card, ErrorText, FieldLabel, Heading, Input } from "../../components/ui";
+import { Button, Card, ErrorText, FieldLabel, Heading, Input, Subtext } from "../../components/ui";
 import { colors, spacing } from "../../lib/theme";
 
 type Session = {
   user: {
     email: string;
+    role: string | null;
+    date_of_birth: string | null;
+    parent_id: string | null;
     display_name: string | null;
     goal: string | null;
     weight_kg: string | null;
@@ -20,6 +23,15 @@ type Session = {
   } | null;
 };
 
+function ageFromDob(dob: string): number {
+  const birth = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  const m = now.getMonth() - birth.getMonth();
+  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
+  return age;
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const [session, setSession] = useState<Session["user"]>(null);
@@ -27,6 +39,10 @@ export default function SettingsScreen() {
   const [error, setError] = useState("");
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [inviteEmail, setInviteEmail] = useState("");
+  const [inviteBusy, setInviteBusy] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+  const [inviteSent, setInviteSent] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -51,6 +67,21 @@ export default function SettingsScreen() {
     }
   }
 
+  async function sendFamilyInvite() {
+    setInviteBusy(true);
+    setInviteError("");
+    setInviteSent(false);
+    try {
+      await api("/api/invites/family", { body: { email: inviteEmail.trim() } });
+      setInviteSent(true);
+      setInviteEmail("");
+    } catch (e) {
+      setInviteError(e instanceof ApiError ? e.message : "Could not send the invite");
+    } finally {
+      setInviteBusy(false);
+    }
+  }
+
   async function logout() {
     await api("/api/auth/logout", { method: "POST", body: {} }).catch(() => {});
     await setToken(null);
@@ -58,6 +89,13 @@ export default function SettingsScreen() {
   }
 
   const trialActive = session?.trial_ends_at && new Date(session.trial_ends_at) > new Date();
+  const age = session?.date_of_birth ? ageFromDob(session.date_of_birth) : null;
+  const isAdult =
+    session?.role === "parent" ||
+    session?.role === "admin" ||
+    (age !== null && age >= 18);
+  const needsParent = !!session && !isAdult && session.parent_id === null;
+  const showInvite = isAdult || needsParent;
 
   return (
     <SafeAreaView style={styles.safe} edges={["top"]}>
@@ -111,6 +149,38 @@ export default function SettingsScreen() {
             />
           </View>
         </Card>
+
+        {showInvite && (
+          <Card style={{ marginTop: spacing.md }}>
+            <Text style={styles.sectionTitle}>
+              {needsParent ? "Invite a parent" : "Invite family"}
+            </Text>
+            <Subtext>
+              {needsParent
+                ? "Since you're under 16, invite a parent or guardian by email. When they accept, they become your parent and can oversee your account."
+                : "Invite a family member to start their own MonthlyAlerts coaching."}
+            </Subtext>
+            <View style={{ marginTop: spacing.md }}>
+              <FieldLabel>{needsParent ? "Parent's email" : "Family member's email"}</FieldLabel>
+              <Input
+                autoCapitalize="none"
+                keyboardType="email-address"
+                placeholder="name@example.com"
+                value={inviteEmail}
+                onChangeText={setInviteEmail}
+              />
+              <ErrorText>{inviteError}</ErrorText>
+              {inviteSent && <Text style={styles.saved}>Invite sent.</Text>}
+              <Button
+                title="Send invite"
+                onPress={sendFamilyInvite}
+                loading={inviteBusy}
+                disabled={!inviteEmail.includes("@")}
+                style={{ marginTop: spacing.md }}
+              />
+            </View>
+          </Card>
+        )}
 
         <Button
           title="Log out"
