@@ -2,6 +2,7 @@ import Link from "next/link";
 import { sql } from "@/lib/db";
 import { requirePageUser } from "@/lib/page-auth";
 import { Card, Stat } from "@/components/ui";
+import { BottomNav } from "@/components/bottom-nav";
 
 export const metadata = { title: "My progress — MonthlyAlerts" };
 export const dynamic = "force-dynamic";
@@ -33,7 +34,7 @@ export default async function MePage() {
   const active = (challengeRows as { target_value: number; name: string; unit: string }[])[0];
 
   return (
-    <main className="mx-auto max-w-3xl px-6 py-12">
+    <main className="mx-auto max-w-3xl px-6 py-12 pb-28">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">
@@ -94,6 +95,8 @@ export default async function MePage() {
           </ul>
         )}
       </Card>
+
+      <BottomNav active="home" />
     </main>
   );
 }
