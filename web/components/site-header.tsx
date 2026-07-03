@@ -19,16 +19,31 @@ export async function SiteHeader() {
                   Admin
                 </Link>
               )}
-              <Link
-                href={user.role === "admin" ? "/me" : homeForRole(user.role)}
-                className="font-medium text-neutral-600 hover:text-neutral-900"
-              >
-                Dashboard
-              </Link>
-              {(user.role === "user" || user.role === "admin") && (
-                <Link href="/chat" className="font-medium text-neutral-600 hover:text-neutral-900">
-                  Coach chat
+              {user.role === "parent" ? (
+                <Link
+                  href={homeForRole(user.role)}
+                  className="font-medium text-neutral-600 hover:text-neutral-900"
+                >
+                  Dashboard
                 </Link>
+              ) : (
+                <>
+                  <Link href="/chat" className="font-medium text-neutral-600 hover:text-neutral-900">
+                    Coach chat
+                  </Link>
+                  <Link
+                    href="/leaderboard"
+                    className="font-medium text-neutral-600 hover:text-neutral-900"
+                  >
+                    Leaderboard
+                  </Link>
+                  <Link
+                    href="/settings"
+                    className="font-medium text-neutral-600 hover:text-neutral-900"
+                  >
+                    Settings
+                  </Link>
+                </>
               )}
               <LogoutButton />
             </>

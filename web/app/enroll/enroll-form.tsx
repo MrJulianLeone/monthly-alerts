@@ -49,7 +49,7 @@ export function EnrollForm() {
       setError((await res.json()).error ?? "Something went wrong");
       return;
     }
-    router.push("/me");
+    router.push("/chat");
     router.refresh();
   }
 

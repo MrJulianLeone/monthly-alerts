@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
 import { BottomNav } from "@/components/bottom-nav";
 
@@ -150,24 +149,6 @@ export function ChatClient({
     <div className="mx-auto flex h-[100dvh] max-w-2xl flex-col">
       {/* Conversation header */}
       <header className="sticky top-0 z-10 flex items-center gap-3 border-b border-neutral-200 bg-white/95 px-4 py-3 backdrop-blur">
-        <Link
-          href="/me"
-          aria-label="Back to dashboard"
-          className="-ml-1 rounded-full p-1.5 text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            className="h-5 w-5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth={2}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden
-          >
-            <path d="M15 5.5 8.5 12l6.5 6.5" />
-          </svg>
-        </Link>
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
           C
         </div>

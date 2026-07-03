@@ -52,10 +52,10 @@ export default async function AdminDashboard() {
         </div>
         <div className="flex gap-2">
           <Link
-            href="/me"
+            href="/settings"
             className="rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50"
           >
-            My dashboard &rarr;
+            My settings &rarr;
           </Link>
           <Link
             href="/chat"
