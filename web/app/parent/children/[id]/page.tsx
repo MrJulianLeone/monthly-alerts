@@ -29,9 +29,9 @@ export default async function ChildDetailPage({
   const child = rows[0];
   if (!child) notFound();
 
-  const [meals, challenges, summaries] = await Promise.all([
+  const [meals, challenges, summaries, progressRows] = await Promise.all([
     sql()`
-      SELECT id, photo_url, meal_type, ai_feedback, logged_at
+      SELECT id, meal_type, ai_feedback, ai_analysis, logged_at
       FROM meal_logs WHERE user_id = ${id} ORDER BY logged_at DESC LIMIT 10`,
     sql()`
       SELECT c.sequence_number, c.target_value, c.completed_at, e.name, e.unit, cl.completed_value
@@ -43,7 +43,18 @@ export default async function ChildDetailPage({
     sql()`
       SELECT id, month, narrative, email_sent_at FROM monthly_summaries
       WHERE user_id = ${id} ORDER BY month DESC LIMIT 12`,
+    sql()`
+      SELECT total_meals_logged, meal_days, balanced_meals,
+             total_challenges_completed, total_challenge_volume
+      FROM progress_stats WHERE user_id = ${id}`,
   ]);
+  const progress = (progressRows as {
+    total_meals_logged: number;
+    meal_days: number;
+    balanced_meals: number;
+    total_challenges_completed: number;
+    total_challenge_volume: number;
+  }[])[0] ?? null;
 
   const name = (child.display_name as string) ?? "Child";
   const childHeight = child.height_cm ? cmToFtIn(Number(child.height_cm)) : null;
@@ -55,9 +66,33 @@ export default async function ChildDetailPage({
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Current streak" value={`${(child.current_streak as number) ?? 0} days`} />
         <Stat label="Best streak" value={`${(child.longest_streak as number) ?? 0} days`} />
-        <Stat label="Meals logged" value={(meals as unknown[]).length >= 10 ? "10+" : (meals as unknown[]).length} />
-        <Stat label="Challenges done" value={(challenges as unknown[]).length >= 10 ? "10+" : (challenges as unknown[]).length} />
+        <Stat label="Meals logged" value={progress?.total_meals_logged ?? 0} />
+        <Stat label="Challenges done" value={progress?.total_challenges_completed ?? 0} />
       </div>
+
+      {progress && (
+        <div className="mb-8">
+          <Card>
+            <h2 className="mb-1 font-semibold text-neutral-900">Progress so far</h2>
+            <p className="mb-4 text-sm text-neutral-500">
+              A running, cumulative summary of {name}&apos;s diet and fitness progress.
+            </p>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              <Stat label="Days logged" value={progress.meal_days} />
+              <Stat
+                label="Balanced meals"
+                value={
+                  progress.total_meals_logged > 0
+                    ? `${Math.round((progress.balanced_meals / progress.total_meals_logged) * 100)}%`
+                    : "—"
+                }
+              />
+              <Stat label="Challenges done" value={progress.total_challenges_completed} />
+              <Stat label="Total reps/sec" value={progress.total_challenge_volume} />
+            </div>
+          </Card>
+        </div>
+      )}
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="space-y-6">

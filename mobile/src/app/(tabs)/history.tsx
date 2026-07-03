@@ -1,12 +1,26 @@
 import { useCallback, useState } from "react";
-import { FlatList, Image, StyleSheet, Text, View } from "react-native";
+import { FlatList, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useFocusEffect } from "expo-router";
 import { api } from "../../lib/api";
 import { Heading, Subtext } from "../../components/ui";
 import { colors, radius, spacing } from "../../lib/theme";
 
-type Meal = { id: string; photo_url: string; ai_feedback: string | null; logged_at: string };
+type Meal = {
+  id: string;
+  ai_feedback: string | null;
+  ai_analysis: { balance?: string; items?: string[] } | null;
+  logged_at: string;
+};
+
+const BALANCE_LABELS: Record<string, string> = {
+  balanced: "Balanced plate",
+  needs_protein: "Add some protein",
+  needs_vegetables: "Add some vegetables",
+  heavy: "On the heavy side",
+  light: "A lighter meal",
+  unclear: "Meal logged",
+};
 type Completed = {
   id: string;
   sequence_number: number;
@@ -88,14 +102,14 @@ export default function HistoryScreen() {
             keyExtractor={(m) => m.id}
             ListEmptyComponent={<Subtext>No meals logged yet. Snap your first meal.</Subtext>}
             renderItem={({ item }) => (
-              <View style={[styles.card, styles.mealRow]}>
-                <Image source={{ uri: item.photo_url }} style={styles.mealThumb} />
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.cardMeta}>{new Date(item.logged_at).toLocaleString()}</Text>
-                  <Text style={styles.cardBodySmall} numberOfLines={3}>
-                    {item.ai_feedback}
-                  </Text>
-                </View>
+              <View style={styles.card}>
+                <Text style={styles.cardTitle}>
+                  {BALANCE_LABELS[item.ai_analysis?.balance ?? "unclear"] ?? "Meal logged"}
+                </Text>
+                <Text style={styles.cardMeta}>{new Date(item.logged_at).toLocaleString()}</Text>
+                <Text style={styles.cardBodySmall} numberOfLines={3}>
+                  {item.ai_feedback}
+                </Text>
               </View>
             )}
           />
@@ -153,6 +167,4 @@ const styles = StyleSheet.create({
   cardBody: { color: colors.textSecondary, fontSize: 14, lineHeight: 20, marginTop: 6 },
   cardBodySmall: { color: colors.textSecondary, fontSize: 13, lineHeight: 18, marginTop: 2 },
   cardMeta: { color: colors.textMuted, fontSize: 12, marginTop: 2 },
-  mealRow: { flexDirection: "row", gap: spacing.md },
-  mealThumb: { borderRadius: radius.sm, height: 64, width: 64 },
 });

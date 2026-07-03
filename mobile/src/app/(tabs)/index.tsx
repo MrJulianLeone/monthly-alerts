@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
   FlatList,
-  Image,
   Platform,
   StyleSheet,
   Text,
@@ -22,8 +21,17 @@ type Message = {
   sender: "coach" | "user";
   kind: string;
   content: string | null;
-  metadata: { photo_url?: string; challenge_id?: string };
+  metadata: { challenge_id?: string; balance?: string; items?: string[] };
   created_at: string;
+};
+
+const BALANCE_LABELS: Record<string, string> = {
+  balanced: "Balanced plate",
+  needs_protein: "Add some protein",
+  needs_vegetables: "Add some vegetables",
+  heavy: "On the heavy side",
+  light: "A lighter meal",
+  unclear: "Meal logged",
 };
 
 type Challenge = {
@@ -125,10 +133,16 @@ export default function ChatScreen() {
 
   function renderMessage({ item }: { item: Message }) {
     const isCoach = item.sender === "coach";
-    if (item.kind === "meal_photo" && item.metadata.photo_url) {
+    if (item.kind === "meal_photo") {
+      const balance = item.metadata.balance ?? "unclear";
+      const items = item.metadata.items ?? [];
       return (
         <View style={[styles.bubbleRow, styles.rowUser]}>
-          <Image source={{ uri: item.metadata.photo_url }} style={styles.mealPhoto} />
+          <View style={[styles.bubble, styles.bubbleUser]}>
+            <Text style={styles.mealTag}>MEAL LOGGED</Text>
+            <Text style={styles.bubbleUserText}>{BALANCE_LABELS[balance] ?? "Meal logged"}</Text>
+            {items.length > 0 && <Text style={styles.mealItems}>{items.join(", ")}</Text>}
+          </View>
         </View>
       );
     }
@@ -235,7 +249,15 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
     marginBottom: 4,
   },
-  mealPhoto: { borderRadius: radius.lg, height: 160, width: 160 },
+  mealTag: {
+    color: colors.primaryText,
+    fontSize: 11,
+    fontWeight: "700",
+    letterSpacing: 1,
+    marginBottom: 4,
+    opacity: 0.7,
+  },
+  mealItems: { color: colors.primaryText, fontSize: 13, lineHeight: 18, marginTop: 4, opacity: 0.8 },
   actions: {
     borderTopColor: colors.border,
     borderTopWidth: 1,
