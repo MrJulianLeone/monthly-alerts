@@ -47,7 +47,18 @@ export async function POST(request: NextRequest, { params }: Params) {
 
   const body = await request.json().catch(() => null);
   const child = body?.child;
-  if (!child?.email || !child?.password || !child?.displayName || !child?.dateOfBirth) {
+  // Names arrive as separate first/last fields; older clients may still send
+  // a single displayName. Either way, profiles store one display_name.
+  const childName =
+    typeof child?.firstName === "string" && child.firstName.trim()
+      ? [child.firstName.trim(), typeof child.lastName === "string" ? child.lastName.trim() : ""]
+          .filter(Boolean)
+          .join(" ")
+          .slice(0, 60)
+      : typeof child?.displayName === "string" && child.displayName.trim()
+        ? child.displayName.trim().slice(0, 60)
+        : null;
+  if (!child?.email || !child?.password || !childName || !child?.dateOfBirth) {
     return jsonError("Child email, password, name, and date of birth are required");
   }
   if (isNaN(Date.parse(child.dateOfBirth))) return jsonError("Invalid date of birth");
@@ -96,7 +107,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     email: child.email,
     password: child.password,
     parentId,
-    displayName: child.displayName,
+    displayName: childName,
     dateOfBirth: child.dateOfBirth,
     gender: child.gender ?? null,
     heightCm: child.heightCm ?? null,

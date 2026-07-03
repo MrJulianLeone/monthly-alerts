@@ -40,7 +40,18 @@ export async function POST(request: NextRequest) {
     userId = existing[0].id;
   } else {
     const profile = body.profile;
-    if (!profile?.dateOfBirth || !profile?.displayName) {
+    // Names arrive as separate first/last fields; older clients may still send
+    // a single displayName.
+    const displayName =
+      typeof profile?.firstName === "string" && profile.firstName.trim()
+        ? [profile.firstName.trim(), typeof profile.lastName === "string" ? profile.lastName.trim() : ""]
+            .filter(Boolean)
+            .join(" ")
+            .slice(0, 60)
+        : typeof profile?.displayName === "string" && profile.displayName.trim()
+          ? profile.displayName.trim().slice(0, 60)
+          : null;
+    if (!profile?.dateOfBirth || !displayName) {
       return NextResponse.json({ needsProfile: true }, { status: 200 });
     }
     if (ageFromDob(profile.dateOfBirth) < 16) {
@@ -57,7 +68,7 @@ export async function POST(request: NextRequest) {
       authProvider: body.provider,
       appleSub: body.provider === "apple" ? identity.sub : undefined,
       googleSub: body.provider === "google" ? identity.sub : undefined,
-      displayName: profile.displayName,
+      displayName,
       dateOfBirth: profile.dateOfBirth,
       gender: profile.gender ?? null,
       heightCm: profile.heightCm ?? null,

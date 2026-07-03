@@ -10,6 +10,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useRouter } from "expo-router";
 import { api, ApiError, setToken } from "../../lib/api";
+import { lbToKg } from "../../lib/units";
 import { Button, ErrorText, FieldLabel, Heading, Input, Subtext } from "../../components/ui";
 import { colors, radius, spacing } from "../../lib/theme";
 
@@ -57,11 +58,12 @@ function Chips({
 export default function Enroll() {
   const router = useRouter();
   const [form, setForm] = useState({
-    displayName: "",
+    firstName: "",
+    lastName: "",
     dateOfBirth: "",
     gender: "",
     goal: "",
-    weightKg: "",
+    weightLb: "",
   });
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -74,11 +76,12 @@ export default function Enroll() {
     try {
       await api("/api/profile/enroll", {
         body: {
-          displayName: form.displayName.trim(),
+          firstName: form.firstName.trim(),
+          lastName: form.lastName.trim(),
           dateOfBirth: form.dateOfBirth,
           gender: form.gender || null,
           goal: form.goal || null,
-          weightKg: form.weightKg ? Number(form.weightKg) : null,
+          weightKg: form.weightLb ? lbToKg(Number(form.weightLb)) : null,
           timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
         },
       });
@@ -96,7 +99,7 @@ export default function Enroll() {
   }
 
   const valid =
-    form.displayName.trim() && /^\d{4}-\d{2}-\d{2}$/.test(form.dateOfBirth);
+    form.firstName.trim() && form.lastName.trim() && /^\d{4}-\d{2}-\d{2}$/.test(form.dateOfBirth);
 
   async function logout() {
     await setToken(null);
@@ -117,8 +120,11 @@ export default function Enroll() {
           </Subtext>
 
           <View style={styles.form}>
-            <FieldLabel>Your name</FieldLabel>
-            <Input value={form.displayName} onChangeText={set("displayName")} />
+            <FieldLabel>First name</FieldLabel>
+            <Input value={form.firstName} onChangeText={set("firstName")} />
+
+            <FieldLabel>Last name</FieldLabel>
+            <Input value={form.lastName} onChangeText={set("lastName")} />
 
             <FieldLabel>Date of birth (YYYY-MM-DD)</FieldLabel>
             <Input
@@ -134,8 +140,8 @@ export default function Enroll() {
             <FieldLabel>Goal (optional)</FieldLabel>
             <Chips options={GOALS} value={form.goal} onChange={set("goal")} />
 
-            <FieldLabel>Weight in kg (optional)</FieldLabel>
-            <Input keyboardType="numeric" value={form.weightKg} onChangeText={set("weightKg")} />
+            <FieldLabel>Weight in lbs (optional)</FieldLabel>
+            <Input keyboardType="numeric" value={form.weightLb} onChangeText={set("weightLb")} />
 
             <ErrorText>{error}</ErrorText>
             <Button

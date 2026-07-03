@@ -1,4 +1,5 @@
 import OpenAI from "openai";
+import { kgToLb } from "@/lib/units";
 
 let client: OpenAI | null = null;
 
@@ -103,6 +104,16 @@ export async function monthlyNarrative(
   displayName: string,
   stats: MonthlyStats
 ): Promise<string> {
+  // Users see imperial units; convert the metric stats before prompting.
+  const displayStats = {
+    ...stats,
+    weight_start_lb: stats.weight_start_kg !== null ? kgToLb(stats.weight_start_kg) : null,
+    weight_end_lb: stats.weight_end_kg !== null ? kgToLb(stats.weight_end_kg) : null,
+    weight_delta_lb: stats.weight_delta_kg !== null ? kgToLb(stats.weight_delta_kg) : null,
+    weight_start_kg: undefined,
+    weight_end_kg: undefined,
+    weight_delta_kg: undefined,
+  };
   const response = await openai().chat.completions.create({
     model: "gpt-4o-mini",
     max_tokens: 400,
@@ -111,8 +122,8 @@ export async function monthlyNarrative(
       {
         role: "user",
         content: `Write a monthly progress summary (3 short paragraphs, plain text) for ${displayName}. Data: ${JSON.stringify(
-          stats
-        )}. Cover: what they accomplished (meals logged, challenges completed, streaks), the trend versus last month if available, weight change only if provided, and one specific focus for next month. Professional and encouraging; no headings, no lists.`,
+          displayStats
+        )}. Cover: what they accomplished (meals logged, challenges completed, streaks), the trend versus last month if available, weight change only if provided (report weight in pounds), and one specific focus for next month. Professional and encouraging; no headings, no lists.`,
       },
     ],
   });
