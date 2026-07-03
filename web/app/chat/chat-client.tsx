@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { BottomNav } from "@/components/bottom-nav";
+import Link from "next/link";
+import { BottomNav, GearIcon } from "@/components/bottom-nav";
 
 export type Message = {
   id: string;
@@ -152,7 +153,7 @@ export function ChatClient({
         <div className="flex h-9 w-9 items-center justify-center rounded-full bg-neutral-900 text-sm font-semibold text-white">
           C
         </div>
-        <div className="min-w-0">
+        <div className="min-w-0 flex-1">
           <p className="truncate text-sm font-semibold text-neutral-900">Your Coach</p>
           <p className="truncate text-xs text-neutral-500">
             {challenge
@@ -160,6 +161,13 @@ export function ChatClient({
               : `Coaching ${displayName}`}
           </p>
         </div>
+        <Link
+          href="/settings"
+          aria-label="Settings"
+          className="-mr-1.5 rounded-full p-1.5 text-neutral-500 transition-colors hover:bg-neutral-100 hover:text-neutral-900"
+        >
+          <GearIcon />
+        </Link>
       </header>
 
       {/* Message feed */}

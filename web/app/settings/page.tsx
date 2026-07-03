@@ -48,7 +48,7 @@ export default async function SettingsPage() {
 
   if (!profile) {
     return (
-      <AppShell title="Settings" active="settings">
+      <AppShell title="Settings" backHref="/chat" hideNav>
         <div className="rounded-xl border border-neutral-200 bg-white p-6 shadow-sm">
           <h2 className="font-semibold text-neutral-900">No coaching profile yet</h2>
           <p className="mt-2 text-sm text-neutral-500">
@@ -66,7 +66,7 @@ export default async function SettingsPage() {
   }
 
   return (
-    <AppShell title="Settings" subtitle="Account, progress, and subscription" active="settings">
+    <AppShell title="Settings" subtitle="Account, progress, and subscription" backHref="/chat" hideNav>
       <div className="space-y-4">
         {/* Account */}
         <section className="rounded-xl border border-neutral-200 bg-white p-4 shadow-sm">
