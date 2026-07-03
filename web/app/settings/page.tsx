@@ -1,10 +1,13 @@
 import Link from "next/link";
 import { sql } from "@/lib/db";
 import { requirePageUser } from "@/lib/page-auth";
+import { ageFromDob } from "@/lib/auth";
 import { Stat } from "@/components/ui";
 import { AppShell } from "@/components/app-shell";
 import { LogoutButton } from "@/components/logout-button";
 import { WeightForm } from "./weight-form";
+import { InviteForms } from "./invite-forms";
+import { ThemeToggle } from "./theme-toggle";
 
 export const metadata = { title: "Settings — MonthlyAlerts" };
 export const dynamic = "force-dynamic";
@@ -35,6 +38,10 @@ export default async function SettingsPage() {
   ]);
 
   const profile = (profileRows as Record<string, unknown>[])[0];
+  const isAdult =
+    user.role === "parent" ||
+    user.role === "admin" ||
+    (user.date_of_birth !== null && ageFromDob(user.date_of_birth) >= 18);
   const subscriptionStatus = (profile?.subscription_status as string) ?? null;
   const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at as string) : null;
   const trialActive = trialEndsAt !== null && trialEndsAt > new Date();
@@ -106,6 +113,12 @@ export default async function SettingsPage() {
             </Link>
           )}
         </section>
+
+        {/* Invites: friends for everyone, family for adults */}
+        <InviteForms isAdult={isAdult} />
+
+        {/* Appearance */}
+        <ThemeToggle />
 
         {/* Weight */}
         <WeightForm />
