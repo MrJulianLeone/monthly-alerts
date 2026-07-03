@@ -1,7 +1,6 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { BottomNav, GearIcon } from "@/components/bottom-nav";
 
@@ -10,8 +9,21 @@ export type Message = {
   sender: "coach" | "user";
   kind: string;
   content: string | null;
-  metadata: { photo_url?: string; challenge_id?: string } | null;
+  metadata: {
+    challenge_id?: string;
+    balance?: string;
+    items?: string[];
+  } | null;
   created_at: string;
+};
+
+const BALANCE_LABELS: Record<string, string> = {
+  balanced: "Balanced plate",
+  needs_protein: "Add some protein",
+  needs_vegetables: "Add some vegetables",
+  heavy: "On the heavy side",
+  light: "A lighter meal",
+  unclear: "Meal logged",
 };
 
 export type Challenge = {
@@ -333,17 +345,20 @@ function BottomSheet({
 function ChatBubble({ message }: { message: Message }) {
   const isCoach = message.sender === "coach";
 
-  if (message.kind === "meal_photo" && message.metadata?.photo_url) {
+  if (message.kind === "meal_photo") {
+    const balance = message.metadata?.balance ?? "unclear";
+    const items = message.metadata?.items ?? [];
     return (
       <div className="flex justify-end">
-        <Image
-          src={message.metadata.photo_url}
-          alt="Meal photo"
-          width={160}
-          height={160}
-          unoptimized
-          className="h-40 w-40 rounded-2xl object-cover"
-        />
+        <div className="max-w-[82%] rounded-2xl rounded-br-md bg-neutral-900 px-4 py-3 text-white">
+          <p className="text-[11px] font-bold uppercase tracking-widest text-neutral-400">
+            Meal logged
+          </p>
+          <p className="mt-0.5 text-sm font-semibold">{BALANCE_LABELS[balance] ?? "Meal logged"}</p>
+          {items.length > 0 && (
+            <p className="mt-1 text-xs leading-relaxed text-neutral-300">{items.join(", ")}</p>
+          )}
+        </div>
       </div>
     );
   }

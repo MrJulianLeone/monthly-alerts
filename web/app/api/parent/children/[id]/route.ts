@@ -18,7 +18,7 @@ export async function GET(request: NextRequest, { params }: Params) {
   const { id } = await params;
   if (!(await assertChild(auth.user.id, id))) return jsonError("Child not found", 404);
 
-  const [profile, meals, challenges, summaries, weights] = await Promise.all([
+  const [profile, meals, challenges, summaries, weights, progress] = await Promise.all([
     sql()`
       SELECT u.email, u.date_of_birth, u.last_active_at,
              p.display_name, p.gender, p.goal, p.weight_kg, p.height_cm, p.timezone,
@@ -28,7 +28,7 @@ export async function GET(request: NextRequest, { params }: Params) {
       LEFT JOIN streaks st ON st.user_id = u.id
       WHERE u.id = ${id}`,
     sql()`
-      SELECT id, photo_url, meal_type, ai_feedback, logged_at
+      SELECT id, meal_type, ai_feedback, ai_analysis, logged_at
       FROM meal_logs WHERE user_id = ${id}
       ORDER BY logged_at DESC LIMIT 20`,
     sql()`
@@ -46,6 +46,11 @@ export async function GET(request: NextRequest, { params }: Params) {
     sql()`
       SELECT weight_kg, recorded_at FROM weight_entries
       WHERE user_id = ${id} ORDER BY recorded_at DESC LIMIT 24`,
+    sql()`
+      SELECT total_meals_logged, meal_days, balanced_meals, balance_breakdown,
+             total_challenges_completed, total_challenge_volume,
+             first_activity_at, last_activity_at
+      FROM progress_stats WHERE user_id = ${id}`,
   ]);
 
   return NextResponse.json({
@@ -54,6 +59,7 @@ export async function GET(request: NextRequest, { params }: Params) {
     challenges,
     summaries,
     weights,
+    progress: (progress as Record<string, unknown>[])[0] ?? null,
   });
 }
 

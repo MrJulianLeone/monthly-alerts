@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { unlockNextChallenge } from "@/lib/progression";
 
 export type ChatKind =
   | "text"
@@ -21,6 +22,59 @@ export async function addChatMessage(
     RETURNING id
   `) as { id: string }[];
   return rows[0].id;
+}
+
+export type ActiveChallenge = {
+  id: string;
+  sequence_number: number;
+  target_value: number;
+  name: string;
+  unit: string;
+};
+
+/** Returns the user's active challenge, unlocking the next one if none is open. */
+export async function getOrUnlockActiveChallenge(
+  userId: string
+): Promise<ActiveChallenge | null> {
+  const rows = (await sql()`
+    SELECT c.id, c.sequence_number, c.target_value, e.name, e.unit
+    FROM challenges c JOIN exercises e ON e.id = c.exercise_id
+    WHERE c.user_id = ${userId} AND c.status = 'active'
+    ORDER BY c.sequence_number DESC LIMIT 1
+  `) as ActiveChallenge[];
+  if (rows[0]) return rows[0];
+
+  const unlocked = await unlockNextChallenge(userId);
+  if (!unlocked) return null;
+  return {
+    id: unlocked.id,
+    sequence_number: unlocked.sequence,
+    target_value: unlocked.target,
+    name: unlocked.exercise.name,
+    unit: unlocked.exercise.unit,
+  };
+}
+
+/**
+ * Posts a reminder of the user's current challenge as the newest chat message,
+ * so the active challenge always stays visible at the bottom of the feed (e.g.
+ * right after a meal is logged). Returns the challenge that was surfaced.
+ */
+export async function remindActiveChallenge(
+  userId: string
+): Promise<ActiveChallenge | null> {
+  const challenge = await getOrUnlockActiveChallenge(userId);
+  if (!challenge) return null;
+
+  const unitLabel = challenge.unit === "seconds" ? "seconds" : "reps";
+  await addChatMessage(
+    userId,
+    "coach",
+    "challenge_prompt",
+    `Your current challenge is still on: ${challenge.name} — ${challenge.target_value} ${unitLabel}. Tap "I Did It" when you finish.`,
+    { challenge_id: challenge.id }
+  );
+  return challenge;
 }
 
 /**

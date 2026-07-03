@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { put } from "@vercel/blob";
 import { sql } from "@/lib/db";
 import { requireUser, jsonError } from "@/lib/api";
 import { analyzeMealPhoto } from "@/lib/ai";
-import { addChatMessage, updateMealStreak } from "@/lib/coach";
+import { addChatMessage, updateMealStreak, remindActiveChallenge } from "@/lib/coach";
+import { recordMealProgress } from "@/lib/progress";
 import { ageFromDob } from "@/lib/auth";
 import { trackEvent } from "@/lib/geo";
 
@@ -11,8 +11,11 @@ export const maxDuration = 60;
 
 /**
  * "Snap Meal": multipart upload with a `photo` file (and optional `mealType`).
- * Stores the photo in Vercel Blob, runs GPT-4o vision analysis, logs the meal,
- * updates the streak, and posts both sides of the chat exchange.
+ *
+ * The image is sent to the vision model inline (never uploaded or stored) and
+ * discarded as soon as categorization returns. Only the structured result
+ * (feedback, balance, items) is persisted, the streak and running progress are
+ * updated, and both sides of the chat exchange are posted.
  */
 export async function POST(request: NextRequest) {
   const auth = await requireUser(request);
@@ -24,24 +27,24 @@ export async function POST(request: NextRequest) {
   if (photo.size > 10 * 1024 * 1024) return jsonError("Photo must be under 10 MB");
   const mealType = form?.get("mealType");
 
-  const blob = await put(
-    `meals/${auth.user.id}/${Date.now()}.jpg`,
-    photo,
-    { access: "public", contentType: photo.type || "image/jpeg" }
-  );
+  // Send the image to the model inline as a base64 data URL. Nothing is
+  // uploaded and no bytes are retained after this request returns.
+  const bytes = Buffer.from(await photo.arrayBuffer());
+  const mime = photo.type || "image/jpeg";
+  const imageDataUrl = `data:${mime};base64,${bytes.toString("base64")}`;
 
   const profileRows = (await sql()`
     SELECT goal FROM profiles WHERE user_id = ${auth.user.id}
   `) as { goal: string | null }[];
 
-  const analysis = await analyzeMealPhoto(blob.url, {
+  const analysis = await analyzeMealPhoto(imageDataUrl, {
     age: auth.user.date_of_birth ? ageFromDob(auth.user.date_of_birth) : 25,
     goal: profileRows[0]?.goal ?? null,
   });
 
   const mealRows = (await sql()`
-    INSERT INTO meal_logs (user_id, photo_url, meal_type, ai_feedback, ai_analysis, ai_model)
-    VALUES (${auth.user.id}, ${blob.url},
+    INSERT INTO meal_logs (user_id, meal_type, ai_feedback, ai_analysis, ai_model)
+    VALUES (${auth.user.id},
             ${typeof mealType === "string" && mealType ? mealType : null},
             ${analysis.feedback}, ${JSON.stringify(analysis)}, 'gpt-4o')
     RETURNING id
@@ -49,10 +52,13 @@ export async function POST(request: NextRequest) {
   const mealId = mealRows[0].id;
 
   const streak = await updateMealStreak(auth.user.id);
+  await recordMealProgress(auth.user.id, analysis.balance);
 
+  // No image is stored; the meal bubble is rendered from the categorization.
   await addChatMessage(auth.user.id, "user", "meal_photo", null, {
     meal_log_id: mealId,
-    photo_url: blob.url,
+    balance: analysis.balance,
+    items: analysis.items.slice(0, 6),
   });
   const feedbackWithStreak =
     streak >= 2 ? `${analysis.feedback} You're on a ${streak}-day logging streak — keep it up.` : analysis.feedback;
@@ -60,10 +66,13 @@ export async function POST(request: NextRequest) {
     meal_log_id: mealId,
   });
 
+  // Keep the active challenge current at the bottom of the chat after each meal.
+  const challenge = await remindActiveChallenge(auth.user.id);
+
   await trackEvent(request, "meal_logged", auth.user.id);
 
   return NextResponse.json(
-    { mealId, photoUrl: blob.url, feedback: feedbackWithStreak, analysis, streak },
+    { mealId, feedback: feedbackWithStreak, analysis, streak, challenge },
     { status: 201 }
   );
 }
@@ -77,7 +86,7 @@ export async function GET(request: NextRequest) {
   const limit = Math.min(parseInt(url.searchParams.get("limit") ?? "30", 10) || 30, 100);
 
   const meals = (await sql()`
-    SELECT id, photo_url, meal_type, ai_feedback, logged_at
+    SELECT id, meal_type, ai_feedback, ai_analysis, logged_at
     FROM meal_logs WHERE user_id = ${auth.user.id}
     ORDER BY logged_at DESC LIMIT ${limit}
   `) as Record<string, unknown>[];

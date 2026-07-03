@@ -201,13 +201,17 @@ CREATE INDEX challenge_logs_user_time_idx ON challenge_logs (user_id, completed_
 -- Nutrition system: meal photos + AI feedback + streaks
 -- ----------------------------------------------------------------------------
 
+-- Meal photos are NOT retained. The image is sent to the vision model inline
+-- for categorization and then discarded; only the structured result is kept.
+-- photo_url is therefore nullable and unused for new logs (retained for any
+-- historical rows created before this policy).
 CREATE TABLE meal_logs (
   id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id     uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  photo_url   text NOT NULL,
+  photo_url   text,                                 -- deprecated: images are no longer stored
   meal_type   text CHECK (meal_type IN ('breakfast', 'lunch', 'dinner', 'snack')),
   ai_feedback text,                                 -- short, useful coach feedback
-  ai_analysis jsonb NOT NULL DEFAULT '{}'::jsonb,   -- structured vision output (balance, portions)
+  ai_analysis jsonb NOT NULL DEFAULT '{}'::jsonb,   -- structured vision output (balance, items)
   ai_model    text,                                 -- e.g. 'gpt-4o'
   logged_at   timestamptz NOT NULL DEFAULT now(),
   created_at  timestamptz NOT NULL DEFAULT now()
@@ -225,6 +229,35 @@ CREATE TABLE streaks (
 );
 
 CREATE TRIGGER streaks_updated_at BEFORE UPDATE ON streaks
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
+
+-- ----------------------------------------------------------------------------
+-- Running progress (cumulative, storage-efficient)
+-- ----------------------------------------------------------------------------
+
+-- A single always-current row per user that accumulates lifetime progress for
+-- both diet goals and fitness challenges. Updated in O(1) on each meal log and
+-- challenge completion, so continued review never has to scan (or retain) the
+-- underlying history or any meal images. This is the "running summary" that
+-- backs on-demand progress views and feeds the monthly narrative.
+CREATE TABLE progress_stats (
+  user_id                    uuid PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  -- Diet goals
+  total_meals_logged         integer NOT NULL DEFAULT 0,
+  meal_days                  integer NOT NULL DEFAULT 0,   -- distinct calendar days a meal was logged
+  balanced_meals             integer NOT NULL DEFAULT 0,   -- meals the coach categorized as "balanced"
+  balance_breakdown          jsonb   NOT NULL DEFAULT '{}'::jsonb, -- running counts per balance label
+  last_meal_date             date,                          -- for distinct-day accounting (user tz)
+  -- Fitness challenges
+  total_challenges_completed integer NOT NULL DEFAULT 0,
+  total_challenge_volume     integer NOT NULL DEFAULT 0,   -- cumulative reps/seconds performed
+  -- Bookkeeping
+  first_activity_at          timestamptz,
+  last_activity_at           timestamptz,
+  updated_at                 timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TRIGGER progress_stats_updated_at BEFORE UPDATE ON progress_stats
   FOR EACH ROW EXECUTE FUNCTION set_updated_at();
 
 -- ----------------------------------------------------------------------------
