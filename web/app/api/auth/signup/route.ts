@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { ageFromDob, createSession, setSessionCookie } from "@/lib/auth";
+import { ageFromDob, createSession, setSessionCookie, setUserCookie } from "@/lib/auth";
 import { createCoachedUser } from "@/lib/onboarding";
 import { jsonError } from "@/lib/api";
 import { trackEvent } from "@/lib/geo";
 
 /**
- * Self-signup for users 16+. The age gate is the first onboarding screen;
- * under-16 users must go through POST /api/onboarding/parent-invite instead.
+ * Self-signup for users 16+. Onboarding starts by collecting name and date of
+ * birth; under-16 users are routed to POST /api/onboarding/parent-invite instead.
  */
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => null);
@@ -57,6 +57,10 @@ export async function POST(request: NextRequest) {
     userAgent: request.headers.get("user-agent"),
   });
   await setSessionCookie(session.token, session.expiresAt);
+  const roleRows = (await sql()`
+    SELECT role FROM users WHERE id = ${userId}
+  `) as { role: string }[];
+  await setUserCookie(displayName, roleRows[0]?.role ?? "user");
   await trackEvent(request, "signup", userId);
 
   return NextResponse.json({ token: session.token, userId }, { status: 201 });

@@ -6,6 +6,7 @@ import {
   hashPassword,
   hashToken,
   setSessionCookie,
+  setUserCookie,
 } from "@/lib/auth";
 import { createCoachedUser } from "@/lib/onboarding";
 import { jsonError } from "@/lib/api";
@@ -70,8 +71,10 @@ export async function POST(request: NextRequest, { params }: Params) {
   `) as { id: string; role: string }[];
 
   let parentId: string;
+  let parentRole = "parent";
   if (existingParent.length > 0) {
     parentId = existingParent[0].id;
+    if (existingParent[0].role === "admin") parentRole = "admin";
     // An existing individual user becoming a parent gains dashboard access
     // (they keep their own coaching profile, if any).
     if (existingParent[0].role === "user") {
@@ -113,6 +116,7 @@ export async function POST(request: NextRequest, { params }: Params) {
     userAgent: request.headers.get("user-agent"),
   });
   await setSessionCookie(session.token, session.expiresAt);
+  await setUserCookie(invite.parent_email, parentRole);
   await trackEvent(request, "parent_setup_completed", parentId);
 
   return NextResponse.json({ ok: true, childId, token: session.token }, { status: 201 });

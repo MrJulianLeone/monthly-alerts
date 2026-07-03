@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { ageFromDob, createSession, setSessionCookie } from "@/lib/auth";
+import { ageFromDob, createSession, setSessionCookie, setUserCookie } from "@/lib/auth";
 import { verifyAppleToken, verifyGoogleToken } from "@/lib/oauth";
 import { createCoachedUser } from "@/lib/onboarding";
 import { jsonError } from "@/lib/api";
@@ -72,6 +72,13 @@ export async function POST(request: NextRequest) {
     userAgent: request.headers.get("user-agent"),
   });
   await setSessionCookie(session.token, session.expiresAt);
+
+  const rows = (await sql()`
+    SELECT u.email, u.role, p.display_name
+    FROM users u LEFT JOIN profiles p ON p.user_id = u.id
+    WHERE u.id = ${userId}
+  `) as { email: string; role: string; display_name: string | null }[];
+  await setUserCookie(rows[0]?.display_name ?? rows[0]?.email ?? "", rows[0]?.role ?? "user");
 
   return NextResponse.json({ token: session.token, userId });
 }

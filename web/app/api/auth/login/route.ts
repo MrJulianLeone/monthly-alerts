@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
-import { createSession, setSessionCookie, verifyPassword } from "@/lib/auth";
+import { createSession, setSessionCookie, setUserCookie, verifyPassword } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
 import { trackEvent } from "@/lib/geo";
 
@@ -9,9 +9,11 @@ export async function POST(request: NextRequest) {
   if (!body?.email || !body?.password) return jsonError("Email and password are required");
 
   const rows = (await sql()`
-    SELECT id, password_hash, role FROM users
-    WHERE email = ${body.email} AND deleted_at IS NULL
-  `) as { id: string; password_hash: string | null; role: string }[];
+    SELECT u.id, u.password_hash, u.role, p.display_name
+    FROM users u
+    LEFT JOIN profiles p ON p.user_id = u.id
+    WHERE u.email = ${body.email} AND u.deleted_at IS NULL
+  `) as { id: string; password_hash: string | null; role: string; display_name: string | null }[];
 
   const user = rows[0];
   if (!user?.password_hash || !verifyPassword(body.password, user.password_hash)) {
@@ -22,6 +24,7 @@ export async function POST(request: NextRequest) {
     userAgent: request.headers.get("user-agent"),
   });
   await setSessionCookie(session.token, session.expiresAt);
+  await setUserCookie(user.display_name ?? body.email, user.role);
   await trackEvent(request, "login", user.id);
 
   return NextResponse.json({ token: session.token, userId: user.id, role: user.role });
