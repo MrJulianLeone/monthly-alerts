@@ -124,6 +124,28 @@ CREATE TABLE parent_invites (
 
 CREATE INDEX parent_invites_email_idx ON parent_invites (parent_email);
 
+-- Family invites: an existing user invites a family member by email. Adults
+-- invite other adults to start their own coaching ('family'); a minor with no
+-- parent yet can invite an adult who becomes their parent/guardian on accept
+-- ('parent'). Token-based so acceptance can be linked back to the inviter.
+CREATE TABLE family_invites (
+  id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  inviter_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invitee_email   citext NOT NULL,
+  relationship    text NOT NULL DEFAULT 'family'
+                    CHECK (relationship IN ('family', 'parent')),
+  token_hash      text UNIQUE NOT NULL,
+  status          text NOT NULL DEFAULT 'pending'
+                    CHECK (status IN ('pending', 'accepted', 'declined', 'expired')),
+  invitee_user_id uuid REFERENCES users(id) ON DELETE SET NULL, -- set on accept
+  expires_at      timestamptz NOT NULL,
+  responded_at    timestamptz,
+  created_at      timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX family_invites_inviter_idx ON family_invites (inviter_id);
+CREATE INDEX family_invites_email_idx ON family_invites (invitee_email);
+
 -- ----------------------------------------------------------------------------
 -- Chat (the main interface)
 -- ----------------------------------------------------------------------------

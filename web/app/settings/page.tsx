@@ -38,10 +38,13 @@ export default async function SettingsPage() {
   ]);
 
   const profile = (profileRows as Record<string, unknown>[])[0];
+  const age = user.date_of_birth !== null ? ageFromDob(user.date_of_birth) : null;
   const isAdult =
     user.role === "parent" ||
     user.role === "admin" ||
-    (user.date_of_birth !== null && ageFromDob(user.date_of_birth) >= 18);
+    (age !== null && age >= 18);
+  // A minor with no parent yet can invite an adult family member to be their parent.
+  const needsParent = !isAdult && user.parent_id === null;
   const subscriptionStatus = (profile?.subscription_status as string) ?? null;
   const trialEndsAt = profile?.trial_ends_at ? new Date(profile.trial_ends_at as string) : null;
   const trialActive = trialEndsAt !== null && trialEndsAt > new Date();
@@ -114,8 +117,8 @@ export default async function SettingsPage() {
           )}
         </section>
 
-        {/* Invites: friends for everyone, family for adults */}
-        <InviteForms isAdult={isAdult} />
+        {/* Invites: friends for everyone, family for adults, a parent for minors */}
+        <InviteForms isAdult={isAdult} needsParent={needsParent} />
 
         {/* Appearance */}
         <ThemeToggle />
