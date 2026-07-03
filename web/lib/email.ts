@@ -68,6 +68,41 @@ export async function sendParentSetupEmail(parentEmail: string, token: string) {
   );
 }
 
+/**
+ * After a parent completes setup: the child receives their login details.
+ * The password is never emailed — the parent set it and shares it directly.
+ */
+export async function sendChildWelcomeEmail(
+  childEmail: string,
+  childName: string,
+  parentEmail: string
+) {
+  const link = `${appUrl()}/login`;
+  await send(
+    childEmail,
+    "Your MonthlyAlerts coach is ready — here's your login",
+    wrapper(`
+      <h1 style="font-size:22px;margin:0 0 16px">You're all set, ${childName}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#404040">
+        Your parent (${parentEmail}) finished setting up your MonthlyAlerts account.
+        Your coach is ready with your first challenge.
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin:16px 0">
+        <tr>
+          <td style="padding:10px 0;font-size:14px;color:#737373;border-bottom:1px solid #f5f5f5">Login email</td>
+          <td style="padding:10px 0;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid #f5f5f5">${childEmail}</td>
+        </tr>
+        <tr>
+          <td style="padding:10px 0;font-size:14px;color:#737373;border-bottom:1px solid #f5f5f5">Password</td>
+          <td style="padding:10px 0;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid #f5f5f5">Set by your parent — ask them for it</td>
+        </tr>
+      </table>
+      <p style="margin:24px 0">${button(link, "Log in and meet your coach")}</p>
+      <p style="font-size:13px;color:#737373">Snap your meals, complete your daily challenge, and you'll get a full progress summary at the end of every month.</p>
+    `)
+  );
+}
+
 /** Leaderboard referral invite. */
 export async function sendReferralEmail(
   inviteeEmail: string,
@@ -93,8 +128,12 @@ export async function sendReferralEmail(
 }
 
 /** Adult users inviting family members to join MonthlyAlerts. */
-export async function sendFamilyInviteEmail(inviteeEmail: string, inviterName: string) {
-  const link = `${appUrl()}/signup`;
+export async function sendFamilyInviteEmail(
+  inviteeEmail: string,
+  inviterName: string,
+  token: string
+) {
+  const link = `${appUrl()}/signup?family=${token}`;
   await send(
     inviteeEmail,
     `${inviterName} invited you to MonthlyAlerts`,
@@ -106,10 +145,12 @@ export async function sendFamilyInviteEmail(inviteeEmail: string, inviterName: s
         them as family.
       </p>
       <p style="font-size:15px;line-height:1.6;color:#404040">
-        Create your account below and your coach kicks things off right away. The first
-        30 days are completely free.
+        Your invitation link below already knows who invited you — just complete your
+        profile and your coach kicks things off right away. The first 30 days are
+        completely free.
       </p>
-      <p style="margin:24px 0">${button(link, "Join MonthlyAlerts")}</p>
+      <p style="margin:24px 0">${button(link, "Accept invitation")}</p>
+      <p style="font-size:13px;color:#737373">This invitation expires in 14 days.</p>
     `)
   );
 }

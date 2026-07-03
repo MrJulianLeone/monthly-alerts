@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { SiteHeader } from "@/components/site-header";
 import { SiteChrome } from "@/components/site-chrome";
 import "./globals.css";
@@ -8,6 +8,16 @@ export const metadata: Metadata = {
   description:
     "Daily meal and exercise guidance from your AI health coach, with a clear monthly progress summary. Simple, professional, built for habits.",
   metadataBase: new URL("https://monthlyalerts.com"),
+};
+
+// App-like viewport: lock zoom so mobile browsers never auto-zoom on input
+// focus and the fixed bottom toolbar always stays pinned to the bottom.
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover",
 };
 
 // Applies the saved theme before first paint to avoid a light-mode flash.

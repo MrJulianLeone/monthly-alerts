@@ -307,6 +307,24 @@ CREATE TABLE leaderboard_members (
 
 CREATE INDEX leaderboard_members_user_idx ON leaderboard_members (user_id);
 
+-- Family invitations (adult accounts): tokenized so the invitee lands in a
+-- pre-filled signup — no re-entering emails, no duplicate accounts. If the
+-- invitee is under 16, the inviter's email is used as the parent email.
+CREATE TABLE family_invites (
+  id            uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  inviter_id    uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  invitee_email citext NOT NULL,
+  token_hash    text UNIQUE NOT NULL,
+  status        text NOT NULL DEFAULT 'pending'
+                  CHECK (status IN ('pending', 'accepted', 'expired')),
+  accepted_at   timestamptz,
+  expires_at    timestamptz NOT NULL,
+  created_at    timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX family_invites_inviter_idx ON family_invites (inviter_id);
+CREATE INDEX family_invites_invitee_email_idx ON family_invites (invitee_email);
+
 -- Refer-a-friend invitations; invitee must accept to join the leaderboard.
 CREATE TABLE referrals (
   id              uuid PRIMARY KEY DEFAULT gen_random_uuid(),

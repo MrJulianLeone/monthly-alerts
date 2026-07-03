@@ -161,6 +161,51 @@ export function ChatClient({
     }
   }
 
+  async function explainChallenge() {
+    if (!challenge || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/challenges/explain", { method: "POST" });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data as { error?: string }).error ?? "Could not get an explanation. Try again.");
+        return;
+      }
+      await refreshMessages();
+      closeSheet();
+    } catch {
+      setError("Could not get an explanation. Check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function passChallenge() {
+    if (!challenge || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/challenges/skip", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ challengeId: challenge.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data as { error?: string }).error ?? "Could not swap the challenge. Try again.");
+        return;
+      }
+      setChallenge((data as { next: Challenge }).next ?? null);
+      await refreshMessages();
+      closeSheet();
+    } catch {
+      setError("Could not swap the challenge. Check your connection and try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const unitLabel = challenge?.unit === "seconds" ? "seconds" : "reps";
 
   return (
@@ -260,9 +305,9 @@ export function ChatClient({
         </BottomSheet>
       )}
 
-      {/* Challenge confirmation sheet */}
+      {/* Challenge menu sheet: mark complete, explain, or pass for another */}
       {sheet === "challenge" && (
-        <BottomSheet title="Confirm challenge" onClose={closeSheet} disabled={busy}>
+        <BottomSheet title="Your challenge" onClose={closeSheet} disabled={busy}>
           {challenge ? (
             <>
               <div className="rounded-xl border border-neutral-200 bg-neutral-50 p-4 text-center">
@@ -274,18 +319,33 @@ export function ChatClient({
                   {challenge.target_value} {unitLabel}
                 </p>
               </div>
-              <p className="mt-3 text-center text-sm text-neutral-500">
-                Confirm you completed this and the next challenge unlocks right away.
-              </p>
               {error && <p className="mt-2 text-center text-sm text-red-600">{error}</p>}
-              <button
-                type="button"
-                onClick={confirmChallenge}
-                disabled={busy}
-                className="mt-4 w-full rounded-full bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:bg-neutral-700 disabled:opacity-50"
-              >
-                {busy ? "Confirming…" : "I did it"}
-              </button>
+              <div className="mt-4 space-y-2.5">
+                <button
+                  type="button"
+                  onClick={confirmChallenge}
+                  disabled={busy}
+                  className="w-full rounded-full bg-neutral-900 px-4 py-3 text-sm font-semibold text-white hover:bg-neutral-700 disabled:opacity-50"
+                >
+                  {busy ? "Working…" : "I did it — mark complete"}
+                </button>
+                <button
+                  type="button"
+                  onClick={explainChallenge}
+                  disabled={busy}
+                  className="w-full rounded-full border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-900 hover:bg-neutral-50 disabled:opacity-50"
+                >
+                  Explain this exercise
+                </button>
+                <button
+                  type="button"
+                  onClick={passChallenge}
+                  disabled={busy}
+                  className="w-full rounded-full border border-neutral-300 bg-white px-4 py-3 text-sm font-semibold text-neutral-600 hover:bg-neutral-50 disabled:opacity-50"
+                >
+                  Pass — give me a different one
+                </button>
+              </div>
             </>
           ) : (
             <p className="py-4 text-center text-sm text-neutral-500">

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button, Card, ErrorText, Field, Input, Select } from "@/components/ui";
 import { ftInToCm, lbToKg } from "@/lib/units";
 
 type Step = "start" | "under16" | "under16-sent" | "profile";
+
+type FamilyInvite = { inviteeEmail: string; inviterName: string; inviterEmail: string };
 
 function ageFromDob(dob: string): number {
   const birth = new Date(dob);
@@ -16,12 +18,13 @@ function ageFromDob(dob: string): number {
   return age;
 }
 
-export function SignupFlow() {
+export function SignupFlow({ familyToken }: { familyToken?: string }) {
   const router = useRouter();
   const [step, setStep] = useState<Step>("start");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [parentEmail, setParentEmail] = useState("");
+  const [familyInvite, setFamilyInvite] = useState<FamilyInvite | null>(null);
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -34,6 +37,22 @@ export function SignupFlow() {
     heightFt: "",
     heightIn: "",
   });
+
+  // Family invite link: pre-fill the invitee's email, and if they turn out to
+  // be under 16, use the inviter's email as the parent email — nobody types an
+  // email address twice.
+  useEffect(() => {
+    if (!familyToken) return;
+    fetch(`/api/invites/family/${familyToken}`)
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data: FamilyInvite | null) => {
+        if (!data) return;
+        setFamilyInvite(data);
+        setForm((f) => ({ ...f, email: f.email || data.inviteeEmail }));
+        setParentEmail((p) => p || data.inviterEmail);
+      })
+      .catch(() => {});
+  }, [familyToken]);
 
   const set = (key: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [key]: e.target.value });
@@ -87,6 +106,7 @@ export function SignupFlow() {
             ? ftInToCm(Number(form.heightFt || 0), Number(form.heightIn || 0))
             : null,
         timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        familyToken: familyToken ?? null,
       }),
     });
     setBusy(false);
@@ -102,6 +122,12 @@ export function SignupFlow() {
     return (
       <Card>
         <h1 className="text-xl font-semibold text-neutral-900">Let&apos;s get started</h1>
+        {familyInvite && (
+          <p className="mt-2 rounded-lg bg-neutral-50 px-3 py-2.5 text-sm text-neutral-600">
+            {familyInvite.inviterName} invited you to MonthlyAlerts — your details are
+            already filled in where we can.
+          </p>
+        )}
         <p className="mt-2 text-sm text-neutral-500">
           Tell us your name and birthday so we can set up the right kind of account.
         </p>
@@ -131,9 +157,9 @@ export function SignupFlow() {
       <Card>
         <h1 className="text-xl font-semibold text-neutral-900">A parent sets you up</h1>
         <p className="mt-2 text-sm text-neutral-500">
-          Since you&apos;re under 16, a parent creates your account. Enter your parent&apos;s
-          email — they&apos;ll receive a secure link to create your account, complete your
-          profile, and set your login.
+          {familyInvite
+            ? `Since you're under 16, a parent sets up your account. We've filled in ${familyInvite.inviterName}'s email — just confirm and send.`
+            : "Since you're under 16, a parent creates your account. Enter your parent's email — they'll receive a secure link to create your account, complete your profile, and set your login."}
         </p>
         <form onSubmit={sendParentInvite} className="mt-6 space-y-4">
           <Field label="Parent's email">

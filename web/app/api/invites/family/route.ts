@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireUser, jsonError } from "@/lib/api";
-import { ageFromDob } from "@/lib/auth";
+import { ageFromDob, generateToken, hashToken } from "@/lib/auth";
 import { sendFamilyInviteEmail } from "@/lib/email";
 import { trackEvent } from "@/lib/geo";
 
 const MAX_PER_DAY = 10;
+const INVITE_DAYS = 14;
 
 /**
  * Family invite (adults only): emails a family member an invitation to join
@@ -54,9 +55,20 @@ export async function POST(request: NextRequest) {
   `) as { display_name: string }[];
   const inviterName = nameRows[0]?.display_name ?? "A family member";
 
+  // Tokenized invite: the emailed link opens a pre-filled signup so the
+  // invitee never re-enters emails (and under-16s never re-type the parent's).
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + INVITE_DAYS * 24 * 60 * 60 * 1000);
+  const inserted = (await sql()`
+    INSERT INTO family_invites (inviter_id, invitee_email, token_hash, expires_at)
+    VALUES (${auth.user.id}, ${email}, ${hashToken(token)}, ${expiresAt.toISOString()})
+    RETURNING id
+  `) as { id: string }[];
+
   try {
-    await sendFamilyInviteEmail(email, inviterName);
+    await sendFamilyInviteEmail(email, inviterName, token);
   } catch (error) {
+    await sql()`DELETE FROM family_invites WHERE id = ${inserted[0].id}`.catch(() => {});
     console.error("Family invite email failed:", error);
     return jsonError("We couldn't send the invitation email right now. Please try again.", 502);
   }

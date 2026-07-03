@@ -53,7 +53,7 @@ npm run db:wipe      # drop everything, then apply schema (destructive)
 
 On Vercel, `POST /api/admin/migrate` (header `x-migrate-secret: $MIGRATE_SECRET`) does the same.
 
-For existing databases, apply the incremental migrations in [`web/db/migrations/`](web/db/migrations) without wiping data: `0001` makes `meal_logs.photo_url` optional and adds/backfills `progress_stats`; `0002` adds `profiles.daily_calorie_goal`, `meal_logs.estimated_calories`, the `daily_calorie_logs` running log, and the `calorie_summary` chat kind.
+For existing databases, apply the incremental migrations in [`web/db/migrations/`](web/db/migrations) without wiping data: `0001` makes `meal_logs.photo_url` optional and adds/backfills `progress_stats`; `0002` adds `profiles.daily_calorie_goal`, `meal_logs.estimated_calories`, the `daily_calorie_logs` running log, and the `calorie_summary` chat kind; `0003` adds tokenized `family_invites`.
 
 ## Scheduled Jobs (Vercel Cron, see web/vercel.json)
 

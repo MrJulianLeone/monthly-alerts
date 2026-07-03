@@ -7,7 +7,7 @@ export type BottomNavTab = "chat" | "leaderboard" | "settings";
 
 type BottomNavProps = {
   active?: BottomNavTab;
-  /** When provided, Photo/Did It render as action buttons; otherwise they link to /chat. */
+  /** When provided, Photo/Challenge render as action buttons; otherwise they link to /chat. */
   onPhoto?: () => void;
   onChallenge?: () => void;
 };
@@ -41,9 +41,9 @@ export function BottomNav({ active, onPhoto, onChallenge }: BottomNavProps) {
         <NavItem
           href={onChallenge ? undefined : "/chat?action=challenge"}
           onClick={onChallenge}
-          label="Did It"
+          label="Challenge"
         >
-          <CheckIcon />
+          <DumbbellIcon />
         </NavItem>
       </div>
     </nav>
@@ -137,7 +137,7 @@ function CameraIcon() {
   );
 }
 
-function CheckIcon() {
+function DumbbellIcon() {
   return (
     <svg
       viewBox="0 0 24 24"
@@ -149,8 +149,7 @@ function CheckIcon() {
       strokeLinejoin="round"
       aria-hidden
     >
-      <circle cx="12" cy="12" r="8.5" />
-      <path d="m8.5 12.5 2.5 2.5 4.5-5" />
+      <path d="M6.5 8.5v7M3.5 10v4M17.5 8.5v7M20.5 10v4M6.5 12h11" />
     </svg>
   );
 }

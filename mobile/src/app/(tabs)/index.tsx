@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import {
   ActivityIndicator,
+  Alert,
   FlatList,
   Platform,
   StyleSheet,
@@ -139,6 +140,48 @@ export default function ChatScreen() {
     }
   }
 
+  async function explainChallenge() {
+    setBusyAction("challenge");
+    setError("");
+    try {
+      await api("/api/challenges/explain", { body: {} });
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not get an explanation. Try again.");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  async function passChallenge() {
+    if (!challenge) return;
+    setBusyAction("challenge");
+    setError("");
+    try {
+      await api("/api/challenges/skip", { body: { challengeId: challenge.id } });
+      await load();
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not swap the challenge. Try again.");
+    } finally {
+      setBusyAction(null);
+    }
+  }
+
+  function openChallengeMenu() {
+    if (!challenge) return;
+    const unitLabel = challenge.unit === "seconds" ? "seconds" : "reps";
+    Alert.alert(
+      `Challenge #${challenge.sequence_number}: ${challenge.name}`,
+      `${challenge.target_value} ${unitLabel}`,
+      [
+        { text: "I did it — mark complete", onPress: didIt },
+        { text: "Explain this exercise", onPress: explainChallenge },
+        { text: "Pass — give me a different one", onPress: passChallenge },
+        { text: "Cancel", style: "cancel" },
+      ]
+    );
+  }
+
   function renderMessage({ item }: { item: Message }) {
     const isCoach = item.sender === "coach";
     if (item.kind === "meal_photo") {
@@ -244,9 +287,9 @@ export default function ChatScreen() {
             style={styles.actionButton}
           />
           <Button
-            title="I Did It"
+            title="Challenge"
             variant="secondary"
-            onPress={didIt}
+            onPress={openChallengeMenu}
             loading={busyAction === "challenge"}
             disabled={busyAction !== null || !challenge}
             style={styles.actionButton}
