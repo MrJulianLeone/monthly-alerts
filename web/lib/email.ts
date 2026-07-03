@@ -92,9 +92,41 @@ export async function sendReferralEmail(
   );
 }
 
-/** Adult users inviting family members to join MonthlyAlerts. */
-export async function sendFamilyInviteEmail(inviteeEmail: string, inviterName: string) {
-  const link = `${appUrl()}/signup`;
+/**
+ * A user inviting a family member to MonthlyAlerts. The link carries a secure
+ * token so acceptance is linked back to the inviter. When `asParent` is set,
+ * the invitee is being asked to be the (minor) inviter's parent/guardian and
+ * becomes their parent on accept.
+ */
+export async function sendFamilyInviteEmail(
+  inviteeEmail: string,
+  inviterName: string,
+  token: string,
+  asParent = false
+) {
+  const link = `${appUrl()}/family-invite/${token}`;
+  if (asParent) {
+    await send(
+      inviteeEmail,
+      `${inviterName} needs a parent to set up MonthlyAlerts`,
+      wrapper(`
+        <h1 style="font-size:22px;margin:0 0 16px">${inviterName} asked you to be their parent on MonthlyAlerts</h1>
+        <p style="font-size:15px;line-height:1.6;color:#404040">
+          ${inviterName} wants to use MonthlyAlerts — a professional personal health coach
+          with daily meal and exercise guidance and a monthly progress summary. Because
+          they are under 16, a parent or guardian needs to approve and oversee their account.
+        </p>
+        <p style="font-size:15px;line-height:1.6;color:#404040">
+          Accept below to become their parent on MonthlyAlerts. You'll get a parent
+          dashboard to follow their progress and receive their monthly summaries — and you
+          can start your own coaching too. The first 30 days are completely free.
+        </p>
+        <p style="margin:24px 0">${button(link, "Accept and become their parent")}</p>
+        <p style="font-size:13px;color:#737373">This invitation expires in 14 days.</p>
+      `)
+    );
+    return;
+  }
   await send(
     inviteeEmail,
     `${inviterName} invited you to MonthlyAlerts`,
@@ -106,10 +138,11 @@ export async function sendFamilyInviteEmail(inviteeEmail: string, inviterName: s
         them as family.
       </p>
       <p style="font-size:15px;line-height:1.6;color:#404040">
-        Create your account below and your coach kicks things off right away. The first
+        Accept the invitation below and your coach kicks things off right away. The first
         30 days are completely free.
       </p>
-      <p style="margin:24px 0">${button(link, "Join MonthlyAlerts")}</p>
+      <p style="margin:24px 0">${button(link, "Accept invitation")}</p>
+      <p style="font-size:13px;color:#737373">This invitation expires in 14 days.</p>
     `)
   );
 }
