@@ -5,15 +5,70 @@ import { useState } from "react";
 type Board = { id: string; name: string };
 
 /**
- * Settings invites: friend invites (all users, joins your leaderboard) and
- * family invites (adult accounts only, invites them to their own account).
+ * Settings invites: friend invites (all users, joins your leaderboard), family
+ * invites (adult accounts, invites them to their own account), and — for a
+ * minor with no parent yet — a "parent" invite (the adult who accepts becomes
+ * their parent/guardian).
  */
-export function InviteForms({ isAdult }: { isAdult: boolean }) {
+export function InviteForms({
+  isAdult,
+  needsParent,
+}: {
+  isAdult: boolean;
+  needsParent: boolean;
+}) {
   return (
     <section className="space-y-4">
       <FriendInviteForm />
       {isAdult && <FamilyInviteForm />}
+      {needsParent && <ParentInviteForm />}
     </section>
+  );
+}
+
+function ParentInviteForm() {
+  const [email, setEmail] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [sent, setSent] = useState(false);
+  const [error, setError] = useState("");
+
+  async function submit(e: React.FormEvent) {
+    e.preventDefault();
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    setSent(false);
+    try {
+      const res = await fetch("/api/invites/family", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim() }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setError((data as { error?: string }).error ?? "Could not send the invite");
+        return;
+      }
+      setEmail("");
+      setSent(true);
+    } catch {
+      setError("Could not send the invite. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <InviteCard
+      title="Invite a parent"
+      description="Since you're under 16, invite a parent or guardian by email. When they accept, they become your parent and can oversee your account."
+      email={email}
+      onEmailChange={setEmail}
+      onSubmit={submit}
+      busy={busy}
+      sent={sent}
+      error={error}
+    />
   );
 }
 
