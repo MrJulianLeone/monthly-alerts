@@ -1,6 +1,7 @@
 import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { sql } from "@/lib/db";
+import { effectiveRole } from "@/lib/admin";
 
 const SESSION_COOKIE = "ma_session";
 const SESSION_DAYS = 365;
@@ -77,7 +78,13 @@ async function userForToken(token: string): Promise<SessionUser | null> {
   sql()`
     UPDATE users SET last_active_at = now() WHERE id = ${rows[0].id}
   `.catch(() => {});
-  return rows[0];
+  // Enforce the single-admin policy regardless of what the database says,
+  // and converge the stored role when it disagrees (best-effort).
+  const role = effectiveRole(rows[0].email, rows[0].role);
+  if (role !== rows[0].role) {
+    sql()`UPDATE users SET role = ${role} WHERE id = ${rows[0].id}`.catch(() => {});
+  }
+  return { ...rows[0], role };
 }
 
 /** Resolves the current user from a bearer token (mobile) or cookie (web). */
