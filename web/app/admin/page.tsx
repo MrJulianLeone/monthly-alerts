@@ -1,6 +1,7 @@
+import Link from "next/link";
 import { sql } from "@/lib/db";
 import { requirePageUser } from "@/lib/page-auth";
-import { Card, PageHeading, Stat } from "@/components/ui";
+import { Card, Stat } from "@/components/ui";
 
 export const metadata = { title: "Admin — MonthlyAlerts" };
 export const dynamic = "force-dynamic";
@@ -42,7 +43,28 @@ export default async function AdminDashboard() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-12">
-      <PageHeading title="Admin dashboard" subtitle="Platform stats and IP-based geolocation analytics (last 30 days)." />
+      <div className="mb-8 flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-neutral-900">Admin dashboard</h1>
+          <p className="mt-1 text-sm text-neutral-500">
+            Platform stats and IP-based geolocation analytics (last 30 days).
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <Link
+            href="/me"
+            className="rounded-lg border border-neutral-300 bg-white px-4 py-2.5 text-sm font-semibold text-neutral-900 hover:bg-neutral-50"
+          >
+            My dashboard &rarr;
+          </Link>
+          <Link
+            href="/chat"
+            className="rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-700"
+          >
+            Coach chat &rarr;
+          </Link>
+        </div>
+      </div>
 
       <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         <Stat label="Users" value={totals.total_users} />

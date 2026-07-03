@@ -1,4 +1,5 @@
 import { sql } from "@/lib/db";
+import { isAdminEmail } from "@/lib/admin";
 import { hashPassword } from "@/lib/auth";
 import { addChatMessage } from "@/lib/coach";
 import { unlockNextChallenge } from "@/lib/progression";
@@ -102,11 +103,9 @@ export type NewCoachedUser = {
 export async function createCoachedUser(input: NewCoachedUser): Promise<string> {
   const db = sql();
 
-  const adminEmails = (process.env.ADMIN_EMAILS ?? "")
-    .split(",")
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean);
-  const role = adminEmails.includes(input.email.toLowerCase()) ? "admin" : "user";
+  // The single hardcoded admin email is the only account that ever gets the
+  // admin role — there is no other promotion path.
+  const role = isAdminEmail(input.email) ? "admin" : "user";
 
   const userRows = (await db`
     INSERT INTO users (email, password_hash, auth_provider, apple_sub, google_sub,

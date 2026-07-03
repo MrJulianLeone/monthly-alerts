@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { effectiveRole } from "@/lib/admin";
 import { requireUser } from "@/lib/api";
 
 /** Current user + profile + subscription snapshot (used by mobile at launch). */
@@ -19,5 +20,7 @@ export async function GET(request: NextRequest) {
     WHERE u.id = ${auth.user.id}
   `) as Record<string, unknown>[];
 
-  return NextResponse.json({ user: rows[0] ?? null });
+  const user = rows[0] ?? null;
+  if (user) user.role = effectiveRole(String(user.email), String(user.role));
+  return NextResponse.json({ user });
 }

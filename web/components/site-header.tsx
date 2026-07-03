@@ -14,10 +14,18 @@ export async function SiteHeader() {
         <nav className="flex items-center gap-4 text-sm">
           {user ? (
             <>
-              <Link href={homeForRole(user.role)} className="font-medium text-neutral-600 hover:text-neutral-900">
+              {user.role === "admin" && (
+                <Link href="/admin" className="font-medium text-neutral-600 hover:text-neutral-900">
+                  Admin
+                </Link>
+              )}
+              <Link
+                href={user.role === "admin" ? "/me" : homeForRole(user.role)}
+                className="font-medium text-neutral-600 hover:text-neutral-900"
+              >
                 Dashboard
               </Link>
-              {user.role === "user" && (
+              {(user.role === "user" || user.role === "admin") && (
                 <Link href="/chat" className="font-medium text-neutral-600 hover:text-neutral-900">
                   Coach chat
                 </Link>

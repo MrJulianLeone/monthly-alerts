@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { effectiveRole } from "@/lib/admin";
 import { createSession, setSessionCookie, setUserCookie, verifyPassword } from "@/lib/auth";
 import { jsonError } from "@/lib/api";
 import { trackEvent } from "@/lib/geo";
@@ -20,12 +21,13 @@ export async function POST(request: NextRequest) {
     return jsonError("Invalid email or password", 401);
   }
 
+  const role = effectiveRole(body.email, user.role);
   const session = await createSession(user.id, {
     userAgent: request.headers.get("user-agent"),
   });
   await setSessionCookie(session.token, session.expiresAt);
-  await setUserCookie(user.display_name ?? body.email, user.role);
+  await setUserCookie(user.display_name ?? body.email, role);
   await trackEvent(request, "login", user.id);
 
-  return NextResponse.json({ token: session.token, userId: user.id, role: user.role });
+  return NextResponse.json({ token: session.token, userId: user.id, role });
 }

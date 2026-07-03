@@ -72,9 +72,9 @@ On Vercel, `POST /api/admin/migrate` (header `x-migrate-secret: $MIGRATE_SECRET`
 
 ## Environment
 
-See [`web/.env.example`](web/.env.example). Required in production: `DATABASE_URL`, `OPENAI_API_KEY`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `MIGRATE_SECRET`. Optional: `ADMIN_EMAILS` (auto-promote at signup), `APPLE_BUNDLE_ID` / `GOOGLE_CLIENT_IDS` (mobile OAuth).
+See [`web/.env.example`](web/.env.example). Required in production: `DATABASE_URL`, `OPENAI_API_KEY`, `RESEND_API_KEY`, `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`, `STRIPE_PRICE_ID`, `BLOB_READ_WRITE_TOKEN`, `CRON_SECRET`, `MIGRATE_SECRET`. Optional: `APPLE_BUNDLE_ID` / `GOOGLE_CLIENT_IDS` (mobile OAuth).
 
-To promote an existing account to admin: `cd web && DATABASE_URL=... node scripts/make-admin.mjs you@example.com`
+Admin access is hardcoded to a single account in [`web/lib/admin.ts`](web/lib/admin.ts) — no environment variable and no promotion path exist. Any other account whose database role is somehow set to `admin` is automatically demoted at sign-in.
 
 ## Development
 
