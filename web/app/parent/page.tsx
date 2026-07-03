@@ -9,6 +9,10 @@ export const dynamic = "force-dynamic";
 export default async function ParentDashboard() {
   const user = await requirePageUser("parent");
 
+  const ownProfile = (await sql()`
+    SELECT 1 FROM profiles WHERE user_id = ${user.id}
+  `) as unknown[];
+
   const children = (await sql()`
     SELECT u.id, u.last_active_at, p.display_name, p.goal,
            st.current_streak,
@@ -41,6 +45,23 @@ export default async function ParentDashboard() {
         title="Parent dashboard"
         subtitle="Follow your children's progress. You'll also receive their monthly summary by email."
       />
+      {ownProfile.length === 0 && (
+        <Card className="mb-6 flex flex-col items-start justify-between gap-3 sm:flex-row sm:items-center">
+          <div>
+            <h2 className="font-semibold text-neutral-900">Use MonthlyAlerts yourself</h2>
+            <p className="mt-0.5 text-sm text-neutral-500">
+              Get your own daily coaching and monthly summary alongside your parent dashboard.
+              First 30 days free.
+            </p>
+          </div>
+          <Link
+            href="/enroll"
+            className="shrink-0 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-neutral-700"
+          >
+            Start my coaching
+          </Link>
+        </Card>
+      )}
       {children.length === 0 ? (
         <Card>
           <p className="text-sm text-neutral-500">

@@ -72,6 +72,11 @@ export async function POST(request: NextRequest, { params }: Params) {
   let parentId: string;
   if (existingParent.length > 0) {
     parentId = existingParent[0].id;
+    // An existing individual user becoming a parent gains dashboard access
+    // (they keep their own coaching profile, if any).
+    if (existingParent[0].role === "user") {
+      await sql()`UPDATE users SET role = 'parent' WHERE id = ${parentId}`;
+    }
   } else {
     if (!body?.parentPassword || String(body.parentPassword).length < 8) {
       return jsonError("Parent password must be at least 8 characters");

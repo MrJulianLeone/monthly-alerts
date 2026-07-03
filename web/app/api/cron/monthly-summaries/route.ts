@@ -20,7 +20,8 @@ export async function GET(request: NextRequest) {
   const users = (await sql()`
     SELECT DISTINCT u.id
     FROM users u
-    WHERE u.role = 'user' AND u.deleted_at IS NULL
+    JOIN profiles p ON p.user_id = u.id
+    WHERE u.deleted_at IS NULL
       AND u.created_at < ${monthISO}::date + interval '1 month'
       AND (
         EXISTS (SELECT 1 FROM meal_logs m WHERE m.user_id = u.id

@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
     FROM users u
     JOIN profiles p ON p.user_id = u.id
     JOIN push_tokens pt ON pt.user_id = u.id
-    WHERE u.role = 'user' AND u.deleted_at IS NULL
+    WHERE u.deleted_at IS NULL
       AND u.last_active_at > now() - interval '30 days'
     GROUP BY u.id, p.display_name, p.timezone
     LIMIT 500

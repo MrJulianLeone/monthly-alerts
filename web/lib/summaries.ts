@@ -25,13 +25,15 @@ export async function generateMonthlySummary(
   `) as { id: string }[];
   if (existing.length > 0) return existing[0].id;
 
+  // Coached users are identified by having a profile (any role — parents can
+  // enroll themselves too).
   const userRows = (await db`
     SELECT u.email, u.parent_id, p.display_name,
            parent.email AS parent_email
     FROM users u
-    LEFT JOIN profiles p ON p.user_id = u.id
+    JOIN profiles p ON p.user_id = u.id
     LEFT JOIN users parent ON parent.id = u.parent_id
-    WHERE u.id = ${userId} AND u.deleted_at IS NULL AND u.role = 'user'
+    WHERE u.id = ${userId} AND u.deleted_at IS NULL
   `) as {
     email: string;
     parent_id: string | null;
