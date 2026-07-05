@@ -1,36 +1,99 @@
-import { View, Text, StyleSheet } from "react-native";
+import { useState } from "react";
+import {
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+  View,
+} from "react-native";
 import { useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
-import { Button, Heading, Subtext } from "../../components/ui";
-import { colors, spacing } from "../../lib/theme";
+import { api, ApiError, setToken } from "../../lib/api";
+import { Button, ErrorText, Heading, Input, Subtext } from "../../components/ui";
+import { colors, radius, spacing } from "../../lib/theme";
 
-/** Onboarding single entry point: the age gate. */
-export default function AgeGate() {
+/**
+ * Zero-signup welcome screen: a coach greeting and a text box. Starting the
+ * chat provisions a guest account (no email, no password) via /api/auth/guest;
+ * the returned token is stored securely so the user is remembered on this
+ * device. Existing accounts can still log in.
+ */
+export default function Welcome() {
   const router = useRouter();
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function start() {
+    if (busy) return;
+    setBusy(true);
+    setError("");
+    try {
+      let timezone = "UTC";
+      try {
+        timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+      } catch {
+        // Keep UTC if the runtime can't resolve a timezone.
+      }
+      const result = await api<{ token?: string }>("/api/auth/guest", {
+        body: { message: message.trim() || undefined, timezone },
+      });
+      if (result.token) await setToken(result.token);
+      router.replace("/(tabs)");
+    } catch (e) {
+      setError(e instanceof ApiError ? e.message : "Could not start the chat. Try again.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.container}>
+      <KeyboardAvoidingView
+        style={styles.container}
+        behavior={Platform.OS === "ios" ? "padding" : undefined}
+      >
         <Text style={styles.brand}>MONTHLYALERTS</Text>
-        <Heading>Are you 16 or older?</Heading>
+        <Heading>Your personal health coach.</Heading>
         <Subtext>
-          Your personal health coach: daily meal and exercise guidance, and a monthly
-          progress summary.
+          Daily meal and exercise guidance, plus a monthly progress summary. No
+          sign-up needed — you&apos;re remembered on this device.
         </Subtext>
-        <View style={styles.buttons}>
-          <Button title="Yes, I'm 16 or older" onPress={() => router.push("/onboarding/signup")} />
-          <Button
-            title="No, I'm under 16"
-            variant="secondary"
-            onPress={() => router.push("/onboarding/parent-email")}
-          />
+
+        {/* Coach welcome bubble */}
+        <View style={styles.coachRow}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>C</Text>
+          </View>
+          <View style={styles.bubble}>
+            <Text style={styles.bubbleText}>
+              Hi, I&apos;m your coach. Say hello or tell me what you want to work
+              on, and we&apos;ll get started right away.
+            </Text>
+          </View>
         </View>
+
+        <Input
+          value={message}
+          onChangeText={setMessage}
+          maxLength={500}
+          placeholder="Say hi or share a goal…"
+          style={{ marginTop: spacing.md }}
+        />
+        <ErrorText>{error}</ErrorText>
+        <Button
+          title={busy ? "Starting…" : "Start chatting"}
+          onPress={start}
+          loading={busy}
+          style={{ marginTop: spacing.md }}
+        />
         <Button
           title="I already have an account"
           variant="secondary"
           onPress={() => router.push("/onboarding/login")}
           style={styles.login}
         />
-      </View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   );
 }
@@ -45,6 +108,30 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
     marginBottom: spacing.md,
   },
-  buttons: { gap: spacing.sm, marginTop: spacing.xl },
-  login: { marginTop: spacing.xl, borderWidth: 0, backgroundColor: "transparent" },
+  coachRow: {
+    alignItems: "flex-end",
+    flexDirection: "row",
+    gap: spacing.sm,
+    marginTop: spacing.xl,
+  },
+  avatar: {
+    alignItems: "center",
+    backgroundColor: colors.primary,
+    borderRadius: radius.full,
+    height: 36,
+    justifyContent: "center",
+    width: 36,
+  },
+  avatarText: { color: colors.primaryText, fontSize: 14, fontWeight: "600" },
+  bubble: {
+    backgroundColor: colors.coachBubble,
+    borderColor: colors.border,
+    borderBottomLeftRadius: radius.sm,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    flex: 1,
+    padding: spacing.md,
+  },
+  bubbleText: { color: colors.text, fontSize: 15, lineHeight: 22 },
+  login: { backgroundColor: "transparent", borderWidth: 0, marginTop: spacing.lg },
 });
