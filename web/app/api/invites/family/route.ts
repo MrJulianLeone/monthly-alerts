@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   if (!email || typeof email !== "string" || !/^\S+@\S+\.\S+$/.test(email)) {
     return jsonError("A valid email is required");
   }
-  if (email.toLowerCase() === auth.user.email.toLowerCase()) {
+  if (auth.user.email && email.toLowerCase() === auth.user.email.toLowerCase()) {
     return jsonError("You can't invite yourself");
   }
 

@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
   const leaderboardId = body?.leaderboardId;
   if (!email || !/^\S+@\S+\.\S+$/.test(email)) return jsonError("A valid email is required");
   if (!leaderboardId) return jsonError("leaderboardId is required");
-  if (email.toLowerCase() === auth.user.email.toLowerCase()) {
+  if (auth.user.email && email.toLowerCase() === auth.user.email.toLowerCase()) {
     return jsonError("You can't refer yourself");
   }
 

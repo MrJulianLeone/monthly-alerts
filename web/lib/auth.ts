@@ -11,7 +11,7 @@ const USER_COOKIE_DAYS = 365;
 
 export type SessionUser = {
   id: string;
-  email: string;
+  email: string | null; // null for guest accounts
   role: "user" | "parent" | "admin";
   parent_id: string | null;
   date_of_birth: string | null;

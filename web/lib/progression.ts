@@ -21,6 +21,14 @@ type Exercise = {
 
 const UPPER_BODY = new Set(["pushups", "db-curls", "db-shoulder-press", "db-rows"]);
 
+// Guests may not have shared a date of birth yet; assume a typical adult
+// until they add demographics in Settings.
+const DEFAULT_ADULT_AGE = 30;
+
+function ageOrDefault(dob: string | null | undefined): number {
+  return dob ? ageFromDob(dob) : DEFAULT_ADULT_AGE;
+}
+
 function ageFactor(age: number): number {
   if (age < 13) return 0.7;
   if (age < 16) return 0.85;
@@ -38,9 +46,9 @@ function genderFactor(gender: string | null, exercise: Exercise): number {
 
 export function startingTarget(
   exercise: Exercise,
-  profile: { dob: string; gender: string | null }
+  profile: { dob: string | null; gender: string | null }
 ): number {
-  const age = ageFromDob(profile.dob);
+  const age = ageOrDefault(profile.dob);
   const value = Math.round(
     exercise.base_value * ageFactor(age) * genderFactor(profile.gender, exercise)
   );
@@ -49,7 +57,7 @@ export function startingTarget(
 
 export function nextTarget(
   exercise: Exercise,
-  profile: { dob: string; gender: string | null },
+  profile: { dob: string | null; gender: string | null },
   last: { target: number; completedValue: number; difficulty: string | null },
   mealStreak: number
 ): number {
@@ -64,7 +72,7 @@ export function nextTarget(
   else if (mealStreak >= 3) pct *= 1.25;
 
   // Younger users progress a bit more conservatively.
-  if (ageFromDob(profile.dob) < 16) pct *= 0.8;
+  if (ageOrDefault(profile.dob) < 16) pct *= 0.8;
 
   const base = Math.max(last.completedValue, last.target);
   return Math.max(base + Math.max(1, Math.round(base * pct)), 1);
@@ -73,9 +81,9 @@ export function nextTarget(
 /** Picks the next exercise, rotating the catalog and respecting min_age. */
 export async function pickNextExercise(
   userId: string,
-  dob: string
+  dob: string | null
 ): Promise<Exercise | null> {
-  const age = ageFromDob(dob);
+  const age = ageOrDefault(dob);
   const rows = (await sql()`
     WITH last_ex AS (
       SELECT exercise_id FROM challenges
@@ -111,9 +119,9 @@ export async function unlockNextChallenge(userId: string): Promise<{
     SELECT u.date_of_birth AS dob, p.gender
     FROM users u LEFT JOIN profiles p ON p.user_id = u.id
     WHERE u.id = ${userId}
-  `) as { dob: string; gender: string | null }[];
+  `) as { dob: string | null; gender: string | null }[];
   const profile = profileRows[0];
-  if (!profile?.dob) return null;
+  if (!profile) return null;
 
   const exercise = await pickNextExercise(userId, profile.dob);
   if (!exercise) return null;

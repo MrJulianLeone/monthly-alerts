@@ -116,8 +116,10 @@ export async function generateMonthlySummary(
     { summary_id: summaryId }
   );
 
-  // Email the parent for minors, otherwise the user directly.
+  // Email the parent for minors, otherwise the user directly. Guests have no
+  // email on file — their summary still lands in the chat above.
   const recipient = user.parent_email ?? user.email;
+  if (!recipient) return summaryId;
   try {
     await sendMonthlySummaryEmail(recipient, displayName, label, narrative, {
       meals_logged: fullStats.meals_logged,

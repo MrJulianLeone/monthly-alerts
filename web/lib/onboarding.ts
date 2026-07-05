@@ -79,6 +79,71 @@ export async function enrollExistingUser(
   }
 }
 
+export type NewGuestUser = {
+  displayName?: string | null;
+  timezone?: string;
+  /** Optional first message the visitor typed on the welcome screen. */
+  firstMessage?: string | null;
+};
+
+/**
+ * Zero-friction entry: provisions a guest account (no email, no password, no
+ * date of birth) so a visitor can start chatting immediately. Identity is
+ * carried by the session cookie; goals and demographics can be added later
+ * from Settings. Returns the new user id.
+ */
+export async function createGuestUser(input: NewGuestUser = {}): Promise<string> {
+  const db = sql();
+  const displayName = input.displayName?.trim().slice(0, 60) || "Friend";
+
+  const userRows = (await db`
+    INSERT INTO users (email, auth_provider, role, last_active_at)
+    VALUES (NULL, 'guest', 'user', now())
+    RETURNING id
+  `) as { id: string }[];
+  const userId = userRows[0].id;
+
+  await db`
+    INSERT INTO profiles (user_id, display_name, timezone, onboarding_completed_at)
+    VALUES (${userId}, ${displayName}, ${input.timezone ?? "UTC"}, now())
+  `;
+
+  const trialEnds = new Date(Date.now() + TRIAL_DAYS * 24 * 60 * 60 * 1000);
+  await db`
+    INSERT INTO subscriptions (user_id, status, trial_ends_at)
+    VALUES (${userId}, 'trialing', ${trialEnds.toISOString()})
+  `;
+
+  await db`INSERT INTO streaks (user_id) VALUES (${userId})`;
+
+  const firstMessage = input.firstMessage?.trim().slice(0, 500);
+  if (firstMessage) {
+    await addChatMessage(userId, "user", "text", firstMessage);
+  }
+
+  await addChatMessage(
+    userId,
+    "coach",
+    "text",
+    "Welcome to MonthlyAlerts — I'm your coach, and you're all set. Each day, snap a photo of your meals and complete your challenge; I'll guide you and track your progress. Whenever you like, open Settings to add your goal and a few details so I can tailor everything to you."
+  );
+
+  const challenge = await unlockNextChallenge(userId);
+  if (challenge) {
+    await addChatMessage(
+      userId,
+      "coach",
+      "challenge_prompt",
+      `Your first challenge: ${challenge.exercise.name} — ${challenge.target} ${
+        challenge.exercise.unit === "seconds" ? "seconds" : "reps"
+      }. Open the Challenge menu to mark it complete when you finish.`,
+      { challenge_id: challenge.id }
+    );
+  }
+
+  return userId;
+}
+
 export type NewCoachedUser = {
   email: string;
   password?: string;

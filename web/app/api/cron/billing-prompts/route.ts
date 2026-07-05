@@ -25,6 +25,7 @@ export async function GET(request: NextRequest) {
       AND s.trial_ends_at < now()
       AND s.billing_prompt_sent_at IS NULL
       AND u.last_active_at > now() - interval '14 days'
+      AND (u.email IS NOT NULL OR parent.email IS NOT NULL) -- guests have no inbox
     LIMIT 100
   `) as {
     subscription_id: string;

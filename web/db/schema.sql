@@ -23,12 +23,14 @@ $$ LANGUAGE plpgsql;
 -- ----------------------------------------------------------------------------
 
 -- All accounts: coached users (kids 11+ and adults), parents, and admins.
+-- Guests (auth_provider = 'guest') have no email/password — identity rides on
+-- the long-lived session cookie so people can start chatting with zero signup.
 CREATE TABLE users (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  email              citext UNIQUE NOT NULL,
-  password_hash      text,                          -- null for OAuth-only accounts
+  email              citext UNIQUE,                 -- null for guest accounts
+  password_hash      text,                          -- null for OAuth-only and guest accounts
   auth_provider      text NOT NULL DEFAULT 'email'
-                       CHECK (auth_provider IN ('email', 'apple', 'google')),
+                       CHECK (auth_provider IN ('email', 'apple', 'google', 'guest')),
   apple_sub          text UNIQUE,                   -- Sign in with Apple subject
   google_sub         text UNIQUE,                   -- Google OAuth subject
   role               text NOT NULL DEFAULT 'user'

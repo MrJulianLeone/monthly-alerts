@@ -10,6 +10,7 @@ import { WeightForm } from "./weight-form";
 import { CalorieGoalForm } from "./calorie-goal-form";
 import { InviteForms } from "./invite-forms";
 import { ThemeToggle } from "./theme-toggle";
+import { ProfileForm } from "./profile-form";
 
 export const metadata = { title: "Settings — MonthlyAlerts" };
 export const dynamic = "force-dynamic";
@@ -86,11 +87,26 @@ export default async function SettingsPage() {
           <p className="text-base font-semibold text-neutral-900">
             {(profile.display_name as string) ?? "—"}
           </p>
-          <p className="mt-0.5 text-sm text-neutral-500">{user.email}</p>
+          <p className="mt-0.5 text-sm text-neutral-500">
+            {user.email ?? "Guest — remembered on this device, no account needed"}
+          </p>
           <p className="mt-0.5 text-sm text-neutral-500">
             Goal: {GOAL_LABELS[(profile.goal as string) ?? ""] ?? "Not set"}
           </p>
         </section>
+
+        {/* Goals & demographics — helps the coach personalize everything */}
+        <ProfileForm
+          displayName={(profile.display_name as string) ?? ""}
+          goal={(profile.goal as string | null) ?? null}
+          gender={(profile.gender as string | null) ?? null}
+          dateOfBirth={
+            user.date_of_birth
+              ? new Date(user.date_of_birth).toISOString().slice(0, 10)
+              : null
+          }
+          heightCm={profile.height_cm != null ? Number(profile.height_cm) : null}
+        />
 
         {/* Progress */}
         <section>
