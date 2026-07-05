@@ -37,7 +37,8 @@ export async function POST(request: NextRequest) {
   let customerId = subRows[0]?.stripe_customer_id ?? null;
   if (!customerId) {
     const customer = await stripe().customers.create({
-      email: auth.user.email,
+      email: auth.user.email ?? undefined, // guests have no email on file
+
       metadata: { user_id: subjectId, payer_user_id: auth.user.id },
     });
     customerId = customer.id;

@@ -15,7 +15,7 @@ export function isAdminEmail(email: string | null | undefined): boolean {
  * email is always 'admin'; any other account claiming 'admin' is demoted.
  */
 export function effectiveRole(
-  email: string,
+  email: string | null | undefined,
   dbRole: string
 ): "user" | "parent" | "admin" {
   if (isAdminEmail(email)) return "admin";

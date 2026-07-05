@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { sql } from "@/lib/db";
 import { requireUser, jsonError } from "@/lib/api";
+import { ageFromDob } from "@/lib/auth";
 
-/** Update my profile (goal, weight, height, display name, timezone). */
+/** Update my profile (goal, weight, height, display name, timezone, birth date). */
 export async function PATCH(request: NextRequest) {
   const auth = await requireUser(request);
   if ("response" in auth) return auth.response;
@@ -27,6 +28,14 @@ export async function PATCH(request: NextRequest) {
       ? body.displayName.trim().slice(0, 60)
       : undefined;
   const timezone = typeof body.timezone === "string" ? body.timezone : undefined;
+  // Birth date lives on users (it tunes challenge targets and calorie goals).
+  let dateOfBirth: string | undefined;
+  if (typeof body.dateOfBirth === "string" && body.dateOfBirth) {
+    if (isNaN(Date.parse(body.dateOfBirth))) return jsonError("Please check the birth date");
+    const age = ageFromDob(body.dateOfBirth);
+    if (age < 5 || age > 120) return jsonError("Please check the birth date");
+    dateOfBirth = body.dateOfBirth;
+  }
   // Allow clearing the goal back to auto-estimate by passing null explicitly.
   const dailyCalorieGoalProvided =
     body.dailyCalorieGoal === null ||
@@ -35,6 +44,12 @@ export async function PATCH(request: NextRequest) {
       body.dailyCalorieGoal <= 6000);
   const dailyCalorieGoal =
     typeof body.dailyCalorieGoal === "number" ? Math.round(body.dailyCalorieGoal) : null;
+
+  if (dateOfBirth) {
+    await sql()`
+      UPDATE users SET date_of_birth = ${dateOfBirth} WHERE id = ${auth.user.id}
+    `;
+  }
 
   await sql()`
     UPDATE profiles SET

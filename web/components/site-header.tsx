@@ -53,10 +53,10 @@ export async function SiteHeader() {
                 Log in
               </Link>
               <Link
-                href="/signup"
+                href="/"
                 className="rounded-lg bg-neutral-900 px-3.5 py-2 font-semibold text-white hover:bg-neutral-700"
               >
-                Get started
+                Start chatting
               </Link>
             </>
           )}

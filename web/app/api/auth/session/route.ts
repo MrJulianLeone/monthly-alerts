@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
 
   const user = rows[0] ?? null;
   if (user) {
-    user.role = effectiveRole(String(user.email), String(user.role));
+    user.role = effectiveRole(user.email as string | null, String(user.role));
 
     // Attach the effective daily calorie goal + today's running standing.
     const age = user.date_of_birth ? ageFromDob(user.date_of_birth as string) : 25;
