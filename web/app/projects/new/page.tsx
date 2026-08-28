@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
 import { billingEnabled, PROJECT_PRICE_DISPLAY } from "@/lib/billing";
 import { t } from "@/lib/i18n";
@@ -21,6 +22,16 @@ export default async function NewProjectPage() {
             <p>{t(lang, "new_project_fee", { price: PROJECT_PRICE_DISPLAY })}</p>
           )}
           <p>{t(lang, "expiry_hint")}</p>
+          <p>
+            {t(lang, "new_project_legal")}{" "}
+            <Link href="/terms" className="underline hover:text-ink">
+              {t(lang, "footer_terms")}
+            </Link>{" "}
+            ·{" "}
+            <Link href="/privacy" className="underline hover:text-ink">
+              {t(lang, "footer_privacy")}
+            </Link>
+          </p>
         </div>
       </main>
     </div>

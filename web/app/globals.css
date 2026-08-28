@@ -158,6 +158,33 @@ body {
   }
 }
 
+/* Legal documents */
+.legal-prose h2 {
+  font-family: var(--font-display-stack);
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 1.375rem;
+  margin: 2rem 0 0.625rem;
+}
+.legal-prose p,
+.legal-prose li {
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  color: var(--color-ink-soft);
+  margin-bottom: 0.75rem;
+}
+.legal-prose ul {
+  list-style: square;
+  padding-left: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.legal-prose strong {
+  color: var(--color-ink);
+}
+.legal-prose a {
+  text-decoration: underline;
+}
+
 /* Print: a clean checklist sheet — chrome, forms, and controls drop out. */
 @media print {
   body {

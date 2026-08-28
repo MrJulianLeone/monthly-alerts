@@ -85,12 +85,20 @@ export default async function LandingPage() {
       </main>
 
       <footer className="border-t-[1.5px] border-line-strong">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <LogoMark size={14} />
             <span className="microlabel">{t(lang, "email_footer")}</span>
           </div>
-          <span className="microlabel">© {new Date().getFullYear()}</span>
+          <div className="flex items-center gap-4">
+            <Link href="/terms" className="microlabel hover:text-ink transition-colors">
+              {t(lang, "footer_terms")}
+            </Link>
+            <Link href="/privacy" className="microlabel hover:text-ink transition-colors">
+              {t(lang, "footer_privacy")}
+            </Link>
+            <span className="microlabel">© {new Date().getFullYear()}</span>
+          </div>
         </div>
       </footer>
     </div>

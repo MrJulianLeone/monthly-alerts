@@ -377,6 +377,20 @@ const messages = {
     es: "Pago único por proyecto: {price}. Serás dirigido a un pago seguro para activar el proyecto.",
   },
 
+  // Legal
+  footer_terms: { en: "Terms of Use", it: "Termini di utilizzo", es: "Términos de uso" },
+  footer_privacy: { en: "Privacy Policy", it: "Informativa sulla privacy", es: "Política de privacidad" },
+  new_project_legal: {
+    en: "By creating a project you agree to:",
+    it: "Creando un progetto accetti:",
+    es: "Al crear un proyecto aceptas:",
+  },
+  legal_english_note: {
+    en: "This document is provided in English. The English version is the authoritative version.",
+    it: "Questo documento è fornito in inglese. La versione inglese è quella che fa fede.",
+    es: "Este documento se proporciona en inglés. La versión en inglés es la versión autorizada.",
+  },
+
   // Billing
   billing_required_title: { en: "Activate this project", it: "Attiva questo progetto", es: "Activa este proyecto" },
   billing_required_body: {
