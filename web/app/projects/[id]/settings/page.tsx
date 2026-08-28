@@ -2,9 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { sql } from "@/lib/db";
-import { t, type Lang } from "@/lib/i18n";
+import { t, type Lang, locale } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
-import { getMembership, getProject, listMembers } from "@/lib/projects";
+import { getMembership, getProject, listMembers, projectExpiresAt } from "@/lib/projects";
 import {
   ArchiveButtons,
   DeleteProjectButton,
@@ -35,7 +35,7 @@ export default async function ProjectSettingsPage({
     ` as unknown as Promise<{ id: string; email: string; role: string; expires_at: string }[]>,
   ]);
 
-  const dateFmt = new Intl.DateTimeFormat(lang === "it" ? "it-IT" : "en-US", {
+  const dateFmt = new Intl.DateTimeFormat(locale(lang), {
     dateStyle: "medium",
   });
 
@@ -104,6 +104,10 @@ export default async function ProjectSettingsPage({
         </div>
 
         <div className="sheet p-6 sm:p-8">
+          <p className="microlabel mb-2">
+            {t(lang, "project_expires", { date: dateFmt.format(projectExpiresAt(project)) })}
+          </p>
+          <p className="text-sm text-ink-soft mb-4">{t(lang, "expiry_hint")}</p>
           <p className="text-sm text-ink-soft mb-4">{t(lang, "archive_hint")}</p>
           <div className="flex flex-wrap gap-3">
             <ArchiveButtons projectId={id} archived={!!project.archived_at} lang={lang} />

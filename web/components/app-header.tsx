@@ -3,13 +3,26 @@ import { Logo } from "@/components/logo";
 import { LogoutButton } from "@/components/logout-button";
 import { t, type Lang } from "@/lib/i18n";
 
-/** Signed-in chrome: logo, projects, settings, logout. */
-export function AppHeader({ lang, userName }: { lang: Lang; userName: string | null }) {
+/** Signed-in chrome: logo, projects, settings, logout (+ admin for the site admin). */
+export function AppHeader({
+  lang,
+  userName,
+  showAdmin = false,
+}: {
+  lang: Lang;
+  userName: string | null;
+  showAdmin?: boolean;
+}) {
   return (
-    <header className="border-b-[1.5px] border-line-strong bg-sheet">
+    <header className="app-header border-b-[1.5px] border-line-strong bg-sheet">
       <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
         <Logo href="/dashboard" />
         <nav className="flex items-center gap-5">
+          {showAdmin && (
+            <Link href="/admin" className="microlabel text-accent hover:text-ink transition-colors">
+              Admin
+            </Link>
+          )}
           <Link href="/dashboard" className="microlabel hover:text-ink transition-colors">
             {t(lang, "nav_projects")}
           </Link>

@@ -73,6 +73,9 @@ export default async function LandingPage() {
                 {t(lang, "pricing_body")}
               </p>
               <p className="chip text-accent mt-4">{t(lang, "pricing_invitees_free")}</p>
+              <p className="microlabel leading-relaxed max-w-md mt-4">
+                {t(lang, "expiry_hint")}
+              </p>
             </div>
             <Link href="/login" className="btn btn-primary text-base px-8 py-3 shrink-0">
               {t(lang, "landing_cta")}

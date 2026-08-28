@@ -157,3 +157,36 @@ body {
     line-height: 1.5;
   }
 }
+
+/* Print: a clean checklist sheet — chrome, forms, and controls drop out. */
+@media print {
+  body {
+    background: #fff;
+  }
+  .app-header,
+  .no-print {
+    display: none !important;
+  }
+  .grid-paper {
+    background-image: none;
+  }
+  main {
+    max-width: 100% !important;
+    padding: 0 !important;
+  }
+  a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+  .sheet {
+    border-color: #1c1917;
+  }
+  /* Keep check states and the progress bar visible on paper */
+  * {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  section {
+    break-inside: avoid;
+  }
+}

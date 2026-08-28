@@ -16,11 +16,12 @@ export default async function NewProjectPage() {
         <div className="sheet p-8">
           <NewProjectForm lang={lang} />
         </div>
-        {billingEnabled() && (
-          <p className="microlabel leading-relaxed mt-4">
-            {t(lang, "new_project_fee", { price: PROJECT_PRICE_DISPLAY })}
-          </p>
-        )}
+        <div className="microlabel leading-relaxed mt-4 space-y-1">
+          {billingEnabled() && (
+            <p>{t(lang, "new_project_fee", { price: PROJECT_PRICE_DISPLAY })}</p>
+          )}
+          <p>{t(lang, "expiry_hint")}</p>
+        </div>
       </main>
     </div>
   );

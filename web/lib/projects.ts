@@ -14,9 +14,26 @@ export type Project = {
   address: string | null;
   description: string | null;
   owner_id: string;
+  paid_at: string | null;
   archived_at: string | null;
   created_at: string;
 };
+
+/**
+ * Storage policy (disclosed on the site before payment): projects and their
+ * photos are kept for two years from payment — creation date for unpaid/free
+ * projects — then deleted by the daily expiration cron.
+ */
+export const PROJECT_RETENTION_YEARS = 2;
+
+export function projectExpiresAt(project: {
+  paid_at: string | null;
+  created_at: string;
+}): Date {
+  const expires = new Date(project.paid_at ?? project.created_at);
+  expires.setFullYear(expires.getFullYear() + PROJECT_RETENTION_YEARS);
+  return expires;
+}
 
 export type Member = {
   user_id: string;
@@ -66,7 +83,7 @@ export async function getMembership(
 
 export async function getProject(projectId: string): Promise<Project | null> {
   const rows = (await sql()`
-    SELECT id, name, name_lang, address, description, owner_id, archived_at, created_at
+    SELECT id, name, name_lang, address, description, owner_id, paid_at, archived_at, created_at
     FROM projects WHERE id = ${projectId}
   `) as Project[];
   return rows[0] ?? null;

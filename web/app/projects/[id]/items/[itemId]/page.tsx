@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { isAdmin } from "@/lib/admin";
 import { sql } from "@/lib/db";
-import { langName, t, type Lang } from "@/lib/i18n";
+import { langName, t, type Lang, locale } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
 import { canEdit, getMembership, getProject, isOwner, listMembers } from "@/lib/projects";
 import { translateBatch, type Translatable } from "@/lib/translate";
@@ -41,7 +42,9 @@ export default async function ItemPage({
 }) {
   const { id, itemId } = await params;
   const { user, lang } = await requireOnboardedUser(`/projects/${id}/items/${itemId}`);
-  const [role, project] = await Promise.all([getMembership(id, user.id), getProject(id)]);
+  const [membership, project] = await Promise.all([getMembership(id, user.id), getProject(id)]);
+  // The site admin can open any project read-only.
+  const role = membership ?? (isAdmin(user) ? ("commenter" as const) : null);
   if (!role || !project) notFound();
 
   const items = (await sql()`
@@ -79,7 +82,7 @@ export default async function ItemPage({
 
   const editable = canEdit(role) && !project.archived_at;
   const owner = isOwner(role);
-  const dateFmt = new Intl.DateTimeFormat(lang === "it" ? "it-IT" : "en-US", {
+  const dateFmt = new Intl.DateTimeFormat(locale(lang), {
     dateStyle: "medium",
   });
 

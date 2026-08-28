@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { t, type Lang } from "@/lib/i18n";
+import { LANGUAGES, t, type Lang } from "@/lib/i18n";
 
 let client: Resend | null = null;
 
@@ -90,16 +90,16 @@ export async function sendInviteEmail(
         project,
         role: t(lang, role === "editor" ? "role_editor" : "role_commenter").toLowerCase(),
       })}</p>`;
+  const codes = LANGUAGES.map((l) => l.code);
   await send(
     to,
     t("en", "email_invite_subject", { inviter: inviterName, project: projectName }),
     wrapper(
       `
-      <h1 style="font-size:22px;margin:0 0 16px">${t("en", "invite_title")} / ${t("it", "invite_title")}</h1>
-      ${block("en")}
-      ${block("it")}
-      <p style="margin:24px 0">${button(link, `${t("en", "email_invite_button")} / ${t("it", "email_invite_button")}`)}</p>
-      <p style="font-size:13px;color:#78716c">${t("en", "email_invite_expiry")} ${t("it", "email_invite_expiry")}</p>
+      <h1 style="font-size:22px;margin:0 0 16px">${codes.map((c) => t(c, "invite_title")).join(" / ")}</h1>
+      ${codes.map(block).join("")}
+      <p style="margin:24px 0">${button(link, codes.map((c) => t(c, "email_invite_button")).join(" / "))}</p>
+      <p style="font-size:13px;color:#78716c">${codes.map((c) => t(c, "email_invite_expiry")).join(" ")}</p>
       `,
       "en"
     )

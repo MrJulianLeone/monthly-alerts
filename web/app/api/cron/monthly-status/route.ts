@@ -3,7 +3,7 @@ import { requireCronSecret } from "@/lib/api";
 import { unsubscribeSignature } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { appUrl, sendMonthlyStatusEmail } from "@/lib/email";
-import type { Lang } from "@/lib/i18n";
+import { locale, type Lang } from "@/lib/i18n";
 import { translateBatch } from "@/lib/translate";
 
 export const maxDuration = 300;
@@ -74,7 +74,7 @@ export async function GET(request: Request) {
           ],
           lang
         );
-        const monthLabel = new Intl.DateTimeFormat(lang === "it" ? "it-IT" : "en-US", {
+        const monthLabel = new Intl.DateTimeFormat(locale(lang), {
           month: "long",
           year: "numeric",
         }).format(reported);

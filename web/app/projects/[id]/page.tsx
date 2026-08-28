@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
-import { t } from "@/lib/i18n";
+import { isAdmin } from "@/lib/admin";
+import { isLang, LANGUAGES, langName, locale, t } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
 import {
   canEdit,
@@ -13,19 +14,29 @@ import {
   listSections,
 } from "@/lib/projects";
 import { translateBatch, type Translatable } from "@/lib/translate";
-import { AddItemForm, AddSectionForm, SectionTools, StatusCheckbox } from "./checklist";
+import { AddItemForm, AddSectionForm, PrintButton, SectionTools, StatusCheckbox } from "./checklist";
 
 export const dynamic = "force-dynamic";
 
 export default async function ProjectPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ lang?: string }>;
 }) {
   const { id } = await params;
-  const { user, lang } = await requireOnboardedUser(`/projects/${id}`);
-  const [role, project] = await Promise.all([getMembership(id, user.id), getProject(id)]);
+  const { user, lang: userLang } = await requireOnboardedUser(`/projects/${id}`);
+  const [membership, project] = await Promise.all([getMembership(id, user.id), getProject(id)]);
+  // The site admin can open any project read-only.
+  const role = membership ?? (isAdmin(user) ? ("commenter" as const) : null);
   if (!role || !project) notFound();
+
+  // Owners can preview the checklist as members in another language see it.
+  const requested = (await searchParams).lang;
+  const previewLang =
+    role === "owner" && isLang(requested) && requested !== userLang ? requested : null;
+  const lang = previewLang ?? userLang;
 
   const [sections, items, members] = await Promise.all([
     listSections(id),
@@ -49,7 +60,7 @@ export default async function ProjectPage({
   const done = items.filter((i) => i.status === "done").length;
   const pct = items.length > 0 ? Math.round((done / items.length) * 100) : 0;
   const today = new Date().toISOString().slice(0, 10);
-  const dateFmt = new Intl.DateTimeFormat(lang === "it" ? "it-IT" : "en-US", {
+  const dateFmt = new Intl.DateTimeFormat(locale(lang), {
     month: "short",
     day: "numeric",
   });
@@ -95,6 +106,37 @@ export default async function ProjectPage({
               </p>
             </div>
           </div>
+          <div className="no-print flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-line">
+            <PrintButton label={t(lang, "print")} />
+            {owner && (
+              <div className="flex items-center gap-2">
+                <span className="microlabel">{t(lang, "preview_language")}:</span>
+                {LANGUAGES.map((l) => (
+                  <Link
+                    key={l.code}
+                    href={
+                      l.code === userLang ? `/projects/${id}` : `/projects/${id}?lang=${l.code}`
+                    }
+                    className={`px-2 py-1 text-[11px] font-mono uppercase tracking-widest rounded-[2px] border transition-colors ${
+                      l.code === lang
+                        ? "bg-ink text-white border-ink"
+                        : "border-line-strong text-ink-soft hover:border-ink hover:text-ink"
+                    }`}
+                  >
+                    {l.code}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </div>
+          {previewLang && (
+            <p className="no-print microlabel text-accent mt-3">
+              {t(lang, "preview_language_note", { lang: langName(previewLang) })} —{" "}
+              <Link href={`/projects/${id}`} className="underline hover:text-ink">
+                {t(lang, "preview_exit")}
+              </Link>
+            </p>
+          )}
         </div>
 
         {/* Sections */}
@@ -181,7 +223,7 @@ export default async function ProjectPage({
                     );
                   })}
                   {editable && (
-                    <li className="py-2.5">
+                    <li className="no-print py-2.5">
                       <AddItemForm projectId={id} sectionId={section.id} lang={lang} />
                     </li>
                   )}
@@ -192,7 +234,7 @@ export default async function ProjectPage({
         </div>
 
         {editable && (
-          <div className="mt-10">
+          <div className="no-print mt-10">
             <AddSectionForm projectId={id} lang={lang} />
           </div>
         )}

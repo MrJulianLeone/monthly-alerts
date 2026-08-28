@@ -4,6 +4,14 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { t, type Lang } from "@/lib/i18n";
 
+export function PrintButton({ label }: { label: string }) {
+  return (
+    <button className="btn btn-ghost btn-sm" onClick={() => window.print()}>
+      ⎙ {label}
+    </button>
+  );
+}
+
 /**
  * Tri-state check control: empty (open) → slash (in progress) → check (done).
  * Clicking cycles open → done → open; in-progress is set from the item page.
@@ -165,7 +173,7 @@ export function SectionTools({
 }) {
   const router = useRouter();
   return (
-    <span className="flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 sm:opacity-100">
+    <span className="no-print flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 sm:opacity-100">
       <button
         className="microlabel hover:text-ink cursor-pointer"
         onClick={async () => {

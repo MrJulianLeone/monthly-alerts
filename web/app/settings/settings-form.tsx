@@ -67,7 +67,7 @@ export function SettingsForm({
       </div>
       <div>
         <label className="field-label">{t(lang, "field_language")}</label>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-3 gap-2">
           {LANGUAGES.map((l) => (
             <button
               key={l.code}
