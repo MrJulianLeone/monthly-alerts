@@ -1,20 +1,19 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser, type SessionUser } from "@/lib/auth";
+import type { Lang } from "@/lib/i18n";
+
+export type PageContext = { user: SessionUser; lang: Lang };
 
 /**
- * Server-component guard. Signed-out visitors on coached pages go to the
- * welcome screen (where they can start as a guest in one tap); role-guarded
- * dashboards still require a real login.
+ * Guard for app pages: requires a session, and routes users who haven't
+ * finished onboarding (basic info + language) there first.
  */
-export async function requirePageUser(role?: "parent" | "admin"): Promise<SessionUser> {
+export async function requireOnboardedUser(currentPath?: string): Promise<PageContext> {
   const user = await getCurrentUser();
-  if (!user) redirect(role ? "/login" : "/");
-  if (role && user.role !== role && user.role !== "admin") redirect("/login");
-  return user;
-}
-
-export function homeForRole(role: string): string {
-  if (role === "admin") return "/admin";
-  if (role === "parent") return "/parent";
-  return "/chat";
+  if (!user) redirect("/login");
+  if (!user.onboarded_at) {
+    const next = currentPath ? `?next=${encodeURIComponent(currentPath)}` : "";
+    redirect(`/welcome${next}`);
+  }
+  return { user, lang: user.preferred_language };
 }

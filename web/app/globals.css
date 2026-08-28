@@ -1,79 +1,159 @@
 @import "tailwindcss";
 
+/* Drafting-sheet system: paper ground, ink strokes, safety-orange accent.
+   Hard edges, hairline rules, stamped uppercase labels — the visual language
+   of a construction drawing set. */
+
 :root {
-  --background: #fafafa;
-  --foreground: #171717;
+  --font-sans-stack: var(--font-barlow), "Helvetica Neue", Arial, sans-serif;
+  --font-display-stack: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  --font-mono-stack: var(--font-plex-mono), "SF Mono", Menlo, monospace;
+}
+
+@theme inline {
+  --font-sans: var(--font-sans-stack);
+  --font-display: var(--font-display-stack);
+  --font-mono: var(--font-mono-stack);
+
+  --color-paper: #fafaf9;
+  --color-sheet: #ffffff;
+  --color-ink: #1c1917;
+  --color-ink-soft: #57534e;
+  --color-ink-faint: #a8a29e;
+  --color-line: #e7e5e4;
+  --color-line-strong: #d6d3d1;
+  --color-accent: #ea580c;
+  --color-accent-deep: #c2410c;
+  --color-ok: #16a34a;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--color-paper);
+  color: var(--color-ink);
+  font-family: var(--font-sans-stack);
   -webkit-font-smoothing: antialiased;
 }
 
-/* iOS Safari auto-zooms the page when a focused form control renders text
- * smaller than 16px. Keep controls at 16px on touch devices so the app never
- * zooms and the fixed bottom toolbar stays exactly where it belongs. */
-@media (pointer: coarse) {
-  input,
-  select,
-  textarea {
-    font-size: 16px;
+/* Faint blueprint grid for hero surfaces */
+.grid-paper {
+  background-image:
+    linear-gradient(to right, rgb(28 25 23 / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(28 25 23 / 0.045) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+@layer components {
+  /* Title-block micro label: uppercase, tracked, mono */
+  .microlabel {
+    font-family: var(--font-mono-stack);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-faint);
+  }
+
+  .display {
+    font-family: var(--font-display-stack);
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.01em;
+    line-height: 0.95;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-family: var(--font-display-stack);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 0.9375rem;
+    padding: 0.625rem 1.25rem;
+    border: 1.5px solid var(--color-ink);
+    border-radius: 2px;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+  }
+  .btn:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+  .btn-primary {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .btn-primary:hover:not(:disabled) {
+    background: var(--color-accent);
+    border-color: var(--color-accent);
+  }
+  .btn-ghost {
+    background: transparent;
+    color: var(--color-ink);
+  }
+  .btn-ghost:hover:not(:disabled) {
+    background: var(--color-ink);
+    color: #fff;
+  }
+  .btn-danger {
+    background: transparent;
+    color: #b91c1c;
+    border-color: #b91c1c;
+  }
+  .btn-danger:hover:not(:disabled) {
+    background: #b91c1c;
+    color: #fff;
+  }
+  .btn-sm {
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .field-label {
+    display: block;
+    font-family: var(--font-mono-stack);
+    font-size: 0.6875rem;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--color-ink-soft);
+    margin-bottom: 0.375rem;
+  }
+
+  .input {
+    width: 100%;
+    background: var(--color-sheet);
+    border: 1.5px solid var(--color-line-strong);
+    border-radius: 2px;
+    padding: 0.625rem 0.75rem;
+    font-size: 0.9375rem;
+    color: var(--color-ink);
+    transition: border-color 0.15s;
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-ink);
+  }
+  .input::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  .sheet {
+    background: var(--color-sheet);
+    border: 1.5px solid var(--color-line-strong);
+    border-radius: 2px;
+  }
+
+  .chip {
+    display: inline-block;
+    font-family: var(--font-mono-stack);
+    font-size: 0.625rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border: 1px solid currentColor;
+    border-radius: 2px;
+    padding: 0.125rem 0.4375rem;
+    line-height: 1.5;
   }
 }
-
-/* ---------------------------------------------------------------------------
- * Dark mode
- * The app's palette is built from a small set of neutral utilities, so dark
- * mode remaps those utilities globally under html.dark (toggled from
- * Settings, persisted in localStorage, system preference as the default).
- * ------------------------------------------------------------------------- */
-
-html.dark {
-  --background: #0a0a0a;
-  --foreground: #ededed;
-  color-scheme: dark;
-}
-
-/* Surfaces */
-.dark .bg-white { background-color: #171717; }
-.dark .bg-white\/90 { background-color: rgb(23 23 23 / 0.9); }
-.dark .bg-white\/95 { background-color: rgb(23 23 23 / 0.95); }
-.dark .bg-neutral-50 { background-color: #1f1f1f; }
-.dark .bg-neutral-100 { background-color: #262626; }
-.dark .bg-neutral-300 { background-color: #404040; }
-.dark .bg-green-50 { background-color: rgb(74 222 128 / 0.08); }
-.dark .bg-amber-50 { background-color: rgb(251 191 36 / 0.08); }
-.dark .shadow-sm { --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.4); }
-
-/* Primary (inverted in dark: light buttons/bubbles with dark text) */
-.dark .bg-neutral-900 { background-color: #ededed; }
-.dark .text-white { color: #171717; }
-.dark .hover\:bg-neutral-700:hover { background-color: #d4d4d4; }
-
-/* Text */
-.dark .text-neutral-900 { color: #ededed; }
-.dark .text-neutral-700 { color: #d4d4d4; }
-.dark .text-neutral-600 { color: #a3a3a3; }
-.dark .text-neutral-500 { color: #8c8c8c; }
-.dark .text-neutral-400 { color: #6f6f6f; }
-.dark .hover\:text-neutral-900:hover { color: #ffffff; }
-.dark .text-red-600 { color: #f87171; }
-.dark .text-green-600 { color: #4ade80; }
-.dark .text-green-700 { color: #4ade80; }
-.dark .text-amber-600 { color: #fbbf24; }
-.dark .text-amber-700 { color: #fbbf24; }
-
-/* Borders & focus rings */
-.dark .border-neutral-100 { border-color: #1f1f1f; }
-.dark .border-neutral-200 { border-color: #262626; }
-.dark .border-neutral-300 { border-color: #3a3a3a; }
-.dark .border-neutral-900 { border-color: #ededed; }
-.dark .border-red-200 { border-color: #7f1d1d; }
-.dark .focus\:border-neutral-900:focus { border-color: #ededed; }
-.dark .focus\:ring-neutral-900:focus { --tw-ring-color: #ededed; }
-
-/* Subtle hovers */
-.dark .hover\:bg-neutral-50:hover { background-color: #262626; }
-.dark .hover\:bg-neutral-100:hover { background-color: #262626; }
-.dark .hover\:bg-red-50:hover { background-color: rgb(248 113 113 / 0.1); }

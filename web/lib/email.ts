@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { kgToLb } from "@/lib/units";
+import { t, type Lang } from "@/lib/i18n";
 
 let client: Resend | null = null;
 
@@ -9,8 +9,8 @@ function resend(): Resend {
 }
 
 function from(): string {
-  // Default must be on the Resend-verified sending domain (alerts.monthlyalerts.com).
-  const email = process.env.RESEND_FROM_EMAIL ?? "coach@alerts.monthlyalerts.com";
+  // Default must be on the Resend-verified sending domain.
+  const email = process.env.RESEND_FROM_EMAIL ?? "alerts@alerts.monthlyalerts.com";
   const name = process.env.RESEND_FROM_NAME ?? "MonthlyAlerts";
   return `${name} <${email}>`;
 }
@@ -19,16 +19,24 @@ export function appUrl(): string {
   return process.env.NEXT_PUBLIC_APP_URL ?? "https://monthlyalerts.com";
 }
 
-const wrapper = (body: string) => `
-<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#171717">
-  <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#737373;margin:0 0 24px">MonthlyAlerts</p>
+export function escapeHtml(s: string): string {
+  return s
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+const wrapper = (body: string, lang: Lang) => `
+<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;max-width:560px;margin:0 auto;padding:32px 24px;color:#1c1917">
+  <p style="font-size:13px;letter-spacing:2px;text-transform:uppercase;color:#78716c;margin:0 0 24px">Monthly<span style="color:#ea580c">Alerts</span></p>
   ${body}
-  <hr style="border:none;border-top:1px solid #e5e5e5;margin:32px 0 16px" />
-  <p style="font-size:12px;color:#a3a3a3;margin:0">MonthlyAlerts.com — Your personal health coach.</p>
+  <hr style="border:none;border-top:1px solid #e7e5e4;margin:32px 0 16px" />
+  <p style="font-size:12px;color:#a8a29e;margin:0">${t(lang, "email_footer")}</p>
 </div>`;
 
 const button = (href: string, label: string) => `
-<a href="${href}" style="display:inline-block;background:#171717;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">${label}</a>`;
+<a href="${href}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">${label}</a>`;
 
 async function send(to: string, subject: string, html: string) {
   // The Resend SDK reports failures via the error field instead of throwing —
@@ -44,182 +52,129 @@ async function send(to: string, subject: string, html: string) {
 // Templates
 // ---------------------------------------------------------------------------
 
-/** Under-16 flow: parent receives a secure setup link. */
-export async function sendParentSetupEmail(parentEmail: string, token: string) {
-  const link = `${appUrl()}/parent-setup/${token}`;
+/** Passwordless sign-in link, in the language the requester chose. */
+export async function sendMagicLinkEmail(to: string, token: string, lang: Lang) {
+  const link = `${appUrl()}/auth/verify?token=${token}`;
   await send(
-    parentEmail,
-    "Set up your child's MonthlyAlerts health coach account",
-    wrapper(`
-      <h1 style="font-size:22px;margin:0 0 16px">Your child wants to start with MonthlyAlerts</h1>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        Your child asked to join MonthlyAlerts, a professional personal health coach that
-        provides daily meal and exercise guidance plus a monthly progress summary.
-        Because they are under 16, your approval and setup are required.
-      </p>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        Use the secure link below to review the program, complete your child's profile,
-        and set their login credentials. You will also get a parent dashboard to follow
-        their progress and receive their monthly summaries.
-      </p>
-      <p style="margin:24px 0">${button(link, "Set up my child's account")}</p>
-      <p style="font-size:13px;color:#737373">This link expires in 7 days. The first 30 days are completely free.</p>
-    `)
+    to,
+    t(lang, "email_magic_subject"),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 16px">${t(lang, "email_magic_title")}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_magic_body")}</p>
+      <p style="margin:24px 0">${button(link, t(lang, "email_magic_button"))}</p>
+      <p style="font-size:13px;color:#78716c">${t(lang, "email_magic_ignore")}</p>
+      `,
+      lang
+    )
   );
 }
 
 /**
- * After a parent completes setup: the child receives their login details.
- * The password is never emailed — the parent set it and shares it directly.
+ * Project invitation. The recipient's language isn't known yet, so the body
+ * carries every supported language.
  */
-export async function sendChildWelcomeEmail(
-  childEmail: string,
-  childName: string,
-  parentEmail: string
-) {
-  const link = `${appUrl()}/login`;
-  await send(
-    childEmail,
-    "Your MonthlyAlerts coach is ready — here's your login",
-    wrapper(`
-      <h1 style="font-size:22px;margin:0 0 16px">You're all set, ${childName}</h1>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        Your parent (${parentEmail}) finished setting up your MonthlyAlerts account.
-        Your coach is ready with your first challenge.
-      </p>
-      <table style="width:100%;border-collapse:collapse;margin:16px 0">
-        <tr>
-          <td style="padding:10px 0;font-size:14px;color:#737373;border-bottom:1px solid #f5f5f5">Login email</td>
-          <td style="padding:10px 0;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid #f5f5f5">${childEmail}</td>
-        </tr>
-        <tr>
-          <td style="padding:10px 0;font-size:14px;color:#737373;border-bottom:1px solid #f5f5f5">Password</td>
-          <td style="padding:10px 0;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid #f5f5f5">Set by your parent — ask them for it</td>
-        </tr>
-      </table>
-      <p style="margin:24px 0">${button(link, "Log in and meet your coach")}</p>
-      <p style="font-size:13px;color:#737373">Snap your meals, complete your daily challenge, and you'll get a full progress summary at the end of every month.</p>
-    `)
-  );
-}
-
-/** Leaderboard referral invite. */
-export async function sendReferralEmail(
-  inviteeEmail: string,
-  referrerName: string,
-  leaderboardName: string,
+export async function sendInviteEmail(
+  to: string,
+  inviterName: string,
+  projectName: string,
+  role: "editor" | "commenter",
   token: string
 ) {
   const link = `${appUrl()}/invite/${token}`;
+  const inviter = escapeHtml(inviterName);
+  const project = escapeHtml(projectName);
+  const block = (lang: Lang) => `
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "invite_body", {
+        inviter,
+        project,
+        role: t(lang, role === "editor" ? "role_editor" : "role_commenter").toLowerCase(),
+      })}</p>`;
   await send(
-    inviteeEmail,
-    `${referrerName} invited you to their MonthlyAlerts leaderboard`,
-    wrapper(`
-      <h1 style="font-size:22px;margin:0 0 16px">You're invited</h1>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        ${referrerName} invited you to join the leaderboard "${leaderboardName}" on
-        MonthlyAlerts — a personal health coach with daily meal and exercise guidance
-        and monthly progress summaries.
-      </p>
-      <p style="margin:24px 0">${button(link, "Accept invitation")}</p>
-      <p style="font-size:13px;color:#737373">This invitation expires in 14 days.</p>
-    `)
+    to,
+    t("en", "email_invite_subject", { inviter: inviterName, project: projectName }),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 16px">${t("en", "invite_title")} / ${t("it", "invite_title")}</h1>
+      ${block("en")}
+      ${block("it")}
+      <p style="margin:24px 0">${button(link, `${t("en", "email_invite_button")} / ${t("it", "email_invite_button")}`)}</p>
+      <p style="font-size:13px;color:#78716c">${t("en", "email_invite_expiry")} ${t("it", "email_invite_expiry")}</p>
+      `,
+      "en"
+    )
   );
 }
 
-/** Adult users inviting family members to join MonthlyAlerts. */
-export async function sendFamilyInviteEmail(
-  inviteeEmail: string,
-  inviterName: string,
-  token: string
-) {
-  const link = `${appUrl()}/signup?family=${token}`;
-  await send(
-    inviteeEmail,
-    `${inviterName} invited you to MonthlyAlerts`,
-    wrapper(`
-      <h1 style="font-size:22px;margin:0 0 16px">Join your family on MonthlyAlerts</h1>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        ${inviterName} is using MonthlyAlerts — a personal health coach with daily meal
-        and exercise guidance and a monthly progress summary — and invited you to join
-        them as family.
-      </p>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        Your invitation link below already knows who invited you — just complete your
-        profile and your coach kicks things off right away. The first 30 days are
-        completely free.
-      </p>
-      <p style="margin:24px 0">${button(link, "Accept invitation")}</p>
-      <p style="font-size:13px;color:#737373">This invitation expires in 14 days.</p>
-    `)
-  );
-}
+export type MonthlyStatus = {
+  projectId: string;
+  projectName: string; // already translated to the recipient's language
+  monthLabel: string;
+  totalItems: number;
+  doneItems: number;
+  completedThisMonth: number;
+  addedThisMonth: number;
+  overdueCount: number;
+  overdueTitles: string[]; // already translated
+};
 
-/** The monthly progress summary — the core deliverable. */
-export async function sendMonthlySummaryEmail(
+/** The monthly status update — the product's namesake. */
+export async function sendMonthlyStatusEmail(
   to: string,
-  displayName: string,
-  monthLabel: string,
-  narrative: string,
-  stats: {
-    meals_logged: number;
-    challenges_completed: number;
-    best_streak: number;
-    weight_delta_kg: number | null;
-  }
+  lang: Lang,
+  status: MonthlyStatus,
+  unsubscribeUrl: string
 ) {
+  const pct =
+    status.totalItems > 0 ? Math.round((status.doneItems / status.totalItems) * 100) : 0;
   const statRow = (label: string, value: string) => `
     <tr>
-      <td style="padding:10px 0;font-size:14px;color:#737373;border-bottom:1px solid #f5f5f5">${label}</td>
-      <td style="padding:10px 0;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid #f5f5f5">${value}</td>
+      <td style="padding:10px 0;font-size:14px;color:#78716c;border-bottom:1px solid #f5f5f4">${label}</td>
+      <td style="padding:10px 0;font-size:14px;font-weight:600;text-align:right;border-bottom:1px solid #f5f5f4">${value}</td>
     </tr>`;
+  const overdueList =
+    status.overdueTitles.length > 0
+      ? `
+      <p style="font-size:14px;font-weight:600;margin:24px 0 8px">${t(lang, "email_monthly_overdue_list")}</p>
+      <ul style="margin:0;padding-left:20px">
+        ${status.overdueTitles
+          .map(
+            (title) =>
+              `<li style="font-size:14px;line-height:1.8;color:#44403c">${escapeHtml(title)}</li>`
+          )
+          .join("")}
+      </ul>`
+      : "";
   await send(
     to,
-    `${displayName}'s ${monthLabel} progress summary — MonthlyAlerts`,
-    wrapper(`
-      <h1 style="font-size:22px;margin:0 0 8px">${monthLabel} Progress Summary</h1>
-      <p style="font-size:14px;color:#737373;margin:0 0 24px">For ${displayName}</p>
-      <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
-        ${statRow("Meals logged", String(stats.meals_logged))}
-        ${statRow("Challenges completed", String(stats.challenges_completed))}
-        ${statRow("Best streak", `${stats.best_streak} days`)}
-        ${
-          stats.weight_delta_kg !== null
-            ? statRow(
-                "Weight change",
-                `${stats.weight_delta_kg > 0 ? "+" : ""}${kgToLb(stats.weight_delta_kg).toFixed(1)} lbs`
-              )
-            : ""
-        }
+    t(lang, "email_monthly_subject", {
+      project: status.projectName,
+      month: status.monthLabel,
+    }),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 8px">${escapeHtml(status.projectName)}</h1>
+      <p style="font-size:14px;color:#78716c;margin:0 0 24px">${t(lang, "email_monthly_title", { month: status.monthLabel })}</p>
+      <div style="background:#f5f5f4;border-radius:8px;height:10px;margin-bottom:8px">
+        <div style="background:#ea580c;border-radius:8px;height:10px;width:${pct}%"></div>
+      </div>
+      <p style="font-size:13px;color:#78716c;margin:0 0 20px">${t(lang, "progress_done", {
+        done: status.doneItems,
+        total: status.totalItems,
+      })} (${pct}%)</p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:8px">
+        ${statRow(t(lang, "email_monthly_completed"), String(status.completedThisMonth))}
+        ${statRow(t(lang, "email_monthly_added"), String(status.addedThisMonth))}
+        ${statRow(t(lang, "email_monthly_overdue"), String(status.overdueCount))}
       </table>
-      ${narrative
-        .split(/\n+/)
-        .map(
-          (p) =>
-            `<p style="font-size:15px;line-height:1.7;color:#404040">${p}</p>`
-        )
-        .join("")}
-    `)
-  );
-}
-
-/** After ~30 days of active use: prompt the Stripe monthly subscription. */
-export async function sendBillingPromptEmail(to: string, displayName: string) {
-  const link = `${appUrl()}/subscribe`;
-  await send(
-    to,
-    "Your first month with MonthlyAlerts — keep the momentum going",
-    wrapper(`
-      <h1 style="font-size:22px;margin:0 0 16px">One month of progress</h1>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        ${displayName} has completed the first free month with MonthlyAlerts —
-        daily coaching, meal feedback, and a monthly progress summary.
-      </p>
-      <p style="font-size:15px;line-height:1.6;color:#404040">
-        To keep the coaching going, start the monthly subscription below.
-        Cancel anytime.
-      </p>
-      <p style="margin:24px 0">${button(link, "Start monthly subscription")}</p>
-    `)
+      ${overdueList}
+      <p style="margin:28px 0 8px">${button(
+        `${appUrl()}/projects/${status.projectId}`,
+        t(lang, "email_monthly_open_project")
+      )}</p>
+      <p style="font-size:12px;margin:24px 0 0"><a href="${unsubscribeUrl}" style="color:#a8a29e">${t(lang, "email_monthly_unsubscribe")}</a></p>
+      `,
+      lang
+    )
   );
 }

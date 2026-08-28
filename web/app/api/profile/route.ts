@@ -1,80 +1,39 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import { jsonError, requireUser } from "@/lib/api";
 import { sql } from "@/lib/db";
-import { requireUser, jsonError } from "@/lib/api";
-import { ageFromDob } from "@/lib/auth";
+import { isLang } from "@/lib/i18n";
 
-/** Update my profile (goal, weight, height, display name, timezone, birth date). */
-export async function PATCH(request: NextRequest) {
-  const auth = await requireUser(request);
+/**
+ * Updates the user's profile. The onboarding form calls this with
+ * onboarded: true, which stamps onboarded_at and unlocks the app.
+ */
+export async function PATCH(request: Request) {
+  const auth = await requireUser();
   if ("response" in auth) return auth.response;
+  const body = await request.json().catch(() => ({}));
 
-  const body = await request.json().catch(() => null);
-  if (!body) return jsonError("Invalid request body");
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : undefined;
+  const company =
+    typeof body.company === "string" ? body.company.trim().slice(0, 120) : undefined;
+  const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 40) : undefined;
+  const language = isLang(body.preferred_language) ? body.preferred_language : undefined;
+  const emailOptOut =
+    typeof body.email_opt_out === "boolean" ? body.email_opt_out : undefined;
+  const onboard = body.onboarded === true;
 
-  const goal = ["lose_weight", "build_strength", "get_fit", "build_habits"].includes(body.goal)
-    ? body.goal
-    : undefined;
-  const gender = ["male", "female", "other"].includes(body.gender) ? body.gender : undefined;
-  const weightKg =
-    typeof body.weightKg === "number" && body.weightKg > 20 && body.weightKg < 400
-      ? body.weightKg
-      : undefined;
-  const heightCm =
-    typeof body.heightCm === "number" && body.heightCm > 80 && body.heightCm < 260
-      ? body.heightCm
-      : undefined;
-  const displayName =
-    typeof body.displayName === "string" && body.displayName.trim()
-      ? body.displayName.trim().slice(0, 60)
-      : undefined;
-  const timezone = typeof body.timezone === "string" ? body.timezone : undefined;
-  // Birth date lives on users (it tunes challenge targets and calorie goals).
-  let dateOfBirth: string | undefined;
-  if (typeof body.dateOfBirth === "string" && body.dateOfBirth) {
-    if (isNaN(Date.parse(body.dateOfBirth))) return jsonError("Please check the birth date");
-    const age = ageFromDob(body.dateOfBirth);
-    if (age < 5 || age > 120) return jsonError("Please check the birth date");
-    dateOfBirth = body.dateOfBirth;
-  }
-  // Allow clearing the goal back to auto-estimate by passing null explicitly.
-  const dailyCalorieGoalProvided =
-    body.dailyCalorieGoal === null ||
-    (typeof body.dailyCalorieGoal === "number" &&
-      body.dailyCalorieGoal >= 800 &&
-      body.dailyCalorieGoal <= 6000);
-  const dailyCalorieGoal =
-    typeof body.dailyCalorieGoal === "number" ? Math.round(body.dailyCalorieGoal) : null;
-
-  if (dateOfBirth) {
-    await sql()`
-      UPDATE users SET date_of_birth = ${dateOfBirth} WHERE id = ${auth.user.id}
-    `;
+  if (onboard && (!name || !language)) {
+    return jsonError("Name and language are required", 400);
   }
 
   await sql()`
-    UPDATE profiles SET
-      goal = COALESCE(${goal ?? null}, goal),
-      gender = COALESCE(${gender ?? null}, gender),
-      weight_kg = COALESCE(${weightKg ?? null}, weight_kg),
-      height_cm = COALESCE(${heightCm ?? null}, height_cm),
-      display_name = COALESCE(${displayName ?? null}, display_name),
-      timezone = COALESCE(${timezone ?? null}, timezone),
-      daily_calorie_goal = CASE WHEN ${dailyCalorieGoalProvided}
-        THEN ${dailyCalorieGoal} ELSE daily_calorie_goal END
-    WHERE user_id = ${auth.user.id}
+    UPDATE users SET
+      name = COALESCE(${name ?? null}, name),
+      company = COALESCE(${company ?? null}, company),
+      phone = COALESCE(${phone ?? null}, phone),
+      preferred_language = COALESCE(${language ?? null}, preferred_language),
+      email_opt_out = COALESCE(${emailOptOut ?? null}, email_opt_out),
+      onboarded_at = CASE WHEN ${onboard} THEN COALESCE(onboarded_at, now()) ELSE onboarded_at END
+    WHERE id = ${auth.user.id}
   `;
-
-  // Weight updates also append to the history used by monthly summaries.
-  if (weightKg !== undefined) {
-    await sql()`
-      INSERT INTO weight_entries (user_id, weight_kg) VALUES (${auth.user.id}, ${weightKg})
-    `;
-  }
-
-  const rows = (await sql()`
-    SELECT display_name, gender, height_cm, weight_kg, goal, daily_calorie_goal, timezone
-    FROM profiles WHERE user_id = ${auth.user.id}
-  `) as Record<string, unknown>[];
-
-  return NextResponse.json({ profile: rows[0] });
+  return NextResponse.json({ ok: true });
 }

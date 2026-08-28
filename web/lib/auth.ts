@@ -1,41 +1,26 @@
-import { createHash, randomBytes, scryptSync, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, randomBytes } from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { sql } from "@/lib/db";
-import { effectiveRole } from "@/lib/admin";
+import { DEFAULT_LANG, isLang, type Lang } from "@/lib/i18n";
 
 const SESSION_COOKIE = "ma_session";
-const SESSION_DAYS = 365;
-
-const USER_COOKIE = "ma_user";
-const USER_COOKIE_DAYS = 365;
+const SESSION_DAYS = 90;
+const LANG_COOKIE = "ma_lang";
+const LOGIN_TOKEN_MINUTES = 30;
 
 export type SessionUser = {
   id: string;
-  email: string | null; // null for guest accounts
-  role: "user" | "parent" | "admin";
-  parent_id: string | null;
-  date_of_birth: string | null;
+  email: string;
+  name: string | null;
+  company: string | null;
+  phone: string | null;
+  preferred_language: Lang;
+  onboarded_at: string | null;
+  email_opt_out: boolean;
 };
 
 // ---------------------------------------------------------------------------
-// Passwords (scrypt, no native deps)
-// ---------------------------------------------------------------------------
-
-export function hashPassword(password: string): string {
-  const salt = randomBytes(16).toString("hex");
-  const hash = scryptSync(password, salt, 64).toString("hex");
-  return `scrypt:${salt}:${hash}`;
-}
-
-export function verifyPassword(password: string, stored: string): boolean {
-  const [scheme, salt, hash] = stored.split(":");
-  if (scheme !== "scrypt" || !salt || !hash) return false;
-  const candidate = scryptSync(password, salt, 64);
-  return timingSafeEqual(candidate, Buffer.from(hash, "hex"));
-}
-
-// ---------------------------------------------------------------------------
-// Tokens & sessions (shared by web cookies and mobile bearer tokens)
+// Tokens
 // ---------------------------------------------------------------------------
 
 export function generateToken(): string {
@@ -45,6 +30,55 @@ export function generateToken(): string {
 export function hashToken(token: string): string {
   return createHash("sha256").update(token).digest("hex");
 }
+
+// ---------------------------------------------------------------------------
+// Magic-link login tokens. Consuming one both authenticates the user and
+// confirms the email address (passwordless — there is nothing else to verify).
+// ---------------------------------------------------------------------------
+
+export async function createLoginToken(
+  email: string,
+  redirect?: string | null
+): Promise<string> {
+  const token = generateToken();
+  const expiresAt = new Date(Date.now() + LOGIN_TOKEN_MINUTES * 60 * 1000);
+  await sql()`
+    INSERT INTO login_tokens (email, token_hash, redirect, expires_at)
+    VALUES (${email.trim().toLowerCase()}, ${hashToken(token)},
+            ${redirect ?? null}, ${expiresAt.toISOString()})
+  `;
+  return token;
+}
+
+export async function consumeLoginToken(
+  token: string
+): Promise<{ email: string; redirect: string | null } | null> {
+  const rows = (await sql()`
+    UPDATE login_tokens
+    SET used_at = now()
+    WHERE token_hash = ${hashToken(token)}
+      AND used_at IS NULL
+      AND expires_at > now()
+    RETURNING email, redirect
+  `) as { email: string; redirect: string | null }[];
+  return rows[0] ?? null;
+}
+
+/** Finds or creates the user for a confirmed email. */
+export async function findOrCreateUser(email: string, lang: Lang): Promise<SessionUser> {
+  const normalized = email.trim().toLowerCase();
+  const rows = (await sql()`
+    INSERT INTO users (email, preferred_language)
+    VALUES (${normalized}, ${lang})
+    ON CONFLICT (email) DO UPDATE SET deleted_at = NULL
+    RETURNING id, email, name, company, phone, preferred_language, onboarded_at, email_opt_out
+  `) as SessionUser[];
+  return rows[0];
+}
+
+// ---------------------------------------------------------------------------
+// Sessions
+// ---------------------------------------------------------------------------
 
 export async function createSession(
   userId: string,
@@ -66,35 +100,18 @@ export async function deleteSession(token: string): Promise<void> {
 
 async function userForToken(token: string): Promise<SessionUser | null> {
   const rows = (await sql()`
-    SELECT u.id, u.email, u.role, u.parent_id, u.date_of_birth
+    SELECT u.id, u.email, u.name, u.company, u.phone,
+           u.preferred_language, u.onboarded_at, u.email_opt_out
     FROM sessions s
     JOIN users u ON u.id = s.user_id
     WHERE s.token_hash = ${hashToken(token)}
       AND s.expires_at > now()
       AND u.deleted_at IS NULL
   `) as SessionUser[];
-  if (rows.length === 0) return null;
-  // Touch activity timestamps (best-effort, drives leaderboard activity).
-  sql()`
-    UPDATE users SET last_active_at = now() WHERE id = ${rows[0].id}
-  `.catch(() => {});
-  // Enforce the single-admin policy regardless of what the database says,
-  // and converge the stored role when it disagrees (best-effort).
-  const role = effectiveRole(rows[0].email, rows[0].role);
-  if (role !== rows[0].role) {
-    sql()`UPDATE users SET role = ${role} WHERE id = ${rows[0].id}`.catch(() => {});
-  }
-  return { ...rows[0], role };
+  return rows[0] ?? null;
 }
 
-/** Resolves the current user from a bearer token (mobile) or cookie (web). */
-export async function getCurrentUser(
-  request?: Request
-): Promise<SessionUser | null> {
-  const bearer = request?.headers.get("authorization");
-  if (bearer?.startsWith("Bearer ")) {
-    return userForToken(bearer.slice(7));
-  }
+export async function getCurrentUser(): Promise<SessionUser | null> {
   const cookieStore = await cookies();
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   return token ? userForToken(token) : null;
@@ -116,59 +133,35 @@ export async function clearSessionCookie() {
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (token) await deleteSession(token).catch(() => {});
   cookieStore.delete(SESSION_COOKIE);
-  cookieStore.delete(USER_COOKIE);
 }
 
 // ---------------------------------------------------------------------------
-// Remembered-user cookie (username + status, long-lived)
+// Language resolution: logged-in users get their stored preference; visitors
+// get the ma_lang cookie (set by the language toggle) or the default.
 // ---------------------------------------------------------------------------
 
-export type RememberedUser = { name: string; status: string };
-
-/**
- * Long-lived cookie remembering who is signed in (username + account status/
- * role). Set at every login/signup and cleared only on logout, so returning
- * visitors are sent straight to their app.
- */
-export async function setUserCookie(name: string, status: string) {
+export async function getVisitorLang(): Promise<Lang> {
   const cookieStore = await cookies();
-  cookieStore.set(USER_COOKIE, JSON.stringify({ name, status }), {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    expires: new Date(Date.now() + USER_COOKIE_DAYS * 24 * 60 * 60 * 1000),
-  });
+  const raw = cookieStore.get(LANG_COOKIE)?.value;
+  return isLang(raw) ? raw : DEFAULT_LANG;
 }
 
-export async function getRememberedUser(): Promise<RememberedUser | null> {
-  const cookieStore = await cookies();
-  const raw = cookieStore.get(USER_COOKIE)?.value;
-  if (!raw) return null;
-  try {
-    const parsed = JSON.parse(raw);
-    if (typeof parsed?.name !== "string" || typeof parsed?.status !== "string") return null;
-    return { name: parsed.name, status: parsed.status };
-  } catch {
-    return null;
-  }
+export async function resolveLang(user: SessionUser | null): Promise<Lang> {
+  return user ? user.preferred_language : getVisitorLang();
 }
 
 // ---------------------------------------------------------------------------
-// Request context helpers
+// Unsubscribe links (signed with CRON_SECRET so the monthly email can carry a
+// one-click opt-out without a session).
 // ---------------------------------------------------------------------------
+
+export function unsubscribeSignature(userId: string): string {
+  const secret = process.env.CRON_SECRET ?? "dev-secret";
+  return createHmac("sha256", secret).update(`unsubscribe:${userId}`).digest("hex");
+}
 
 export async function requestIp(): Promise<string | null> {
   const h = await headers();
   const fwd = h.get("x-forwarded-for");
   return fwd ? fwd.split(",")[0].trim() : h.get("x-real-ip");
-}
-
-export function ageFromDob(dob: string | Date): number {
-  const birth = new Date(dob);
-  const now = new Date();
-  let age = now.getFullYear() - birth.getFullYear();
-  const m = now.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) age--;
-  return age;
 }

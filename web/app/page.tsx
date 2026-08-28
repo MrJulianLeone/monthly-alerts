@@ -1,69 +1,73 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
-import { getCurrentUser, getRememberedUser } from "@/lib/auth";
-import { homeForRole } from "@/lib/page-auth";
-import { StartChat } from "./start-chat";
+import { LangToggle } from "@/components/lang-toggle";
+import { Logo, LogoMark } from "@/components/logo";
+import { getCurrentUser, getVisitorLang } from "@/lib/auth";
+import { t } from "@/lib/i18n";
 
-const features = [
-  {
-    title: "Start instantly, no sign-up",
-    body: "Type one message and you're in. We remember you on this device with a cookie, so your coach and your history are waiting when you come back.",
-  },
-  {
-    title: "Daily coaching, two taps",
-    body: "Snap a photo of your meal for instant, practical feedback. Complete your daily challenge and tap \"I Did It\". No typing, no friction.",
-  },
-  {
-    title: "Challenges that grow with you",
-    body: "Sequential bodyweight and dumbbell challenges with progressive overload tuned to your goals and performance.",
-  },
-  {
-    title: "The monthly summary",
-    body: "Every month you get a clear progress report — meals logged, challenges completed, streaks, and trends — right in the app.",
-  },
-];
-
-export default async function HomePage() {
-  // Anyone with a live session (guest or full account) goes straight back to
-  // their chat history — no welcome screen, no barriers.
+export default async function LandingPage() {
   const user = await getCurrentUser();
-  if (user) redirect(homeForRole(user.role));
+  if (user) redirect("/dashboard");
+  const lang = await getVisitorLang();
 
-  // No live session, but we may still remember who they are.
-  const remembered = await getRememberedUser();
+  const features = [
+    { title: t(lang, "landing_feature_1_title"), body: t(lang, "landing_feature_1_body") },
+    { title: t(lang, "landing_feature_2_title"), body: t(lang, "landing_feature_2_body") },
+    { title: t(lang, "landing_feature_3_title"), body: t(lang, "landing_feature_3_body") },
+  ];
 
   return (
-    <main>
-      <section className="mx-auto max-w-3xl px-6 pb-20 pt-20 text-center">
-        <p className="mb-4 text-sm font-medium uppercase tracking-widest text-neutral-500">
-          MonthlyAlerts.com
-        </p>
-        <h1 className="text-4xl font-semibold tracking-tight text-neutral-900 sm:text-5xl">
-          Your personal health coach.
-          <br />
-          Start chatting right now.
-        </h1>
-        <p className="mx-auto mt-6 max-w-xl text-lg leading-relaxed text-neutral-600">
-          Daily guidance for meals and exercise through a simple chat with your
-          AI coach — no account, no forms, no waiting.
-        </p>
-
-        <StartChat rememberedName={remembered?.name ?? null} />
-      </section>
-
-      <section className="border-t border-neutral-200 bg-white">
-        <div className="mx-auto grid max-w-5xl gap-10 px-6 py-20 sm:grid-cols-2">
-          {features.map((f) => (
-            <div key={f.title}>
-              <h2 className="text-lg font-semibold text-neutral-900">{f.title}</h2>
-              <p className="mt-2 leading-relaxed text-neutral-600">{f.body}</p>
-            </div>
-          ))}
+    <div className="min-h-screen flex flex-col">
+      <header className="border-b-[1.5px] border-line-strong bg-sheet">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
+          <Logo />
+          <div className="flex items-center gap-4">
+            <LangToggle current={lang} />
+            <Link href="/login" className="btn btn-ghost btn-sm">
+              {t(lang, "log_in")}
+            </Link>
+          </div>
         </div>
-      </section>
+      </header>
 
-      <footer className="border-t border-neutral-200 py-10 text-center text-sm text-neutral-400">
-        MonthlyAlerts.com — Your personal health coach.
+      <main className="flex-1">
+        <section className="grid-paper border-b-[1.5px] border-line-strong">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-20 sm:py-28">
+            <p className="microlabel mb-6">EN ⇄ IT — {t(lang, "app_name")}</p>
+            <h1 className="display text-5xl sm:text-7xl max-w-3xl mb-6">
+              {t(lang, "landing_tagline")}
+            </h1>
+            <p className="text-lg text-ink-soft max-w-xl mb-10 leading-relaxed">
+              {t(lang, "landing_sub")}
+            </p>
+            <Link href="/login" className="btn btn-primary text-base px-8 py-3">
+              {t(lang, "landing_cta")}
+            </Link>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 py-16">
+          <div className="grid sm:grid-cols-3 gap-px bg-line-strong border-[1.5px] border-line-strong">
+            {features.map((f, i) => (
+              <div key={f.title} className="bg-sheet p-8">
+                <p className="microlabel mb-4">{String(i + 1).padStart(2, "0")}</p>
+                <h2 className="display text-2xl mb-3">{f.title}</h2>
+                <p className="text-sm text-ink-soft leading-relaxed">{f.body}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+      </main>
+
+      <footer className="border-t-[1.5px] border-line-strong">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <LogoMark size={14} />
+            <span className="microlabel">{t(lang, "email_footer")}</span>
+          </div>
+          <span className="microlabel">© {new Date().getFullYear()}</span>
+        </div>
       </footer>
-    </main>
+    </div>
   );
 }

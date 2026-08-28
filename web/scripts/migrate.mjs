@@ -17,9 +17,10 @@ if (!databaseUrl) {
 }
 
 const wipe = process.argv.includes("--wipe");
+const local = /localhost|127\.0\.0\.1/.test(databaseUrl);
 const client = new pg.Client({
   connectionString: databaseUrl,
-  ssl: { rejectUnauthorized: false },
+  ssl: local ? undefined : { rejectUnauthorized: false },
 });
 
 try {

@@ -1,62 +1,58 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { Button, Card, ErrorText, Field, Input } from "@/components/ui";
+import { t, type Lang } from "@/lib/i18n";
 
-export function LoginForm() {
-  const router = useRouter();
+export function LoginForm({ lang, redirect }: { lang: Lang; redirect: string | null }) {
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState("");
+  const [sent, setSent] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  async function login(e: React.FormEvent) {
-    e.preventDefault();
-    setBusy(true);
-    setError("");
-    const res = await fetch("/api/auth/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      setError((await res.json()).error ?? "Login failed");
-      return;
-    }
-    const { role } = await res.json();
-    router.push(role === "admin" ? "/admin" : role === "parent" ? "/parent" : "/chat");
-    router.refresh();
+  if (sent) {
+    return (
+      <div className="border-[1.5px] border-ok rounded-[2px] p-5">
+        <p className="display text-xl mb-2 text-ok">{t(lang, "login_sent_title")}</p>
+        <p className="text-sm text-ink-soft leading-relaxed">
+          {t(lang, "login_sent_body", { email })}
+        </p>
+      </div>
+    );
   }
 
   return (
-    <Card>
-      <h1 className="text-xl font-semibold text-neutral-900">Welcome back</h1>
-      <form onSubmit={login} className="mt-6 space-y-4">
-        <Field label="Email">
-          <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-        </Field>
-        <Field label="Password">
-          <Input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </Field>
-        <ErrorText>{error}</ErrorText>
-        <Button type="submit" disabled={busy} className="w-full">
-          {busy ? "Signing in..." : "Log in"}
-        </Button>
-        <p className="text-center text-sm text-neutral-500">
-          New here?{" "}
-          <Link href="/signup" className="font-medium text-neutral-900 underline">
-            Get started
-          </Link>
-        </p>
-      </form>
-    </Card>
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        setBusy(true);
+        setError(null);
+        const res = await fetch("/api/auth/request-link", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, lang, redirect }),
+        });
+        setBusy(false);
+        if (res.ok) setSent(true);
+        else setError(t(lang, "error_generic"));
+      }}
+    >
+      <label className="field-label" htmlFor="email">
+        {t(lang, "login_email_label")}
+      </label>
+      <input
+        id="email"
+        type="email"
+        required
+        autoFocus
+        className="input mb-4"
+        placeholder="name@company.com"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+      />
+      {error && <p className="text-sm text-accent-deep mb-4">{error}</p>}
+      <button type="submit" disabled={busy} className="btn btn-primary w-full">
+        {t(lang, "login_submit")}
+      </button>
+    </form>
   );
 }
