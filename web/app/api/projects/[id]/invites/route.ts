@@ -3,6 +3,7 @@ import { jsonError, requireProject } from "@/lib/api";
 import { generateToken, hashToken } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { sendInviteEmail } from "@/lib/email";
+import { isLang } from "@/lib/i18n";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const INVITE_DAYS = 14;
@@ -18,6 +19,7 @@ export async function POST(
 
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const role = body.role === "editor" ? "editor" : "commenter";
+  const language = isLang(body.language) ? body.language : "en";
   if (!EMAIL_RE.test(email)) return jsonError("Invalid email", 400);
 
   const existing = (await sql()`
@@ -35,8 +37,8 @@ export async function POST(
   const token = generateToken();
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 24 * 60 * 60 * 1000);
   await sql()`
-    INSERT INTO invites (project_id, email, role, token_hash, invited_by, expires_at)
-    VALUES (${id}, ${email}, ${role}, ${hashToken(token)}, ${auth.user.id},
+    INSERT INTO invites (project_id, email, role, language, token_hash, invited_by, expires_at)
+    VALUES (${id}, ${email}, ${role}, ${language}, ${hashToken(token)}, ${auth.user.id},
             ${expiresAt.toISOString()})
   `;
   await sendInviteEmail(
@@ -44,7 +46,8 @@ export async function POST(
     auth.user.name ?? auth.user.email,
     auth.project.name,
     role,
-    token
+    token,
+    language
   );
   return NextResponse.json({ ok: true });
 }

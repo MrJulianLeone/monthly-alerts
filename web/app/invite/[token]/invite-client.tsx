@@ -4,46 +4,69 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { t, type Lang } from "@/lib/i18n";
 
-/** Logged-out invitee: email them a magic link that returns to this page. */
-export function RequestInviteLink({
-  email,
+/** Logged-out invitee without an account: create a password and join. */
+export function InviteRegisterForm({
   token,
+  email,
   lang,
 }: {
-  email: string;
   token: string;
+  email: string;
   lang: Lang;
 }) {
-  const [sent, setSent] = useState(false);
+  const router = useRouter();
+  const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  if (sent) {
-    return (
-      <div className="border-[1.5px] border-ok rounded-[2px] p-5">
-        <p className="display text-xl mb-2 text-ok">{t(lang, "login_sent_title")}</p>
-        <p className="text-sm text-ink-soft leading-relaxed">
-          {t(lang, "login_sent_body", { email })}
-        </p>
-      </div>
-    );
-  }
   return (
-    <button
-      disabled={busy}
-      className="btn btn-primary w-full"
-      onClick={async () => {
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
         setBusy(true);
-        const res = await fetch("/api/auth/request-link", {
+        setError(null);
+        const res = await fetch("/api/invites/register", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, lang, redirect: `/invite/${token}` }),
+          body: JSON.stringify({ token, password }),
         });
-        setBusy(false);
-        if (res.ok) setSent(true);
+        const data = await res.json().catch(() => ({}));
+        if (res.ok && data.project_id) {
+          router.push(`/welcome?next=${encodeURIComponent(`/projects/${data.project_id}`)}`);
+          router.refresh();
+        } else {
+          setBusy(false);
+          setError(
+            data.error === "password_too_short"
+              ? t(lang, "password_too_short")
+              : t(lang, "error_generic")
+          );
+        }
       }}
     >
-      {t(lang, "invite_accept")} — {email}
-    </button>
+      <p className="text-sm text-ink-soft leading-relaxed mb-4">
+        {t(lang, "invite_create_password", { email })}
+      </p>
+      <label className="field-label" htmlFor="password">
+        {t(lang, "password_label")}
+      </label>
+      <input
+        id="password"
+        type="password"
+        required
+        minLength={8}
+        autoFocus
+        autoComplete="new-password"
+        className="input mb-1"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+      />
+      <p className="microlabel mb-4">{t(lang, "password_hint")}</p>
+      {error && <p className="text-sm text-accent-deep mb-3">{error}</p>}
+      <button type="submit" disabled={busy} className="btn btn-primary w-full">
+        {t(lang, "invite_join")}
+      </button>
+    </form>
   );
 }
 

@@ -21,7 +21,9 @@ export default async function WelcomePage({
       ? params.next
       : "/dashboard";
   if (user.onboarded_at) redirect(next);
-  const lang = await getVisitorLang();
+  // Signup and invitations record an initial language on the account
+  // (invitees get the language the owner chose), so prefer that.
+  const lang = user.preferred_language ?? (await getVisitorLang());
 
   return (
     <div className="min-h-screen grid-paper flex flex-col">

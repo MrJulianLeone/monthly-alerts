@@ -10,10 +10,12 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto;
 CREATE TABLE IF NOT EXISTS users (
   id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email              text NOT NULL UNIQUE,          -- stored lowercased
+  password_hash      text,                          -- scrypt; null until the user sets one
+  email_verified_at  timestamptz,                   -- set by the emailed confirmation link
   name               text,
   company            text,
   phone              text,
-  preferred_language text NOT NULL DEFAULT 'en',    -- 'en' | 'it' (app-enforced)
+  preferred_language text NOT NULL DEFAULT 'en',    -- 'en' | 'it' | 'es' (app-enforced)
   onboarded_at       timestamptz,                   -- profile + language collected
   email_opt_out      boolean NOT NULL DEFAULT false,
   created_at         timestamptz NOT NULL DEFAULT now(),
@@ -30,11 +32,12 @@ CREATE TABLE IF NOT EXISTS sessions (
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
--- One-time magic-link tokens. Logging in with one both authenticates and
--- confirms the email address.
+-- One-time emailed tokens: email confirmation ('verify') and password reset
+-- ('reset'). Using one proves control of the email address.
 CREATE TABLE IF NOT EXISTS login_tokens (
   id         uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   email      text NOT NULL,
+  purpose    text NOT NULL DEFAULT 'verify',        -- 'verify' | 'reset'
   token_hash text NOT NULL UNIQUE,
   redirect   text,                                  -- post-login destination
   expires_at timestamptz NOT NULL,
@@ -76,6 +79,7 @@ CREATE TABLE IF NOT EXISTS invites (
   project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   email      text NOT NULL,                         -- stored lowercased
   role       text NOT NULL DEFAULT 'commenter',     -- 'editor' | 'commenter'
+  language   text NOT NULL DEFAULT 'en',            -- owner-selected invite language
   token_hash text NOT NULL UNIQUE,
   invited_by uuid NOT NULL REFERENCES users(id),
   expires_at timestamptz NOT NULL,
@@ -154,6 +158,22 @@ CREATE TABLE IF NOT EXISTS translations (
   created_at  timestamptz NOT NULL DEFAULT now(),
   PRIMARY KEY (source_hash, target_lang)
 );
+
+-- ---------------------------------------------------------------------------
+-- In-place upgrades for databases created before these columns existed
+-- (CREATE TABLE IF NOT EXISTS skips existing tables, so alter idempotently).
+-- ---------------------------------------------------------------------------
+
+ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz;
+ALTER TABLE login_tokens ADD COLUMN IF NOT EXISTS purpose text NOT NULL DEFAULT 'verify';
+ALTER TABLE invites ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'en';
+
+-- Accounts created in the magic-link era proved their email by logging in;
+-- new password signups have a password_hash and stay unverified until the
+-- confirmation link is used, so this backfill never touches them.
+UPDATE users SET email_verified_at = created_at
+WHERE email_verified_at IS NULL AND password_hash IS NULL;
 
 -- ---------------------------------------------------------------------------
 -- Indexes

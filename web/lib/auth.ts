@@ -1,12 +1,20 @@
-import { createHash, createHmac, randomBytes } from "node:crypto";
+import {
+  createHash,
+  createHmac,
+  randomBytes,
+  scryptSync,
+  timingSafeEqual,
+} from "node:crypto";
 import { cookies, headers } from "next/headers";
 import { sql } from "@/lib/db";
 import { DEFAULT_LANG, isLang, type Lang } from "@/lib/i18n";
 
 const SESSION_COOKIE = "ma_session";
-const SESSION_DAYS = 90;
+const SESSION_DAYS = 365; // long-lived cookie keeps users signed in
 const LANG_COOKIE = "ma_lang";
-const LOGIN_TOKEN_MINUTES = 30;
+const EMAIL_TOKEN_MINUTES = 60; // verification / reset links
+
+export const MIN_PASSWORD_LENGTH = 8;
 
 export type SessionUser = {
   id: string;
@@ -18,6 +26,23 @@ export type SessionUser = {
   onboarded_at: string | null;
   email_opt_out: boolean;
 };
+
+// ---------------------------------------------------------------------------
+// Passwords (scrypt, no native deps)
+// ---------------------------------------------------------------------------
+
+export function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+  return `scrypt:${salt}:${hash}`;
+}
+
+export function verifyPassword(password: string, stored: string): boolean {
+  const [scheme, salt, hash] = stored.split(":");
+  if (scheme !== "scrypt" || !salt || !hash) return false;
+  const candidate = scryptSync(password, salt, 64);
+  return timingSafeEqual(candidate, Buffer.from(hash, "hex"));
+}
 
 // ---------------------------------------------------------------------------
 // Tokens
@@ -32,31 +57,36 @@ export function hashToken(token: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// Magic-link login tokens. Consuming one both authenticates the user and
-// confirms the email address (passwordless — there is nothing else to verify).
+// One-time emailed tokens: email confirmation ('verify') and password reset
+// ('reset'). Consuming one proves control of the email address.
 // ---------------------------------------------------------------------------
 
-export async function createLoginToken(
+export type TokenPurpose = "verify" | "reset";
+
+export async function createEmailToken(
   email: string,
+  purpose: TokenPurpose,
   redirect?: string | null
 ): Promise<string> {
   const token = generateToken();
-  const expiresAt = new Date(Date.now() + LOGIN_TOKEN_MINUTES * 60 * 1000);
+  const expiresAt = new Date(Date.now() + EMAIL_TOKEN_MINUTES * 60 * 1000);
   await sql()`
-    INSERT INTO login_tokens (email, token_hash, redirect, expires_at)
-    VALUES (${email.trim().toLowerCase()}, ${hashToken(token)},
+    INSERT INTO login_tokens (email, purpose, token_hash, redirect, expires_at)
+    VALUES (${email.trim().toLowerCase()}, ${purpose}, ${hashToken(token)},
             ${redirect ?? null}, ${expiresAt.toISOString()})
   `;
   return token;
 }
 
-export async function consumeLoginToken(
-  token: string
+export async function consumeEmailToken(
+  token: string,
+  purpose: TokenPurpose
 ): Promise<{ email: string; redirect: string | null } | null> {
   const rows = (await sql()`
     UPDATE login_tokens
     SET used_at = now()
     WHERE token_hash = ${hashToken(token)}
+      AND purpose = ${purpose}
       AND used_at IS NULL
       AND expires_at > now()
     RETURNING email, redirect
@@ -64,16 +94,23 @@ export async function consumeLoginToken(
   return rows[0] ?? null;
 }
 
-/** Finds or creates the user for a confirmed email. */
-export async function findOrCreateUser(email: string, lang: Lang): Promise<SessionUser> {
-  const normalized = email.trim().toLowerCase();
+// ---------------------------------------------------------------------------
+// User lookup
+// ---------------------------------------------------------------------------
+
+export type AuthUser = SessionUser & {
+  password_hash: string | null;
+  email_verified_at: string | null;
+};
+
+export async function findUserByEmail(email: string): Promise<AuthUser | null> {
   const rows = (await sql()`
-    INSERT INTO users (email, preferred_language)
-    VALUES (${normalized}, ${lang})
-    ON CONFLICT (email) DO UPDATE SET deleted_at = NULL
-    RETURNING id, email, name, company, phone, preferred_language, onboarded_at, email_opt_out
-  `) as SessionUser[];
-  return rows[0];
+    SELECT id, email, name, company, phone, preferred_language,
+           onboarded_at, email_opt_out, password_hash, email_verified_at
+    FROM users
+    WHERE email = ${email.trim().toLowerCase()} AND deleted_at IS NULL
+  `) as AuthUser[];
+  return rows[0] ?? null;
 }
 
 // ---------------------------------------------------------------------------
@@ -133,6 +170,15 @@ export async function clearSessionCookie() {
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (token) await deleteSession(token).catch(() => {});
   cookieStore.delete(SESSION_COOKIE);
+}
+
+/** Signs the user in: session row + cookie. */
+export async function startSession(userId: string, userAgent?: string | null) {
+  const session = await createSession(userId, {
+    ip: await requestIp(),
+    userAgent: userAgent ?? null,
+  });
+  await setSessionCookie(session.token, session.expiresAt);
 }
 
 // ---------------------------------------------------------------------------

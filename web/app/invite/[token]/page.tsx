@@ -1,16 +1,17 @@
+import Link from "next/link";
 import { Logo } from "@/components/logo";
-import { LangToggle } from "@/components/lang-toggle";
-import { getCurrentUser, getVisitorLang, hashToken } from "@/lib/auth";
+import { findUserByEmail, getCurrentUser, hashToken } from "@/lib/auth";
 import { sql } from "@/lib/db";
 import { t, type Lang } from "@/lib/i18n";
 import { translateOne } from "@/lib/translate";
-import { AcceptInvite, RequestInviteLink } from "./invite-client";
+import { AcceptInvite, InviteRegisterForm } from "./invite-client";
 
 export const dynamic = "force-dynamic";
 
 type InviteRow = {
   email: string;
   role: "editor" | "commenter";
+  language: Lang;
   project_name: string;
   project_name_lang: Lang;
   inviter_name: string | null;
@@ -24,10 +25,9 @@ export default async function InvitePage({
 }) {
   const { token } = await params;
   const user = await getCurrentUser();
-  const lang = user?.preferred_language ?? (await getVisitorLang());
 
   const rows = (await sql()`
-    SELECT i.email, i.role, p.name AS project_name, p.name_lang AS project_name_lang,
+    SELECT i.email, i.role, i.language, p.name AS project_name, p.name_lang AS project_name_lang,
            u.name AS inviter_name, u.email AS inviter_email
     FROM invites i
     JOIN projects p ON p.id = i.project_id
@@ -37,16 +37,22 @@ export default async function InvitePage({
   `) as InviteRow[];
   const invite = rows[0] ?? null;
 
+  // Logged-out visitors see the page in the language the owner chose for them.
+  const lang: Lang = user?.preferred_language ?? invite?.language ?? "en";
+
   const projectName = invite
     ? await translateOne(invite.project_name, invite.project_name_lang, lang)
     : null;
 
+  // Does the invited address already have a usable (password + verified) account?
+  const invitedUser = invite ? await findUserByEmail(invite.email) : null;
+  const hasAccount = !!(invitedUser?.password_hash && invitedUser?.email_verified_at);
+
   return (
     <div className="min-h-screen grid-paper flex flex-col">
       <header className="border-b-[1.5px] border-line-strong bg-sheet">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center">
           <Logo />
-          {!user && <LangToggle current={lang} />}
         </div>
       </header>
       <main className="flex-1 flex items-center justify-center px-4 py-16">
@@ -70,17 +76,31 @@ export default async function InvitePage({
                   ).toLowerCase(),
                 })}
               </p>
-              {!user ? (
-                <RequestInviteLink email={invite.email} token={token} lang={lang} />
-              ) : user.email === invite.email ? (
-                <AcceptInvite token={token} lang={lang} />
+              {user ? (
+                user.email === invite.email ? (
+                  <AcceptInvite token={token} lang={lang} />
+                ) : (
+                  <p className="text-sm text-accent-deep border-[1.5px] border-accent-deep rounded-[2px] px-3 py-2">
+                    {t(lang, "invite_wrong_account", {
+                      email: invite.email,
+                      current: user.email,
+                    })}
+                  </p>
+                )
+              ) : hasAccount ? (
+                <>
+                  <p className="text-sm text-ink-soft leading-relaxed mb-4">
+                    {t(lang, "invite_log_in_to_accept")}
+                  </p>
+                  <Link
+                    href={`/login?next=${encodeURIComponent(`/invite/${token}`)}`}
+                    className="btn btn-primary w-full"
+                  >
+                    {t(lang, "log_in")}
+                  </Link>
+                </>
               ) : (
-                <p className="text-sm text-accent-deep border-[1.5px] border-accent-deep rounded-[2px] px-3 py-2">
-                  {t(lang, "invite_wrong_account", {
-                    email: invite.email,
-                    current: user.email,
-                  })}
-                </p>
+                <InviteRegisterForm token={token} email={invite.email} lang={lang} />
               )}
             </>
           )}

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { langName, t, type Lang } from "@/lib/i18n";
+import { LANGUAGES, langName, t, type Lang } from "@/lib/i18n";
 
 export function ProjectDetailsForm(props: {
   projectId: string;
@@ -126,6 +126,7 @@ export function InviteForm({ projectId, lang }: { projectId: string; lang: Lang 
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<"editor" | "commenter">("editor");
+  const [inviteLang, setInviteLang] = useState<Lang>(lang);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -138,7 +139,7 @@ export function InviteForm({ projectId, lang }: { projectId: string; lang: Lang 
         const res = await fetch(`/api/projects/${projectId}/invites`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, role }),
+          body: JSON.stringify({ email, role, language: inviteLang }),
         });
         setBusy(false);
         if (res.ok) {
@@ -159,19 +160,32 @@ export function InviteForm({ projectId, lang }: { projectId: string; lang: Lang 
           onChange={(e) => setEmail(e.target.value)}
         />
         <select
-          className="input sm:!w-44 cursor-pointer"
+          className="input sm:!w-40 cursor-pointer"
           value={role}
           onChange={(e) => setRole(e.target.value as "editor" | "commenter")}
         >
           <option value="editor">{t(lang, "role_editor")}</option>
           <option value="commenter">{t(lang, "role_commenter")}</option>
         </select>
+        <select
+          className="input sm:!w-36 cursor-pointer"
+          value={inviteLang}
+          onChange={(e) => setInviteLang(e.target.value as Lang)}
+          aria-label={t(lang, "invite_language_label")}
+        >
+          {LANGUAGES.map((l) => (
+            <option key={l.code} value={l.code}>
+              {l.label}
+            </option>
+          ))}
+        </select>
         <button type="submit" disabled={busy} className="btn btn-primary">
           {t(lang, "invite_send")}
         </button>
       </div>
       <p className="microlabel mt-2">
-        {role === "editor" ? t(lang, "role_editor_desc") : t(lang, "role_commenter_desc")}
+        {role === "editor" ? t(lang, "role_editor_desc") : t(lang, "role_commenter_desc")} ·{" "}
+        {t(lang, "invite_language_label")}: {LANGUAGES.find((l) => l.code === inviteLang)?.label}
       </p>
       {error && <p className="text-sm text-accent-deep mt-2">{error}</p>}
     </form>

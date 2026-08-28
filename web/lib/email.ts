@@ -1,5 +1,5 @@
 import { Resend } from "resend";
-import { LANGUAGES, t, type Lang } from "@/lib/i18n";
+import { t, type Lang } from "@/lib/i18n";
 
 let client: Resend | null = null;
 
@@ -52,56 +52,67 @@ async function send(to: string, subject: string, html: string) {
 // Templates
 // ---------------------------------------------------------------------------
 
-/** Passwordless sign-in link, in the language the requester chose. */
-export async function sendMagicLinkEmail(to: string, token: string, lang: Lang) {
+/** Email confirmation link for new password signups. */
+export async function sendVerificationEmail(to: string, token: string, lang: Lang) {
   const link = `${appUrl()}/auth/verify?token=${token}`;
   await send(
     to,
-    t(lang, "email_magic_subject"),
+    t(lang, "email_verify_subject"),
     wrapper(
       `
-      <h1 style="font-size:22px;margin:0 0 16px">${t(lang, "email_magic_title")}</h1>
-      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_magic_body")}</p>
-      <p style="margin:24px 0">${button(link, t(lang, "email_magic_button"))}</p>
-      <p style="font-size:13px;color:#78716c">${t(lang, "email_magic_ignore")}</p>
+      <h1 style="font-size:22px;margin:0 0 16px">${t(lang, "email_verify_title")}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_verify_body")}</p>
+      <p style="margin:24px 0">${button(link, t(lang, "email_verify_button"))}</p>
+      <p style="font-size:13px;color:#78716c">${t(lang, "email_ignore")}</p>
       `,
       lang
     )
   );
 }
 
-/**
- * Project invitation. The recipient's language isn't known yet, so the body
- * carries every supported language.
- */
+/** Password reset link. */
+export async function sendPasswordResetEmail(to: string, token: string, lang: Lang) {
+  const link = `${appUrl()}/reset?token=${token}`;
+  await send(
+    to,
+    t(lang, "email_reset_subject"),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 16px">${t(lang, "email_reset_title")}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_reset_body")}</p>
+      <p style="margin:24px 0">${button(link, t(lang, "email_reset_button"))}</p>
+      <p style="font-size:13px;color:#78716c">${t(lang, "email_ignore")}</p>
+      `,
+      lang
+    )
+  );
+}
+
+/** Project invitation, in the language the owner selected for this invitee. */
 export async function sendInviteEmail(
   to: string,
   inviterName: string,
   projectName: string,
   role: "editor" | "commenter",
-  token: string
+  token: string,
+  lang: Lang
 ) {
   const link = `${appUrl()}/invite/${token}`;
-  const inviter = escapeHtml(inviterName);
-  const project = escapeHtml(projectName);
-  const block = (lang: Lang) => `
-      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "invite_body", {
-        inviter,
-        project,
-        role: t(lang, role === "editor" ? "role_editor" : "role_commenter").toLowerCase(),
-      })}</p>`;
-  const codes = LANGUAGES.map((l) => l.code);
   await send(
     to,
-    t("en", "email_invite_subject", { inviter: inviterName, project: projectName }),
+    t(lang, "email_invite_subject", { inviter: inviterName, project: projectName }),
     wrapper(
       `
-      <h1 style="font-size:22px;margin:0 0 16px">${codes.map((c) => t(c, "invite_title")).join(" / ")}</h1>
-      ${codes.map(block).join("")}
-      <p style="margin:24px 0">${button(link, codes.map((c) => t(c, "email_invite_button")).join(" / "))}</p>
-      <p style="font-size:13px;color:#78716c">${codes.map((c) => t(c, "email_invite_expiry")).join(" ")}</p>
+      <h1 style="font-size:22px;margin:0 0 16px">${t(lang, "invite_title")}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "invite_body", {
+        inviter: escapeHtml(inviterName),
+        project: escapeHtml(projectName),
+        role: t(lang, role === "editor" ? "role_editor" : "role_commenter").toLowerCase(),
+      })}</p>
+      <p style="margin:24px 0">${button(link, t(lang, "email_invite_button"))}</p>
+      <p style="font-size:13px;color:#78716c">${t(lang, "email_invite_expiry")}</p>
       `,
-      "en"
+      lang
     )
   );
 }

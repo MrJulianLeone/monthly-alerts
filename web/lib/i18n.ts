@@ -90,25 +90,88 @@ const messages = {
     es: "Un correo mensual de estado mantiene a cada miembro al día sobre el avance, trabajos nuevos y tareas atrasadas.",
   },
 
-  // Login
-  login_title: { en: "Log in or sign up", it: "Accedi o registrati", es: "Inicia sesión o regístrate" },
+  // Login / signup
+  login_title: { en: "Log in", it: "Accedi", es: "Iniciar sesión" },
+  signup_title: { en: "Create your account", it: "Crea il tuo account", es: "Crea tu cuenta" },
   login_sub: {
-    en: "Enter your email and we'll send you a secure sign-in link. No password needed.",
-    it: "Inserisci la tua email e ti invieremo un link di accesso sicuro. Nessuna password necessaria.",
-    es: "Escribe tu correo y te enviaremos un enlace de acceso seguro. Sin contraseña.",
+    en: "Welcome back — enter your email and password.",
+    it: "Bentornato — inserisci email e password.",
+    es: "Bienvenido de nuevo — escribe tu correo y contraseña.",
+  },
+  signup_sub: {
+    en: "Sign up with your email and a password. We'll send you a confirmation link before you can log in.",
+    it: "Registrati con email e password. Ti invieremo un link di conferma prima che tu possa accedere.",
+    es: "Regístrate con tu correo y una contraseña. Te enviaremos un enlace de confirmación antes de poder iniciar sesión.",
   },
   login_email_label: { en: "Email address", it: "Indirizzo email", es: "Correo electrónico" },
-  login_submit: { en: "Send sign-in link", it: "Invia link di accesso", es: "Enviar enlace de acceso" },
-  login_sent_title: { en: "Check your email", it: "Controlla la tua email", es: "Revisa tu correo" },
-  login_sent_body: {
-    en: "We sent a sign-in link to {email}. It expires in 30 minutes.",
-    it: "Abbiamo inviato un link di accesso a {email}. Scade tra 30 minuti.",
-    es: "Enviamos un enlace de acceso a {email}. Caduca en 30 minutos.",
+  password_label: { en: "Password", it: "Password", es: "Contraseña" },
+  password_hint: {
+    en: "At least 8 characters",
+    it: "Almeno 8 caratteri",
+    es: "Al menos 8 caracteres",
   },
+  login_submit: { en: "Log in", it: "Accedi", es: "Iniciar sesión" },
+  signup_submit: { en: "Create account", it: "Crea account", es: "Crear cuenta" },
+  login_no_account: {
+    en: "New to MonthlyAlerts?",
+    it: "Nuovo su MonthlyAlerts?",
+    es: "¿Nuevo en MonthlyAlerts?",
+  },
+  signup_have_account: {
+    en: "Already have an account?",
+    it: "Hai già un account?",
+    es: "¿Ya tienes una cuenta?",
+  },
+  forgot_password: { en: "Forgot password?", it: "Password dimenticata?", es: "¿Olvidaste tu contraseña?" },
+  forgot_title: { en: "Reset your password", it: "Reimposta la password", es: "Restablece tu contraseña" },
+  forgot_sub: {
+    en: "Enter your email and we'll send you a link to set a new password.",
+    it: "Inserisci la tua email e ti invieremo un link per impostare una nuova password.",
+    es: "Escribe tu correo y te enviaremos un enlace para establecer una nueva contraseña.",
+  },
+  forgot_submit: { en: "Send reset link", it: "Invia link di reimpostazione", es: "Enviar enlace" },
+  email_sent_title: { en: "Check your email", it: "Controlla la tua email", es: "Revisa tu correo" },
+  reset_sent_body: {
+    en: "If an account exists for {email}, we've sent it a password reset link. It expires in 60 minutes.",
+    it: "Se esiste un account per {email}, abbiamo inviato un link di reimpostazione. Scade tra 60 minuti.",
+    es: "Si existe una cuenta para {email}, le hemos enviado un enlace de restablecimiento. Caduca en 60 minutos.",
+  },
+  verify_sent_body: {
+    en: "We sent a confirmation link to {email}. Click it to activate your account, then log in.",
+    it: "Abbiamo inviato un link di conferma a {email}. Fai clic per attivare il tuo account, poi accedi.",
+    es: "Enviamos un enlace de confirmación a {email}. Haz clic para activar tu cuenta y luego inicia sesión.",
+  },
+  reset_title: { en: "Choose a new password", it: "Scegli una nuova password", es: "Elige una nueva contraseña" },
+  reset_submit: { en: "Set password", it: "Imposta password", es: "Establecer contraseña" },
   login_invalid_link: {
-    en: "That sign-in link is invalid or has expired. Request a new one below.",
-    it: "Il link di accesso non è valido o è scaduto. Richiedine uno nuovo qui sotto.",
-    es: "Ese enlace de acceso no es válido o ha caducado. Solicita uno nuevo abajo.",
+    en: "That link is invalid or has expired. Request a new one below.",
+    it: "Il link non è valido o è scaduto. Richiedine uno nuovo qui sotto.",
+    es: "Ese enlace no es válido o ha caducado. Solicita uno nuevo abajo.",
+  },
+  error_invalid_credentials: {
+    en: "Incorrect email or password.",
+    it: "Email o password errata.",
+    es: "Correo o contraseña incorrectos.",
+  },
+  error_unverified: {
+    en: "Please confirm your email first — check your inbox for the confirmation link.",
+    it: "Conferma prima la tua email — controlla la posta per il link di conferma.",
+    es: "Confirma primero tu correo — busca el enlace de confirmación en tu bandeja de entrada.",
+  },
+  error_account_exists: {
+    en: "An account with this email already exists. Log in instead.",
+    it: "Esiste già un account con questa email. Accedi invece.",
+    es: "Ya existe una cuenta con este correo. Inicia sesión.",
+  },
+  error_no_password: {
+    en: "This account doesn't have a password yet. Use \"Forgot password?\" below to set one.",
+    it: "Questo account non ha ancora una password. Usa \"Password dimenticata?\" qui sotto per impostarne una.",
+    es: "Esta cuenta aún no tiene contraseña. Usa \"¿Olvidaste tu contraseña?\" abajo para crear una.",
+  },
+  password_too_short: {
+    en: "Password must be at least 8 characters.",
+    it: "La password deve avere almeno 8 caratteri.",
+    es: "La contraseña debe tener al menos 8 caracteres.",
   },
 
   // Onboarding
@@ -276,6 +339,22 @@ const messages = {
     es: "{inviter} te invitó a unirte al proyecto \"{project}\" en MonthlyAlerts como {role}.",
   },
   invite_accept: { en: "Accept invitation", it: "Accetta invito", es: "Aceptar invitación" },
+  invite_create_password: {
+    en: "Create a password for your account ({email}) to join the project.",
+    it: "Crea una password per il tuo account ({email}) per unirti al progetto.",
+    es: "Crea una contraseña para tu cuenta ({email}) para unirte al proyecto.",
+  },
+  invite_join: { en: "Create account & join", it: "Crea account e unisciti", es: "Crear cuenta y unirse" },
+  invite_log_in_to_accept: {
+    en: "This email already has an account. Log in to accept the invitation.",
+    it: "Questa email ha già un account. Accedi per accettare l'invito.",
+    es: "Este correo ya tiene una cuenta. Inicia sesión para aceptar la invitación.",
+  },
+  invite_language_label: {
+    en: "Invitation language",
+    it: "Lingua dell'invito",
+    es: "Idioma de la invitación",
+  },
   invite_invalid: {
     en: "This invitation is invalid, expired, or was already used.",
     it: "Questo invito non è valido, è scaduto o è già stato utilizzato.",
@@ -307,22 +386,34 @@ const messages = {
   },
 
   // Emails
-  email_magic_subject: {
-    en: "Your MonthlyAlerts sign-in link",
-    it: "Il tuo link di accesso a MonthlyAlerts",
-    es: "Tu enlace de acceso a MonthlyAlerts",
+  email_verify_subject: {
+    en: "Confirm your email — MonthlyAlerts",
+    it: "Conferma la tua email — MonthlyAlerts",
+    es: "Confirma tu correo — MonthlyAlerts",
   },
-  email_magic_title: { en: "Sign in to MonthlyAlerts", it: "Accedi a MonthlyAlerts", es: "Inicia sesión en MonthlyAlerts" },
-  email_magic_body: {
-    en: "Click the button below to sign in. This link expires in 30 minutes and can be used once.",
-    it: "Fai clic sul pulsante qui sotto per accedere. Questo link scade tra 30 minuti e può essere usato una sola volta.",
-    es: "Haz clic en el botón de abajo para iniciar sesión. Este enlace caduca en 30 minutos y solo puede usarse una vez.",
+  email_verify_title: { en: "Confirm your email", it: "Conferma la tua email", es: "Confirma tu correo" },
+  email_verify_body: {
+    en: "Click the button below to confirm your email address and activate your MonthlyAlerts account. This link expires in 60 minutes.",
+    it: "Fai clic sul pulsante qui sotto per confermare il tuo indirizzo email e attivare il tuo account MonthlyAlerts. Questo link scade tra 60 minuti.",
+    es: "Haz clic en el botón de abajo para confirmar tu correo y activar tu cuenta de MonthlyAlerts. Este enlace caduca en 60 minutos.",
   },
-  email_magic_button: { en: "Sign in", it: "Accedi", es: "Iniciar sesión" },
-  email_magic_ignore: {
+  email_verify_button: { en: "Confirm email", it: "Conferma email", es: "Confirmar correo" },
+  email_reset_subject: {
+    en: "Reset your MonthlyAlerts password",
+    it: "Reimposta la tua password MonthlyAlerts",
+    es: "Restablece tu contraseña de MonthlyAlerts",
+  },
+  email_reset_title: { en: "Reset your password", it: "Reimposta la password", es: "Restablece tu contraseña" },
+  email_reset_body: {
+    en: "Click the button below to choose a new password. This link expires in 60 minutes and can be used once.",
+    it: "Fai clic sul pulsante qui sotto per scegliere una nuova password. Questo link scade tra 60 minuti e può essere usato una sola volta.",
+    es: "Haz clic en el botón de abajo para elegir una nueva contraseña. Este enlace caduca en 60 minutos y solo puede usarse una vez.",
+  },
+  email_reset_button: { en: "Choose new password", it: "Scegli nuova password", es: "Elegir nueva contraseña" },
+  email_ignore: {
     en: "If you didn't request this, you can safely ignore this email.",
-    it: "Se non hai richiesto tu questo accesso, puoi ignorare questa email.",
-    es: "Si no solicitaste este acceso, puedes ignorar este correo.",
+    it: "Se non l'hai richiesto tu, puoi ignorare questa email.",
+    es: "Si no lo solicitaste, puedes ignorar este correo.",
   },
   email_invite_subject: {
     en: "{inviter} invited you to \"{project}\" on MonthlyAlerts",
