@@ -1,4 +1,5 @@
 import { AppHeader } from "@/components/app-header";
+import { billingEnabled, PROJECT_PRICE_DISPLAY } from "@/lib/billing";
 import { t } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
 import { NewProjectForm } from "./new-project-form";
@@ -15,6 +16,11 @@ export default async function NewProjectPage() {
         <div className="sheet p-8">
           <NewProjectForm lang={lang} />
         </div>
+        {billingEnabled() && (
+          <p className="microlabel leading-relaxed mt-4">
+            {t(lang, "new_project_fee", { price: PROJECT_PRICE_DISPLAY })}
+          </p>
+        )}
       </main>
     </div>
   );

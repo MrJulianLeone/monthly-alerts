@@ -263,6 +263,22 @@ const messages = {
     it: "MonthlyAlerts.com — liste di controllo multilingue per l'edilizia.",
   },
 
+  // Pricing
+  pricing_label: { en: "Pricing", it: "Prezzi" },
+  pricing_per_project: { en: "per project", it: "a progetto" },
+  pricing_body: {
+    en: "One-time fee when you create a project — no subscription. Unlimited checklist items and photos, and your whole team of subs, inspectors, and crew joins free.",
+    it: "Tariffa una tantum alla creazione del progetto — nessun abbonamento. Voci e foto illimitate, e tutta la squadra di subappaltatori, ispettori e operai partecipa gratis.",
+  },
+  pricing_invitees_free: {
+    en: "Free for everyone you invite",
+    it: "Gratis per tutti gli invitati",
+  },
+  new_project_fee: {
+    en: "One-time project fee: {price}. You'll be taken to secure checkout to activate the project.",
+    it: "Tariffa una tantum: {price}. Verrai reindirizzato al pagamento sicuro per attivare il progetto.",
+  },
+
   // Billing
   billing_required_title: { en: "Activate this project", it: "Attiva questo progetto" },
   billing_required_body: {

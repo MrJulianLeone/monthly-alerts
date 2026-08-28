@@ -8,6 +8,9 @@ import { sql } from "@/lib/db";
  * paying for — a project of their own. Flipping BILLING_ENABLED=true routes
  * project creation through Stripe Checkout; no schema change needed.
  */
+/** Shown on public pages; the amount actually charged is the Stripe price. */
+export const PROJECT_PRICE_DISPLAY = "$100";
+
 export function billingEnabled(): boolean {
   return (
     process.env.BILLING_ENABLED === "true" &&
