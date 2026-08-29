@@ -4,7 +4,7 @@ import { t, type Lang, type MessageKey } from "@/lib/i18n";
 
 const MARKET_LINKS: { href: string; label: MessageKey }[] = [
   { href: "/for-contractors", label: "footer_for_contractors" },
-  { href: "/renovating-in-italy", label: "footer_renovating_italy" },
+  { href: "/renovating-abroad", label: "footer_renovating_abroad" },
   { href: "/for-designers", label: "footer_for_designers" },
   { href: "/for-homeowners", label: "footer_for_homeowners" },
 ];

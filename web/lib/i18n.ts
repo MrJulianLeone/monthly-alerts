@@ -564,10 +564,10 @@ const messages = {
     it: "Per imprese edili",
     es: "Para contratistas",
   },
-  footer_renovating_italy: {
-    en: "Renovating in Italy",
-    it: "Ristrutturare in Italia",
-    es: "Renovar en Italia",
+  footer_renovating_abroad: {
+    en: "Renovating abroad",
+    it: "Ristrutturare dall'estero",
+    es: "Renovar en el extranjero",
   },
   footer_for_designers: {
     en: "For designers & architects",

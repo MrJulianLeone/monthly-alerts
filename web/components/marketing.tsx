@@ -8,8 +8,8 @@ import { t, type Lang } from "@/lib/i18n";
 /**
  * Shared chrome and section blocks for the audience marketing pages
  * (/for-contractors, /renovating-in-italy, /for-designers, /for-homeowners).
- * Page bodies are English — these pages target English-speaking buyers and
- * carry English SEO metadata — while header/footer chrome stays localized.
+ * Body copy lives in each page's COPY dictionary keyed by Lang; the blocks
+ * here are string-driven, with chrome labels coming from lib/i18n.
  */
 export function MarketingShell({
   lang,
@@ -38,15 +38,15 @@ export function MarketingShell({
 }
 
 export function MarketingHero({
+  lang,
   kicker,
   title,
   sub,
-  cta = "Start a project",
 }: {
+  lang: Lang;
   kicker: string;
   title: string;
   sub: string;
-  cta?: string;
 }) {
   return (
     <section className="grid-paper border-b-[1.5px] border-line-strong">
@@ -55,7 +55,7 @@ export function MarketingHero({
         <h1 className="display text-5xl sm:text-7xl max-w-3xl mb-6">{title}</h1>
         <p className="text-lg text-ink-soft max-w-xl mb-10 leading-relaxed">{sub}</p>
         <Link href="/login" className="btn btn-primary text-base px-8 py-3">
-          {cta}
+          {t(lang, "landing_cta")}
         </Link>
       </div>
     </section>
@@ -115,12 +115,10 @@ export function AudienceBand({
   title,
   items,
   note,
-  children,
 }: {
   title: string;
   items: string[];
   note?: string;
-  children?: React.ReactNode;
 }) {
   return (
     <section className="border-y-[1.5px] border-line-strong bg-sheet">
@@ -134,63 +132,104 @@ export function AudienceBand({
           ))}
         </ul>
         {note && <p className="text-sm text-ink-soft leading-relaxed max-w-2xl">{note}</p>}
-        {children}
       </div>
     </section>
   );
 }
 
-export function PricingCta({ blurb }: { blurb: string }) {
+export function PricingCta({ lang, blurb }: { lang: Lang; blurb: string }) {
   return (
     <section className="mx-auto max-w-5xl px-4 sm:px-6 py-20">
       <div className="sheet grid-paper p-10 sm:p-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
         <div>
-          <p className="microlabel mb-3">Pricing</p>
+          <p className="microlabel mb-3">{t(lang, "pricing_label")}</p>
           <p className="display text-6xl sm:text-7xl">
             {PROJECT_PRICE_DISPLAY}
             <span className="text-2xl text-ink-soft ml-3 align-middle normal-case tracking-normal font-sans font-medium">
-              per project
+              {t(lang, "pricing_per_project")}
             </span>
           </p>
           <p className="text-sm text-ink-soft leading-relaxed max-w-md mt-4">{blurb}</p>
-          <p className="chip text-accent mt-4">Free for everyone you invite</p>
+          <p className="chip text-accent mt-4">{t(lang, "pricing_invitees_free")}</p>
         </div>
         <Link href="/login" className="btn btn-primary text-base px-8 py-3 shrink-0">
-          Start a project
+          {t(lang, "landing_cta")}
         </Link>
       </div>
     </section>
   );
 }
 
-const MARKET_PAGES = [
+const CROSS_LINKS_LABEL: Record<Lang, string> = {
+  en: "Also on MonthlyAlerts",
+  it: "Anche su MonthlyAlerts",
+  es: "También en MonthlyAlerts",
+};
+
+const MARKET_PAGES: {
+  href: string;
+  title: Record<Lang, string>;
+  blurb: Record<Lang, string>;
+}[] = [
   {
     href: "/for-contractors",
-    title: "For remodeling contractors",
-    blurb: "English–Spanish checklists your whole crew can read.",
+    title: {
+      en: "For remodeling contractors",
+      it: "Per imprese di ristrutturazione",
+      es: "Para contratistas de remodelación",
+    },
+    blurb: {
+      en: "English–Spanish checklists your whole crew can read.",
+      it: "Liste inglese–spagnolo che tutta la squadra può leggere.",
+      es: "Listas inglés–español que toda tu cuadrilla puede leer.",
+    },
   },
   {
-    href: "/renovating-in-italy",
-    title: "Renovating in Italy",
-    blurb: "Run an Italian renovation from the United States.",
+    href: "/renovating-abroad",
+    title: {
+      en: "Renovating abroad",
+      it: "Ristrutturare dall'estero",
+      es: "Renovar en el extranjero",
+    },
+    blurb: {
+      en: "Run an overseas renovation, whatever language the site speaks.",
+      it: "Cantieri con clienti all'estero, ognuno nella propria lingua.",
+      es: "Gestiona una renovación en el extranjero, cada quien en su idioma.",
+    },
   },
   {
     href: "/for-designers",
-    title: "For designers & architects",
-    blurb: "Client-ready checklists with automatic monthly reports.",
+    title: {
+      en: "For designers & architects",
+      it: "Per designer e architetti",
+      es: "Para diseñadores y arquitectos",
+    },
+    blurb: {
+      en: "Client-ready checklists with automatic monthly reports.",
+      it: "Checklist per i clienti con report mensili automatici.",
+      es: "Listas profesionales con informes mensuales automáticos.",
+    },
   },
   {
     href: "/for-homeowners",
-    title: "For homeowners",
-    blurb: "Track everything your contractor promised, in both languages.",
+    title: {
+      en: "For homeowners",
+      it: "Per proprietari di casa",
+      es: "Para propietarios",
+    },
+    blurb: {
+      en: "Track everything your contractor promised, in both languages.",
+      it: "Tieni traccia di ciò che l'impresa ha promesso, in due lingue.",
+      es: "Sigue todo lo que prometió tu contratista, en ambos idiomas.",
+    },
   },
 ];
 
 /** Internal links between the audience pages, minus the one you're on. */
-export function MarketCrossLinks({ current }: { current: string }) {
+export function MarketCrossLinks({ lang, current }: { lang: Lang; current: string }) {
   return (
     <section className="mx-auto max-w-5xl px-4 sm:px-6 pb-20">
-      <p className="microlabel mb-4">Also on MonthlyAlerts</p>
+      <p className="microlabel mb-4">{CROSS_LINKS_LABEL[lang]}</p>
       <div className="grid sm:grid-cols-3 gap-px bg-line-strong border-[1.5px] border-line-strong">
         {MARKET_PAGES.filter((p) => p.href !== current).map((p) => (
           <Link
@@ -198,8 +237,8 @@ export function MarketCrossLinks({ current }: { current: string }) {
             href={p.href}
             className="bg-sheet p-6 hover:bg-paper transition-colors"
           >
-            <h3 className="display text-xl mb-1.5">{p.title}</h3>
-            <p className="text-sm text-ink-soft leading-relaxed">{p.blurb}</p>
+            <h3 className="display text-xl mb-1.5">{p.title[lang]}</h3>
+            <p className="text-sm text-ink-soft leading-relaxed">{p.blurb[lang]}</p>
           </Link>
         ))}
       </div>
