@@ -117,7 +117,7 @@ export default function PrivacyPage() {
         personal data, to object to or restrict certain processing, and to complain
         to your local data-protection authority. We honor these requests for all
         users regardless of location: email{" "}
-        <strong>julianleone@gmail.com</strong> from your account address and we will
+        <strong>support@monthlyalerts.com</strong> from your account address and we will
         verify and respond within the time required by applicable law. We do not
         discriminate against you for exercising any right.
       </p>
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
 
       <h2>10. Contact</h2>
       <p>
-        Privacy questions and requests: <strong>julianleone@gmail.com</strong>. See
+        Privacy questions and requests: <strong>support@monthlyalerts.com</strong>. See
         also our <Link href="/terms">Terms of Use</Link>.
       </p>
     </LegalPage>

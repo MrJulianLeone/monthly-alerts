@@ -162,7 +162,7 @@ export default function TermsPage() {
 
       <h2>14. Contact</h2>
       <p>
-        Questions about these Terms: <strong>julianleone@gmail.com</strong>.
+        Questions about these Terms: <strong>support@monthlyalerts.com</strong>.
       </p>
     </LegalPage>
   );
