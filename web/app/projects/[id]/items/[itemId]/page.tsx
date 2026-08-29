@@ -88,7 +88,7 @@ export default async function ItemPage({
 
   return (
     <div className="min-h-screen">
-      <AppHeader lang={lang} userName={user.name} />
+      <AppHeader lang={lang} user={user} />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
         <p className="microlabel mb-4">
           <Link href={`/projects/${id}`} className="hover:text-ink transition-colors">

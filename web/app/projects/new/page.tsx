@@ -9,7 +9,7 @@ export default async function NewProjectPage() {
   const { user, lang } = await requireOnboardedUser("/projects/new");
   return (
     <div className="min-h-screen">
-      <AppHeader lang={lang} userName={user.name} />
+      <AppHeader lang={lang} user={user} />
       <main className="mx-auto max-w-xl px-4 sm:px-6 py-10">
         <p className="microlabel mb-2">{t(lang, "dashboard_title")}</p>
         <h1 className="display text-5xl mb-3">{t(lang, "new_project_title")}</h1>

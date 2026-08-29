@@ -33,7 +33,7 @@ export default async function ActivatedPage({
 
   return (
     <div className="min-h-screen">
-      <AppHeader lang={lang} userName={user.name} />
+      <AppHeader lang={lang} user={user} />
       <main className="mx-auto max-w-xl px-4 sm:px-6 py-20 text-center">
         <h1 className="display text-5xl mb-4">{t(lang, "billing_success_title")}</h1>
         <p className="text-sm text-ink-soft mb-8">{t(lang, "billing_success_body")}</p>

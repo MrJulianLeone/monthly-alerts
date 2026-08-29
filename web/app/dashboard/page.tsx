@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
-import { isAdmin } from "@/lib/admin";
 import { t } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
 import { listProjectsForUser } from "@/lib/projects";
@@ -20,7 +19,7 @@ export default async function DashboardPage() {
 
   return (
     <div className="min-h-screen">
-      <AppHeader lang={lang} userName={user.name} showAdmin={isAdmin(user)} />
+      <AppHeader lang={lang} user={user} />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
         <div className="flex items-end justify-between mb-8">
           <div>

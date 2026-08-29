@@ -72,7 +72,7 @@ export default async function AdminPage() {
 
   return (
     <div className="min-h-screen">
-      <AppHeader lang={user.preferred_language} userName={user.name} />
+      <AppHeader lang={user.preferred_language} user={user} />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
         <p className="microlabel mb-2">Site administration</p>
         <h1 className="display text-5xl mb-8">Admin</h1>

@@ -67,7 +67,7 @@ export default async function ProjectPage({
 
   return (
     <div className="min-h-screen">
-      <AppHeader lang={lang} userName={user.name} />
+      <AppHeader lang={lang} user={user} />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
         {/* Title block */}
         <div className="sheet grid-paper p-6 sm:p-8 mb-8">
