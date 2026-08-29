@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LogoMark } from "@/components/logo";
 import { t, type Lang, type MessageKey } from "@/lib/i18n";
+import { localePath } from "@/lib/seo";
 
 const MARKET_LINKS: { href: string; label: MessageKey }[] = [
   { href: "/for-contractors", label: "footer_for_contractors" },
@@ -21,7 +22,7 @@ export function SiteFooter({ lang }: { lang: Lang }) {
       <div className="mx-auto max-w-5xl px-4 sm:px-6 pt-4 pb-[max(2.5rem,calc(1rem+env(safe-area-inset-bottom)))] sm:pb-4 space-y-1 sm:space-y-3">
         <nav className="flex flex-wrap items-center gap-x-5 sm:gap-x-4 gap-y-0 sm:gap-y-1">
           {MARKET_LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className={LINK_CLASS}>
+            <Link key={link.href} href={localePath(lang, link.href)} className={LINK_CLASS}>
               {t(lang, link.label)}
             </Link>
           ))}

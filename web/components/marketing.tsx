@@ -1,9 +1,11 @@
 import Link from "next/link";
+import { HtmlLang } from "@/components/html-lang";
 import { LangToggle } from "@/components/lang-toggle";
 import { Logo } from "@/components/logo";
 import { SiteFooter } from "@/components/site-footer";
 import { PROJECT_PRICE_DISPLAY } from "@/lib/billing";
 import { t, type Lang } from "@/lib/i18n";
+import { localePath } from "@/lib/seo";
 
 /**
  * Shared chrome and section blocks for the audience marketing pages
@@ -13,18 +15,21 @@ import { t, type Lang } from "@/lib/i18n";
  */
 export function MarketingShell({
   lang,
+  basePath,
   children,
 }: {
   lang: Lang;
+  basePath: string;
   children: React.ReactNode;
 }) {
   return (
     <div className="min-h-screen flex flex-col">
+      <HtmlLang lang={lang} />
       <header className="border-b-[1.5px] border-line-strong bg-sheet">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
           <Logo />
           <div className="flex items-center gap-4">
-            <LangToggle current={lang} />
+            <LangToggle current={lang} basePath={basePath} />
             <Link href="/login" className="btn btn-ghost btn-sm">
               {t(lang, "log_in")}
             </Link>
@@ -234,7 +239,7 @@ export function MarketCrossLinks({ lang, current }: { lang: Lang; current: strin
         {MARKET_PAGES.filter((p) => p.href !== current).map((p) => (
           <Link
             key={p.href}
-            href={p.href}
+            href={localePath(lang, p.href)}
             className="bg-sheet p-6 hover:bg-paper transition-colors"
           >
             <h3 className="display text-xl mb-1.5">{p.title[lang]}</h3>
