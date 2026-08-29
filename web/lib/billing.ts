@@ -11,12 +11,21 @@ import { sql } from "@/lib/db";
 /** Shown on public pages; the amount actually charged is the Stripe price. */
 export const PROJECT_PRICE_DISPLAY = "$100";
 
+/** Storage extension: one purchase adds this many years for this price. */
+export const EXTENSION_YEARS = 2;
+export const EXTENSION_PRICE_DISPLAY = "$100";
+
 export function billingEnabled(): boolean {
   return (
     process.env.BILLING_ENABLED === "true" &&
     !!process.env.STRIPE_SECRET_KEY &&
     !!process.env.STRIPE_PRICE_ID
   );
+}
+
+/** Extensions are sellable once the extension price exists in Stripe. */
+export function extensionsEnabled(): boolean {
+  return billingEnabled() && !!process.env.STRIPE_EXTENSION_PRICE_ID;
 }
 
 let client: Stripe | null = null;
@@ -56,4 +65,34 @@ export async function createProjectFromSession(
     ON CONFLICT DO NOTHING
   `;
   return rows[0].id;
+}
+
+/**
+ * Applies a paid storage extension for a completed Checkout session.
+ * Idempotent on stripe_session_id — called from both the webhook and the
+ * success page. Re-arms the 30-day expiry warning for the new expiry date.
+ */
+export async function applyExtensionFromSession(
+  session: Stripe.Checkout.Session
+): Promise<boolean> {
+  const meta = session.metadata ?? {};
+  if (!meta.extend_project_id) return false;
+  const years = Number(meta.years) || EXTENSION_YEARS;
+
+  const inserted = (await sql()`
+    INSERT INTO project_extensions
+      (project_id, stripe_session_id, amount_paid_cents, years, purchased_by)
+    VALUES (${meta.extend_project_id}, ${session.id}, ${session.amount_total ?? null},
+            ${years}, ${meta.user_id ?? null})
+    ON CONFLICT (stripe_session_id) DO NOTHING
+    RETURNING id
+  `) as { id: string }[];
+  if (inserted.length === 0) return true; // already applied
+
+  await sql()`
+    UPDATE projects
+    SET extended_years = extended_years + ${years}, expiry_warned_at = NULL
+    WHERE id = ${meta.extend_project_id}
+  `;
+  return true;
 }

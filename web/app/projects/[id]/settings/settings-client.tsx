@@ -282,3 +282,27 @@ export function DeleteProjectButton({ projectId, lang }: { projectId: string; la
     />
   );
 }
+
+export function ExtendButton({ projectId, label }: { projectId: string; label: string }) {
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      className="btn btn-primary btn-sm"
+      disabled={busy}
+      onClick={async () => {
+        setBusy(true);
+        try {
+          const res = await fetch(`/api/projects/${projectId}/extend`, { method: "POST" });
+          const data = await res.json().catch(() => ({}));
+          if (res.ok && data.checkout_url) {
+            window.location.href = data.checkout_url;
+            return;
+          }
+        } catch {}
+        setBusy(false);
+      }}
+    >
+      {label}
+    </button>
+  );
+}

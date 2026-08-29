@@ -212,6 +212,20 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'US
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS amount_paid_cents int;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS expiry_warned_at timestamptz;
 
+-- Paid storage extensions: each purchase adds years to the project's
+-- retention. extended_years on projects is the denormalized sum used in
+-- expiry math; this table is the per-purchase audit trail.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS extended_years int NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS project_extensions (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id        uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  stripe_session_id text NOT NULL UNIQUE,            -- idempotency (webhook + success page)
+  amount_paid_cents int,
+  years             int NOT NULL,
+  purchased_by      uuid REFERENCES users(id),
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
 -- Support inbox: spam folder + AI autoresponder bookkeeping.
 -- folder: 'inbox' | 'spam' (moves apply to the whole thread; a thread shows
 -- in the folder of its latest message). ai_verdict on inbound rows records

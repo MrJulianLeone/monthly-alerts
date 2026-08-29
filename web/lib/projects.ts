@@ -17,6 +17,7 @@ export type Project = {
   currency: string;
   paid_at: string | null;
   archived_at: string | null;
+  extended_years: number;
   created_at: string;
 };
 
@@ -33,9 +34,12 @@ export const PROJECT_RETENTION_YEARS = 2;
 export function projectExpiresAt(project: {
   paid_at: string | null;
   created_at: string;
+  extended_years?: number;
 }): Date {
   const expires = new Date(project.paid_at ?? project.created_at);
-  expires.setFullYear(expires.getFullYear() + PROJECT_RETENTION_YEARS);
+  expires.setFullYear(
+    expires.getFullYear() + PROJECT_RETENTION_YEARS + (project.extended_years ?? 0)
+  );
   return expires;
 }
 
@@ -89,7 +93,8 @@ export async function getMembership(
 
 export async function getProject(projectId: string): Promise<Project | null> {
   const rows = (await sql()`
-    SELECT id, name, name_lang, address, description, owner_id, currency, paid_at, archived_at, created_at
+    SELECT id, name, name_lang, address, description, owner_id, currency, paid_at, archived_at,
+           extended_years, created_at
     FROM projects WHERE id = ${projectId}
   `) as Project[];
   return rows[0] ?? null;

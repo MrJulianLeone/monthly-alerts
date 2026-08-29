@@ -24,13 +24,13 @@ export async function GET(request: Request) {
 
   // Phase 1: 30-day warnings.
   const expiring = (await sql()`
-    SELECT p.id, p.name, p.name_lang, p.paid_at, p.created_at,
+    SELECT p.id, p.name, p.name_lang, p.paid_at, p.created_at, p.extended_years,
            u.email AS owner_email, u.preferred_language AS owner_lang
     FROM projects p JOIN users u ON u.id = p.owner_id
     WHERE p.expiry_warned_at IS NULL
       AND u.deleted_at IS NULL
       AND COALESCE(p.paid_at, p.created_at)
-            + make_interval(years => ${PROJECT_RETENTION_YEARS})
+            + make_interval(years => ${PROJECT_RETENTION_YEARS} + p.extended_years)
           BETWEEN now() AND now() + interval '30 days'
   `) as {
     id: string;
@@ -38,6 +38,7 @@ export async function GET(request: Request) {
     name_lang: Lang;
     paid_at: string | null;
     created_at: string;
+    extended_years: number;
     owner_email: string;
     owner_lang: Lang;
   }[];
@@ -64,7 +65,8 @@ export async function GET(request: Request) {
   // Phase 2: deletions.
   const expired = (await sql()`
     SELECT id, name FROM projects
-    WHERE COALESCE(paid_at, created_at) < now() - make_interval(years => ${PROJECT_RETENTION_YEARS})
+    WHERE COALESCE(paid_at, created_at)
+          < now() - make_interval(years => ${PROJECT_RETENTION_YEARS} + extended_years)
   `) as { id: string; name: string }[];
 
   let photosDeleted = 0;

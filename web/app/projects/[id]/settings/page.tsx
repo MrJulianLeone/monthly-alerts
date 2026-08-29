@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { EXTENSION_PRICE_DISPLAY, EXTENSION_YEARS, extensionsEnabled } from "@/lib/billing";
 import { sql } from "@/lib/db";
 import { t, type Lang, locale } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
@@ -8,6 +9,7 @@ import { CURRENCIES, getMembership, getProject, listMembers, projectExpiresAt } 
 import {
   ArchiveButtons,
   DeleteProjectButton,
+  ExtendButton,
   InviteForm,
   InviteRow,
   MemberRow,
@@ -112,6 +114,15 @@ export default async function ProjectSettingsPage({
           <p className="text-sm text-ink-soft mb-4">{t(lang, "expiry_hint")}</p>
           <p className="text-sm text-ink-soft mb-4">{t(lang, "archive_hint")}</p>
           <div className="flex flex-wrap gap-3">
+            {extensionsEnabled() && (
+              <ExtendButton
+                projectId={id}
+                label={t(lang, "extend_button", {
+                  years: EXTENSION_YEARS,
+                  price: EXTENSION_PRICE_DISPLAY,
+                })}
+              />
+            )}
             <ArchiveButtons projectId={id} archived={!!project.archived_at} lang={lang} />
             <DeleteProjectButton projectId={id} lang={lang} />
           </div>

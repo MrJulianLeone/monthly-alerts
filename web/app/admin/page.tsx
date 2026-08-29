@@ -35,6 +35,7 @@ type ProjectRow = {
   stripe_session_id: string | null;
   amount_paid_cents: number | null;
   archived_at: string | null;
+  extended_years: number;
   created_at: string;
 };
 
@@ -52,7 +53,7 @@ export default async function AdminPage() {
     ` as unknown as Promise<UserRow[]>,
     sql()`
       SELECT p.id, p.name, o.email AS owner_email, p.paid_at, p.stripe_session_id,
-             p.amount_paid_cents, p.archived_at, p.created_at,
+             p.amount_paid_cents, p.archived_at, p.extended_years, p.created_at,
              (SELECT count(*) FROM project_members m WHERE m.project_id = p.id)::int AS member_count,
              (SELECT count(*) FROM items i WHERE i.project_id = p.id)::int AS item_count,
              (SELECT count(*) FROM items i WHERE i.project_id = p.id AND i.status = 'done')::int AS done_count

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { createProjectFromSession, stripe } from "@/lib/billing";
+import { applyExtensionFromSession, createProjectFromSession, stripe } from "@/lib/billing";
 
 /**
  * Creates the paid project when Stripe Checkout completes. Idempotent on
@@ -29,7 +29,11 @@ export async function POST(request: Request) {
     const session = event.data.object as Stripe.Checkout.Session;
     // Async payment methods can complete the session before the money clears.
     if (session.payment_status === "paid") {
-      await createProjectFromSession(session);
+      if (session.metadata?.extend_project_id) {
+        await applyExtensionFromSession(session);
+      } else {
+        await createProjectFromSession(session);
+      }
     }
   }
 

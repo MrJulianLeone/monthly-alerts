@@ -402,6 +402,21 @@ const messages = {
     it: "I progetti e le loro foto vengono conservati per due anni dal pagamento, poi eliminati automaticamente.",
     es: "Los proyectos y sus fotos se conservan durante dos años desde el pago y luego se eliminan automáticamente.",
   },
+  extend_button: {
+    en: "Extend storage {years} more years — {price}",
+    it: "Estendi l'archiviazione di altri {years} anni — {price}",
+    es: "Extiende el almacenamiento {years} años más — {price}",
+  },
+  extend_success_title: {
+    en: "Storage extended",
+    it: "Archiviazione estesa",
+    es: "Almacenamiento extendido",
+  },
+  extend_success_body: {
+    en: "Thank you — this project is now stored until {date}.",
+    it: "Grazie — questo progetto sarà ora conservato fino al {date}.",
+    es: "Gracias — este proyecto se conservará ahora hasta el {date}.",
+  },
 
   // Invite acceptance
   invite_title: { en: "You're invited", it: "Sei stato invitato", es: "Estás invitado" },
