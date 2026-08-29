@@ -26,7 +26,11 @@ export async function POST(request: Request) {
   }
 
   if (event.type === "checkout.session.completed") {
-    await createProjectFromSession(event.data.object as Stripe.Checkout.Session);
+    const session = event.data.object as Stripe.Checkout.Session;
+    // Async payment methods can complete the session before the money clears.
+    if (session.payment_status === "paid") {
+      await createProjectFromSession(session);
+    }
   }
 
   return NextResponse.json({ received: true });

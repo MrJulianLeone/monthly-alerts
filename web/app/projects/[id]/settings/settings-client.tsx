@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmingButton } from "@/components/confirming-button";
 import { LANGUAGES, langName, t, type Lang } from "@/lib/i18n";
 
 export function ProjectDetailsForm(props: {
@@ -269,16 +270,15 @@ export function ArchiveButtons({
 export function DeleteProjectButton({ projectId, lang }: { projectId: string; lang: Lang }) {
   const router = useRouter();
   return (
-    <button
+    <ConfirmingButton
+      label={t(lang, "delete_project")}
+      confirmLabel={t(lang, "confirm_delete")}
       className="btn btn-danger btn-sm"
-      onClick={async () => {
-        if (!window.confirm(t(lang, "delete_project_confirm"))) return;
+      onConfirm={async () => {
         await fetch(`/api/projects/${projectId}`, { method: "DELETE" });
         router.push("/dashboard");
         router.refresh();
       }}
-    >
-      {t(lang, "delete_project")}
-    </button>
+    />
   );
 }

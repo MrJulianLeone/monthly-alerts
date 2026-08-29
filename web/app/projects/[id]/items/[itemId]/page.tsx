@@ -33,7 +33,13 @@ type CommentRow = {
   created_at: string;
 };
 
-type PhotoRow = { id: string; url: string; uploaded_by: string | null };
+type PhotoRow = {
+  id: string;
+  url: string;
+  uploaded_by: string | null;
+  caption: string | null;
+  caption_lang: Lang | null;
+};
 
 export default async function ItemPage({
   params,
@@ -65,7 +71,8 @@ export default async function ItemPage({
       ORDER BY c.created_at
     ` as unknown as Promise<CommentRow[]>,
     sql()`
-      SELECT id, url, uploaded_by FROM photos WHERE item_id = ${itemId} ORDER BY created_at
+      SELECT id, url, uploaded_by, caption, caption_lang
+      FROM photos WHERE item_id = ${itemId} ORDER BY created_at
     ` as unknown as Promise<PhotoRow[]>,
     listMembers(id),
   ]);
@@ -74,11 +81,13 @@ export default async function ItemPage({
     { text: item.title, lang: item.source_lang },
     { text: item.description ?? "", lang: item.source_lang },
     ...comments.map((c) => ({ text: c.body, lang: c.source_lang })),
+    ...photos.map((p) => ({ text: p.caption ?? "", lang: p.caption_lang ?? lang })),
   ];
   const translated = await translateBatch(texts, lang);
   const title = translated[0];
   const description = translated[1];
-  const commentBodies = translated.slice(2);
+  const commentBodies = translated.slice(2, 2 + comments.length);
+  const photoCaptions = translated.slice(2 + comments.length);
 
   const editable = canEdit(role) && !project.archived_at;
   const owner = isOwner(role);
@@ -135,8 +144,10 @@ export default async function ItemPage({
           </h2>
           <PhotoGrid
             itemId={item.id}
-            photos={photos.map((p) => ({
-              ...p,
+            photos={photos.map((p, i) => ({
+              id: p.id,
+              url: p.url,
+              caption: photoCaptions[i] ?? "",
               canDelete: !project.archived_at && (owner || p.uploaded_by === user.id),
             }))}
             canUpload={editable}

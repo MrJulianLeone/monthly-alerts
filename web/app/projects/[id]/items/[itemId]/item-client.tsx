@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { ConfirmingButton } from "@/components/confirming-button";
 import { t, type Lang } from "@/lib/i18n";
 
 async function patchItem(itemId: string, body: Record<string, unknown>) {
@@ -45,9 +46,20 @@ export function ItemEditor(props: {
           className="space-y-4 mb-6"
           onSubmit={async (e) => {
             e.preventDefault();
+            // Only send fields that actually changed — an untouched save must
+            // not re-base the item's source language onto the viewer's.
+            const changes: Record<string, string> = {};
+            if (title.trim() !== props.title.trim()) changes.title = title;
+            if (description.trim() !== (props.description ?? "").trim()) {
+              changes.description = description;
+            }
+            if (Object.keys(changes).length === 0) {
+              setEditing(false);
+              return;
+            }
             setBusy(true);
             // The edited text becomes the new source, in the editor's language.
-            await patchItem(itemId, { title, description });
+            await patchItem(itemId, changes);
             setBusy(false);
             setEditing(false);
             router.refresh();
@@ -174,17 +186,77 @@ export function DeleteItemButton({
 }) {
   const router = useRouter();
   return (
-    <button
+    <ConfirmingButton
+      label={t(lang, "delete")}
+      confirmLabel={t(lang, "confirm_delete")}
       className="btn btn-danger btn-sm"
-      onClick={async () => {
-        if (!window.confirm(t(lang, "delete_item_confirm"))) return;
+      onConfirm={async () => {
         await fetch(`/api/items/${itemId}`, { method: "DELETE" });
         router.push(`/projects/${projectId}`);
         router.refresh();
       }}
-    >
-      {t(lang, "delete")}
-    </button>
+    />
+  );
+}
+
+/**
+ * Downscales and re-encodes an image to JPEG in the browser before upload:
+ * keeps every upload under Vercel's request-size limit and converts HEIC
+ * (which Safari can decode natively) into a format every browser displays.
+ */
+async function toUploadableJpeg(file: File): Promise<Blob | null> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const MAX = 1600;
+    const scale = Math.min(1, MAX / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    return await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob(resolve, "image/jpeg", 0.85)
+    );
+  } catch {
+    return null;
+  }
+}
+
+function PhotoCaption({
+  photoId,
+  caption,
+  editable,
+  lang,
+}: {
+  photoId: string;
+  caption: string;
+  editable: boolean;
+  lang: Lang;
+}) {
+  const router = useRouter();
+  const [value, setValue] = useState(caption);
+
+  if (!editable) {
+    return caption ? (
+      <p className="text-xs text-ink-soft px-2 py-1.5 border-t border-line">{caption}</p>
+    ) : null;
+  }
+  return (
+    <input
+      className="w-full text-xs text-ink-soft px-2 py-1.5 border-t border-line bg-transparent focus:outline-none focus:bg-paper placeholder:text-ink-faint no-print"
+      placeholder={t(lang, "caption_placeholder")}
+      value={value}
+      onChange={(e) => setValue(e.target.value)}
+      onBlur={async () => {
+        if (value.trim() === caption.trim()) return;
+        await fetch(`/api/photos/${photoId}`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ caption: value }),
+        });
+        router.refresh();
+      }}
+    />
   );
 }
 
@@ -195,7 +267,7 @@ export function PhotoGrid({
   lang,
 }: {
   itemId: string;
-  photos: { id: string; url: string; canDelete: boolean }[];
+  photos: { id: string; url: string; caption: string; canDelete: boolean }[];
   canUpload: boolean;
   lang: Lang;
 }) {
@@ -211,11 +283,12 @@ export function PhotoGrid({
           <div key={p.id} className="relative group border-[1.5px] border-line-strong rounded-[2px] overflow-hidden">
             <a href={p.url} target="_blank" rel="noreferrer">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={p.url} alt="" className="w-full h-36 object-cover" />
+              <img src={p.url} alt={p.caption} loading="lazy" className="w-full h-36 object-cover" />
             </a>
+            <PhotoCaption photoId={p.id} caption={p.caption} editable={p.canDelete} lang={lang} />
             {p.canDelete && (
               <button
-                className="absolute top-1.5 right-1.5 bg-ink/80 text-white text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded-[2px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer"
+                className="absolute top-1.5 right-1.5 bg-ink/80 text-white text-[10px] font-mono uppercase tracking-widest px-2 py-1 rounded-[2px] opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer no-print"
                 onClick={async () => {
                   await fetch(`/api/photos/${p.id}`, { method: "DELETE" });
                   router.refresh();
@@ -230,7 +303,7 @@ export function PhotoGrid({
           <button
             disabled={busy}
             onClick={() => fileRef.current?.click()}
-            className="h-36 border-2 border-dashed border-line-strong rounded-[2px] flex flex-col items-center justify-center gap-1 text-ink-faint hover:border-ink hover:text-ink transition-colors cursor-pointer"
+            className="no-print h-36 border-2 border-dashed border-line-strong rounded-[2px] flex flex-col items-center justify-center gap-1 text-ink-faint hover:border-ink hover:text-ink transition-colors cursor-pointer"
           >
             <span className="text-2xl leading-none">+</span>
             <span className="microlabel">{busy ? "…" : t(lang, "add_photo")}</span>
@@ -241,15 +314,22 @@ export function PhotoGrid({
       <input
         ref={fileRef}
         type="file"
-        accept="image/jpeg,image/png,image/webp,image/heic"
+        accept="image/*,image/heic"
         className="hidden"
         onChange={async (e) => {
           const file = e.target.files?.[0];
           if (!file) return;
           setBusy(true);
           setError(null);
+          const jpeg = await toUploadableJpeg(file);
+          if (!jpeg) {
+            setBusy(false);
+            e.target.value = "";
+            setError(t(lang, "photo_unsupported"));
+            return;
+          }
           const form = new FormData();
-          form.append("file", file);
+          form.append("file", new File([jpeg], "photo.jpg", { type: "image/jpeg" }));
           const res = await fetch(`/api/items/${itemId}/photos`, { method: "POST", body: form });
           setBusy(false);
           e.target.value = "";

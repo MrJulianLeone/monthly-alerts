@@ -31,11 +31,29 @@ export async function PATCH(
   const actual = money(body.actual);
   const touchesMoney = "budget" in body || "actual" in body;
 
-  // Budget and actual are owner-only; renaming is open to editors.
+  // Budget and actual are owner-only; renaming and reordering are open to editors.
   const auth = await requireProject(projectId, touchesMoney ? "owner" : "editor", {
     write: true,
   });
   if ("response" in auth) return auth.response;
+
+  if (body.move === "up" || body.move === "down") {
+    const siblings = (await sql()`
+      SELECT id FROM sections WHERE project_id = ${projectId}
+      ORDER BY position, created_at
+    `) as { id: string }[];
+    const idx = siblings.findIndex((s) => s.id === id);
+    const swap = body.move === "up" ? idx - 1 : idx + 1;
+    if (idx !== -1 && swap >= 0 && swap < siblings.length) {
+      [siblings[idx], siblings[swap]] = [siblings[swap], siblings[idx]];
+      await Promise.all(
+        siblings.map(
+          (s, i) => sql()`UPDATE sections SET position = ${i} WHERE id = ${s.id}`
+        )
+      );
+    }
+    return NextResponse.json({ ok: true });
+  }
 
   if (touchesMoney) {
     await sql()`

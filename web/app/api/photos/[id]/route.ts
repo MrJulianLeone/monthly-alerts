@@ -3,6 +3,35 @@ import { del } from "@vercel/blob";
 import { jsonError, requireProject } from "@/lib/api";
 import { sql } from "@/lib/db";
 
+/** Caption edit: uploader or owner. The caption is translatable content. */
+export async function PATCH(
+  request: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const rows = (await sql()`
+    SELECT project_id, uploaded_by FROM photos WHERE id = ${id}
+  `) as { project_id: string; uploaded_by: string | null }[];
+  if (rows.length === 0) return jsonError("Not found", 404);
+
+  const auth = await requireProject(rows[0].project_id, "editor", { write: true });
+  if ("response" in auth) return auth.response;
+  if (auth.role !== "owner" && auth.user.id !== rows[0].uploaded_by) {
+    return jsonError("Forbidden", 403);
+  }
+
+  const body = await request.json().catch(() => ({}));
+  const caption =
+    typeof body.caption === "string" ? body.caption.trim().slice(0, 300) : "";
+  await sql()`
+    UPDATE photos
+    SET caption = ${caption || null},
+        caption_lang = ${caption ? auth.user.preferred_language : null}
+    WHERE id = ${id}
+  `;
+  return NextResponse.json({ ok: true });
+}
+
 /** Uploaders can delete their own photos; owners can delete any. */
 export async function DELETE(
   _request: Request,

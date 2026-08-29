@@ -22,6 +22,7 @@
     "stripe": "^22.3.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.1.10",
     "@types/node": "^22",
     "@types/pg": "^8.15.4",

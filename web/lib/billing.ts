@@ -43,9 +43,11 @@ export async function createProjectFromSession(
   if (existing.length > 0) return existing[0].id;
 
   const rows = (await sql()`
-    INSERT INTO projects (name, name_lang, address, description, owner_id, paid_at, stripe_session_id)
+    INSERT INTO projects (name, name_lang, address, description, owner_id, paid_at,
+                          stripe_session_id, amount_paid_cents)
     VALUES (${meta.name}, ${meta.name_lang ?? "en"}, ${meta.address || null},
-            ${meta.description || null}, ${meta.user_id}, now(), ${session.id})
+            ${meta.description || null}, ${meta.user_id}, now(), ${session.id},
+            ${session.amount_total ?? null})
     RETURNING id
   `) as { id: string }[];
   await sql()`

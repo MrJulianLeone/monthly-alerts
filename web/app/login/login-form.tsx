@@ -11,6 +11,7 @@ const ERROR_KEYS: Record<string, MessageKey> = {
   unverified: "error_unverified",
   account_exists: "error_account_exists",
   password_too_short: "password_too_short",
+  too_many: "error_too_many",
 };
 
 export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
@@ -21,6 +22,7 @@ export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [verifySent, setVerifySent] = useState(false);
+  const [unverified, setUnverified] = useState(false);
 
   if (verifySent) {
     return (
@@ -65,6 +67,7 @@ export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
             router.refresh();
           } else {
             setBusy(false);
+            setUnverified(data.error === "unverified");
             const key = ERROR_KEYS[data.error as string];
             setError(key ? t(lang, key) : t(lang, "error_generic"));
           }
@@ -106,6 +109,26 @@ export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
         />
         {mode === "signup" && <p className="microlabel mb-3">{t(lang, "password_hint")}</p>}
         {error && <p className="text-sm text-accent-deep my-3">{error}</p>}
+        {unverified && (
+          <button
+            type="button"
+            disabled={busy}
+            className="text-sm underline hover:text-ink cursor-pointer mb-2"
+            onClick={async () => {
+              setBusy(true);
+              // Re-signing up on an unverified account re-sends the link.
+              const res = await fetch("/api/auth/signup", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, lang }),
+              });
+              setBusy(false);
+              if (res.ok) setVerifySent(true);
+            }}
+          >
+            {t(lang, "resend_verification")}
+          </button>
+        )}
         <button type="submit" disabled={busy} className="btn btn-primary w-full mt-3">
           {t(lang, mode === "login" ? "login_submit" : "signup_submit")}
         </button>

@@ -19,6 +19,7 @@
   --color-sheet: #ffffff;
   --color-ink: #1c1917;
   --color-ink-soft: #57534e;
+  --color-ink-mid: #78716c;
   --color-ink-faint: #a8a29e;
   --color-line: #e7e5e4;
   --color-line-strong: #d6d3d1;
@@ -44,12 +45,13 @@ body {
 
 @layer components {
   /* Title-block micro label: uppercase, tracked, mono */
+  /* WCAG AA: #78716c on paper passes for the small mono labels. */
   .microlabel {
     font-family: var(--font-mono-stack);
     font-size: 0.6875rem;
     letter-spacing: 0.14em;
     text-transform: uppercase;
-    color: var(--color-ink-faint);
+    color: var(--color-ink-mid);
   }
 
   .display {

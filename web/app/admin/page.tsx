@@ -32,6 +32,7 @@ type ProjectRow = {
   done_count: number;
   paid_at: string | null;
   stripe_session_id: string | null;
+  amount_paid_cents: number | null;
   archived_at: string | null;
   created_at: string;
 };
@@ -50,7 +51,7 @@ export default async function AdminPage() {
     ` as unknown as Promise<UserRow[]>,
     sql()`
       SELECT p.id, p.name, o.email AS owner_email, p.paid_at, p.stripe_session_id,
-             p.archived_at, p.created_at,
+             p.amount_paid_cents, p.archived_at, p.created_at,
              (SELECT count(*) FROM project_members m WHERE m.project_id = p.id)::int AS member_count,
              (SELECT count(*) FROM items i WHERE i.project_id = p.id)::int AS item_count,
              (SELECT count(*) FROM items i WHERE i.project_id = p.id AND i.status = 'done')::int AS done_count
@@ -62,6 +63,12 @@ export default async function AdminPage() {
   const payments = projects.filter((p) => p.paid_at);
   const fmt = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" });
   const price = Number(PROJECT_PRICE_DISPLAY.replace(/[^0-9.]/g, ""));
+  const revenue =
+    payments.reduce((sum, p) => sum + (p.amount_paid_cents ?? price * 100), 0) / 100;
+  const amountOf = (p: ProjectRow) =>
+    p.amount_paid_cents !== null
+      ? `$${(p.amount_paid_cents / 100).toLocaleString()}`
+      : PROJECT_PRICE_DISPLAY;
 
   const stat = (label: string, value: string | number) => (
     <div className="bg-sheet p-6">
@@ -81,7 +88,7 @@ export default async function AdminPage() {
           {stat("Users", users.length)}
           {stat("Projects", projects.length)}
           {stat("Payments", payments.length)}
-          {stat("Revenue", `$${(payments.length * price).toLocaleString()}`)}
+          {stat("Revenue", `$${revenue.toLocaleString()}`)}
         </div>
 
         <h2 className="display text-2xl border-b-2 border-ink pb-2 mb-3">
@@ -173,7 +180,7 @@ export default async function AdminPage() {
                     <td className="py-2.5 pr-4">{fmt.format(new Date(p.paid_at!))}</td>
                     <td className="py-2.5 pr-4 font-medium">{p.name}</td>
                     <td className="py-2.5 pr-4 text-ink-soft">{p.owner_email}</td>
-                    <td className="py-2.5 pr-4">{PROJECT_PRICE_DISPLAY}</td>
+                    <td className="py-2.5 pr-4">{amountOf(p)}</td>
                     <td className="py-2.5 font-mono text-xs text-ink-faint">
                       {p.stripe_session_id ?? "—"}
                     </td>

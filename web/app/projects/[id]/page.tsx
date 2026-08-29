@@ -14,13 +14,16 @@ import {
   listSections,
 } from "@/lib/projects";
 import { translateBatch, type Translatable } from "@/lib/translate";
+import { TEMPLATE_SECTIONS } from "@/lib/templates";
 import {
   AddItemForm,
   AddSectionForm,
+  ItemMove,
   PrintButton,
   SectionBudget,
   SectionTools,
   StatusCheckbox,
+  TemplateButton,
 } from "./checklist";
 
 export const dynamic = "force-dynamic";
@@ -30,7 +33,7 @@ export default async function ProjectPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ lang?: string }>;
+  searchParams: Promise<{ lang?: string; mine?: string }>;
 }) {
   const { id } = await params;
   const { user, lang: userLang } = await requireOnboardedUser(`/projects/${id}`);
@@ -40,10 +43,12 @@ export default async function ProjectPage({
   if (!role || !project) notFound();
 
   // Owners can preview the checklist as members in another language see it.
-  const requested = (await searchParams).lang;
+  const sp = await searchParams;
+  const requested = sp.lang;
   const previewLang =
     role === "owner" && isLang(requested) && requested !== userLang ? requested : null;
   const lang = previewLang ?? userLang;
+  const mineOnly = sp.mine === "1";
 
   const [sections, items, members] = await Promise.all([
     listSections(id),
@@ -132,7 +137,17 @@ export default async function ProjectPage({
             )}
           </div>
           <div className="no-print flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-line">
-            <PrintButton label={t(lang, "print")} />
+            <div className="flex items-center gap-2">
+              <PrintButton label={t(lang, "print")} />
+              {items.some((i) => i.assignee_id === user.id) && (
+                <Link
+                  href={mineOnly ? `/projects/${id}` : `/projects/${id}?mine=1`}
+                  className={`btn btn-sm ${mineOnly ? "btn-primary" : "btn-ghost"}`}
+                >
+                  {t(lang, "my_items")} · {items.filter((i) => i.assignee_id === user.id).length}
+                </Link>
+              )}
+            </div>
             {owner && (
               <div className="flex items-center gap-2">
                 <span className="microlabel">{t(lang, "preview_language")}:</span>
@@ -172,7 +187,9 @@ export default async function ProjectPage({
           {sections.map((section, si) => {
             const sectionItems = items
               .map((item, ii) => ({ item, title: itemTitles[ii] }))
-              .filter(({ item }) => item.section_id === section.id);
+              .filter(({ item }) => item.section_id === section.id)
+              .filter(({ item }) => !mineOnly || item.assignee_id === user.id);
+            if (mineOnly && sectionItems.length === 0) return null;
             return (
               <section key={section.id}>
                 <div className="flex items-center justify-between border-b-2 border-ink pb-2 mb-1">
@@ -185,7 +202,16 @@ export default async function ProjectPage({
                       {sectionItems.filter(({ item }) => item.status === "done").length}/
                       {sectionItems.length}
                     </span>
-                    {editable && <SectionTools sectionId={section.id} isOwner={owner} lang={lang} />}
+                    {editable && (
+                      <SectionTools
+                        sectionId={section.id}
+                        name={sectionNames[si]}
+                        isOwner={owner}
+                        isFirst={si === 0}
+                        isLast={si === sections.length - 1}
+                        lang={lang}
+                      />
+                    )}
                   </div>
                 </div>
                 <SectionBudget
@@ -200,7 +226,7 @@ export default async function ProjectPage({
                   {sectionItems.length === 0 && !editable && (
                     <li className="py-3 text-sm text-ink-faint">{t(lang, "no_items_yet")}</li>
                   )}
-                  {sectionItems.map(({ item, title }) => {
+                  {sectionItems.map(({ item, title }, ri) => {
                     const overdue =
                       item.due_date !== null && item.due_date < today && item.status !== "done";
                     return (
@@ -210,6 +236,14 @@ export default async function ProjectPage({
                           status={item.status}
                           disabled={!editable}
                         />
+                        {editable && !mineOnly && (
+                          <ItemMove
+                            itemId={item.id}
+                            isFirst={ri === 0}
+                            isLast={ri === sectionItems.length - 1}
+                            lang={lang}
+                          />
+                        )}
                         <Link
                           href={`/projects/${id}/items/${item.id}`}
                           className="flex-1 min-w-0 flex items-center gap-3"
@@ -267,7 +301,14 @@ export default async function ProjectPage({
         </div>
 
         {editable && (
-          <div className="no-print mt-10">
+          <div className="no-print mt-10 space-y-3">
+            {sections.length === 0 && (
+              <TemplateButton
+                projectId={id}
+                sections={TEMPLATE_SECTIONS[userLang]}
+                lang={lang}
+              />
+            )}
             <AddSectionForm projectId={id} lang={lang} />
           </div>
         )}

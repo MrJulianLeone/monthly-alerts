@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { ConfirmingButton } from "@/components/confirming-button";
 import { locale, t, type Lang } from "@/lib/i18n";
 
 /**
@@ -283,46 +284,186 @@ export function AddSectionForm({ projectId, lang }: { projectId: string; lang: L
   );
 }
 
-/** Rename (editors) and delete (owners) for a section header. */
+/** Rename, reorder (editors) and delete (owners) for a section header. */
 export function SectionTools({
   sectionId,
+  name,
   isOwner,
+  isFirst,
+  isLast,
   lang,
 }: {
   sectionId: string;
+  name: string;
   isOwner: boolean;
+  isFirst: boolean;
+  isLast: boolean;
   lang: Lang;
 }) {
   const router = useRouter();
-  return (
-    <span className="no-print flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 sm:opacity-100">
-      <button
-        className="microlabel hover:text-ink cursor-pointer"
-        onClick={async () => {
-          const name = window.prompt(t(lang, "section_name_placeholder"));
-          if (!name?.trim()) return;
+  const [renaming, setRenaming] = useState(false);
+  const [value, setValue] = useState(name);
+
+  const move = async (direction: "up" | "down") => {
+    await fetch(`/api/sections/${sectionId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ move: direction }),
+    });
+    router.refresh();
+  };
+
+  if (renaming) {
+    return (
+      <form
+        className="no-print flex items-center gap-2"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!value.trim()) return;
           await fetch(`/api/sections/${sectionId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
+            body: JSON.stringify({ name: value }),
           });
+          setRenaming(false);
           router.refresh();
         }}
+      >
+        <input
+          autoFocus
+          className="input !w-48 !py-1 text-sm"
+          value={value}
+          onChange={(e) => setValue(e.target.value)}
+        />
+        <button type="submit" className="microlabel hover:text-ink cursor-pointer uppercase">
+          {t(lang, "save")}
+        </button>
+        <button
+          type="button"
+          className="microlabel hover:text-ink cursor-pointer uppercase"
+          onClick={() => {
+            setValue(name);
+            setRenaming(false);
+          }}
+        >
+          {t(lang, "cancel")}
+        </button>
+      </form>
+    );
+  }
+
+  return (
+    <span className="no-print flex items-center gap-2 opacity-0 group-hover:opacity-100 focus-within:opacity-100 sm:opacity-100">
+      {!isFirst && (
+        <button
+          className="microlabel hover:text-ink cursor-pointer"
+          title={t(lang, "move_up")}
+          onClick={() => move("up")}
+        >
+          ↑
+        </button>
+      )}
+      {!isLast && (
+        <button
+          className="microlabel hover:text-ink cursor-pointer"
+          title={t(lang, "move_down")}
+          onClick={() => move("down")}
+        >
+          ↓
+        </button>
+      )}
+      <button
+        className="microlabel hover:text-ink cursor-pointer"
+        onClick={() => setRenaming(true)}
       >
         {t(lang, "edit")}
       </button>
       {isOwner && (
-        <button
+        <ConfirmingButton
+          label={t(lang, "delete")}
+          confirmLabel={t(lang, "confirm_delete")}
           className="microlabel text-red-700 hover:text-red-900 cursor-pointer"
-          onClick={async () => {
-            if (!window.confirm(t(lang, "delete_item_confirm"))) return;
+          onConfirm={async () => {
             await fetch(`/api/sections/${sectionId}`, { method: "DELETE" });
             router.refresh();
           }}
-        >
-          {t(lang, "delete")}
-        </button>
+        />
       )}
     </span>
+  );
+}
+
+/** Reorder arrows for an item row (editors). */
+export function ItemMove({
+  itemId,
+  isFirst,
+  isLast,
+  lang,
+}: {
+  itemId: string;
+  isFirst: boolean;
+  isLast: boolean;
+  lang: Lang;
+}) {
+  const router = useRouter();
+  const move = async (direction: "up" | "down") => {
+    await fetch(`/api/items/${itemId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ move: direction }),
+    });
+    router.refresh();
+  };
+  return (
+    <span className="no-print shrink-0 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+      <button
+        className={`microlabel cursor-pointer ${isFirst ? "invisible" : "hover:text-ink"}`}
+        title={t(lang, "move_up")}
+        onClick={() => move("up")}
+      >
+        ↑
+      </button>
+      <button
+        className={`microlabel cursor-pointer ${isLast ? "invisible" : "hover:text-ink"}`}
+        title={t(lang, "move_down")}
+        onClick={() => move("down")}
+      >
+        ↓
+      </button>
+    </span>
+  );
+}
+
+/** One-click standard construction sections for an empty checklist. */
+export function TemplateButton({
+  projectId,
+  sections,
+  lang,
+}: {
+  projectId: string;
+  sections: string[];
+  lang: Lang;
+}) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  return (
+    <button
+      disabled={busy}
+      className="btn btn-ghost"
+      onClick={async () => {
+        setBusy(true);
+        for (const name of sections) {
+          await fetch(`/api/projects/${projectId}/sections`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ name }),
+          });
+        }
+        setBusy(false);
+        router.refresh();
+      }}
+    >
+      {busy ? "…" : `⚏ ${t(lang, "template_button")}`}
+    </button>
   );
 }

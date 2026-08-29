@@ -39,6 +39,11 @@ const button = (href: string, label: string) => `
 <a href="${href}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">${label}</a>`;
 
 async function send(to: string, subject: string, html: string) {
+  // Test/CI hook: log instead of sending (EMAIL_DISABLED=true).
+  if (process.env.EMAIL_DISABLED === "true") {
+    console.log(`[email disabled] to=${to} subject=${subject}`);
+    return null;
+  }
   // The Resend SDK reports failures via the error field instead of throwing —
   // without this check, failed sends would look like successes to callers.
   const { data, error } = await resend().emails.send({ from: from(), to, subject, html });
@@ -82,6 +87,86 @@ export async function sendPasswordResetEmail(to: string, token: string, lang: La
       <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_reset_body")}</p>
       <p style="margin:24px 0">${button(link, t(lang, "email_reset_button"))}</p>
       <p style="font-size:13px;color:#78716c">${t(lang, "email_ignore")}</p>
+      `,
+      lang
+    )
+  );
+}
+
+/** Anti-enumeration signup notice: the address already has an account. */
+export async function sendAccountExistsEmail(to: string, lang: Lang) {
+  await send(
+    to,
+    t(lang, "email_exists_subject"),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 16px">${t(lang, "email_exists_subject")}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_exists_body")}</p>
+      <p style="margin:24px 0">${button(`${appUrl()}/login`, t(lang, "log_in"))}</p>
+      `,
+      lang
+    )
+  );
+}
+
+/** Task assignment notice, in the assignee's language. */
+export async function sendAssignmentEmail(
+  to: string,
+  lang: Lang,
+  data: {
+    assignerName: string;
+    projectName: string; // translated
+    itemTitle: string; // translated
+    projectId: string;
+    itemId: string;
+    dueDate: string | null; // localized display string
+  }
+) {
+  await send(
+    to,
+    t(lang, "email_assign_subject", { project: data.projectName, item: data.itemTitle }),
+    wrapper(
+      `
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_assign_body", {
+        assigner: escapeHtml(data.assignerName),
+        project: escapeHtml(data.projectName),
+      })}</p>
+      <p style="font-size:18px;font-weight:600;margin:16px 0">${escapeHtml(data.itemTitle)}</p>
+      ${
+        data.dueDate
+          ? `<p style="font-size:14px;color:#78716c">${t(lang, "email_assign_due", { date: data.dueDate })}</p>`
+          : ""
+      }
+      <p style="margin:24px 0">${button(
+        `${appUrl()}/projects/${data.projectId}/items/${data.itemId}`,
+        t(lang, "email_assign_button")
+      )}</p>
+      `,
+      lang
+    )
+  );
+}
+
+/** 30-day storage-expiration warning to the project owner. */
+export async function sendExpiryWarningEmail(
+  to: string,
+  lang: Lang,
+  data: { projectName: string; projectId: string; date: string }
+) {
+  await send(
+    to,
+    t(lang, "email_expiry_subject", { project: data.projectName, date: data.date }),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 16px">${escapeHtml(data.projectName)}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_expiry_body", {
+        project: escapeHtml(data.projectName),
+        date: data.date,
+      })}</p>
+      <p style="margin:24px 0">${button(
+        `${appUrl()}/projects/${data.projectId}`,
+        t(lang, "email_monthly_open_project")
+      )}</p>
       `,
       lang
     )

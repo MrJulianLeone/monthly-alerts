@@ -269,6 +269,71 @@ const messages = {
   },
   preview_exit: { en: "Back to my language", it: "Torna alla mia lingua", es: "Volver a mi idioma" },
 
+  error_too_many: {
+    en: "Too many attempts. Please wait a few minutes and try again.",
+    it: "Troppi tentativi. Attendi qualche minuto e riprova.",
+    es: "Demasiados intentos. Espera unos minutos e inténtalo de nuevo.",
+  },
+  resend_verification: {
+    en: "Resend confirmation email",
+    it: "Reinvia email di conferma",
+    es: "Reenviar correo de confirmación",
+  },
+  my_items: { en: "My items", it: "Le mie voci", es: "Mis tareas" },
+  all_items: { en: "All items", it: "Tutte le voci", es: "Todas las tareas" },
+  confirm_delete: { en: "Confirm delete", it: "Conferma eliminazione", es: "Confirmar eliminación" },
+  move_up: { en: "Move up", it: "Sposta su", es: "Subir" },
+  move_down: { en: "Move down", it: "Sposta giù", es: "Bajar" },
+  template_button: {
+    en: "Start from standard sections",
+    it: "Parti dalle sezioni standard",
+    es: "Empezar con secciones estándar",
+  },
+  caption_placeholder: { en: "Add caption…", it: "Aggiungi didascalia…", es: "Añadir leyenda…" },
+  photo_unsupported: {
+    en: "This image format isn't supported by your browser.",
+    it: "Questo formato immagine non è supportato dal tuo browser.",
+    es: "Tu navegador no admite este formato de imagen.",
+  },
+
+  // Emails: account exists (anti-enumeration signup notice)
+  email_exists_subject: {
+    en: "You already have a MonthlyAlerts account",
+    it: "Hai già un account MonthlyAlerts",
+    es: "Ya tienes una cuenta de MonthlyAlerts",
+  },
+  email_exists_body: {
+    en: "Someone (probably you) tried to sign up with this email, but an account already exists. Log in with your password, or reset it if you've forgotten it. If this wasn't you, you can ignore this email.",
+    it: "Qualcuno (probabilmente tu) ha provato a registrarsi con questa email, ma esiste già un account. Accedi con la tua password, oppure reimpostala se l'hai dimenticata. Se non sei stato tu, puoi ignorare questa email.",
+    es: "Alguien (probablemente tú) intentó registrarse con este correo, pero ya existe una cuenta. Inicia sesión con tu contraseña o restablécela si la olvidaste. Si no fuiste tú, puedes ignorar este correo.",
+  },
+
+  // Emails: task assignment
+  email_assign_subject: {
+    en: "New task on {project}: {item}",
+    it: "Nuovo compito su {project}: {item}",
+    es: "Nueva tarea en {project}: {item}",
+  },
+  email_assign_body: {
+    en: "{assigner} assigned you a checklist item on \"{project}\":",
+    it: "{assigner} ti ha assegnato una voce della lista su \"{project}\":",
+    es: "{assigner} te asignó una tarea de la lista en \"{project}\":",
+  },
+  email_assign_due: { en: "Due: {date}", it: "Scadenza: {date}", es: "Vence: {date}" },
+  email_assign_button: { en: "Open item", it: "Apri voce", es: "Abrir tarea" },
+
+  // Emails: expiration warning
+  email_expiry_subject: {
+    en: "\"{project}\" will be deleted on {date}",
+    it: "\"{project}\" sarà eliminato il {date}",
+    es: "\"{project}\" se eliminará el {date}",
+  },
+  email_expiry_body: {
+    en: "Your project \"{project}\" reaches the end of its two-year storage period on {date}. On that date the project — checklist, comments, budgets, and photos — will be permanently deleted. Print the checklist or save anything you need to keep before then.",
+    it: "Il tuo progetto \"{project}\" raggiunge la fine del periodo di conservazione di due anni il {date}. In quella data il progetto — lista, commenti, budget e foto — sarà eliminato definitivamente. Stampa la lista o salva ciò che ti serve prima di allora.",
+    es: "Tu proyecto \"{project}\" llega al final de su período de almacenamiento de dos años el {date}. En esa fecha el proyecto — lista, comentarios, presupuestos y fotos — se eliminará permanentemente. Imprime la lista o guarda lo que necesites antes.",
+  },
+
   // Budgets
   budget_label: { en: "Budget", it: "Budget", es: "Presupuesto" },
   actual_label: { en: "Actual", it: "Effettivo", es: "Real" },

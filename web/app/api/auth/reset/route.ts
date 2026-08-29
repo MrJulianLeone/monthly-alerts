@@ -7,12 +7,16 @@ import {
   startSession,
 } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { rateLimited } from "@/lib/rate-limit";
 
 /**
  * Completes a password reset. Using the emailed token also proves control of
  * the address, so it verifies the email and signs the user straight in.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimited("reset", 10, 15);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => ({}));
   const token = typeof body.token === "string" ? body.token : "";
   const password = typeof body.password === "string" ? body.password : "";

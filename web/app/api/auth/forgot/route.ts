@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createEmailToken, findUserByEmail } from "@/lib/auth";
 import { sendPasswordResetEmail } from "@/lib/email";
 import { DEFAULT_LANG, isLang } from "@/lib/i18n";
+import { rateLimited } from "@/lib/rate-limit";
 
 /**
  * Password reset request. Always answers ok so the endpoint can't be used to
@@ -9,6 +10,9 @@ import { DEFAULT_LANG, isLang } from "@/lib/i18n";
  * accounts that never had a password.
  */
 export async function POST(request: Request) {
+  const limited = await rateLimited("forgot", 5, 15);
+  if (limited) return limited;
+
   const body = await request.json().catch(() => ({}));
   const email = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   const lang = isLang(body.lang) ? body.lang : DEFAULT_LANG;

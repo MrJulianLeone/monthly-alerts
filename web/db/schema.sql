@@ -147,6 +147,13 @@ CREATE TABLE IF NOT EXISTS photos (
   created_at   timestamptz NOT NULL DEFAULT now()
 );
 
+-- Fixed-window rate limiting for auth endpoints (key = bucket:ip).
+CREATE TABLE IF NOT EXISTS rate_limits (
+  key          text PRIMARY KEY,
+  count        int NOT NULL DEFAULT 0,
+  window_start timestamptz NOT NULL DEFAULT now()
+);
+
 -- ---------------------------------------------------------------------------
 -- Translation cache. Content-addressed: the key is a hash of the source
 -- language + source text, so an edit produces a new hash and stale
@@ -174,6 +181,8 @@ ALTER TABLE invites ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'en'
 ALTER TABLE sections ADD COLUMN IF NOT EXISTS budget numeric(14,2);
 ALTER TABLE sections ADD COLUMN IF NOT EXISTS actual numeric(14,2);
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'USD';
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS amount_paid_cents int;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS expiry_warned_at timestamptz;
 
 -- Accounts created in the magic-link era proved their email by logging in;
 -- new password signups have a password_hash and stay unverified until the
