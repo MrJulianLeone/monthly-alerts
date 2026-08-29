@@ -4,7 +4,7 @@ import { AppHeader } from "@/components/app-header";
 import { sql } from "@/lib/db";
 import { t, type Lang, locale } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
-import { getMembership, getProject, listMembers, projectExpiresAt } from "@/lib/projects";
+import { CURRENCIES, getMembership, getProject, listMembers, projectExpiresAt } from "@/lib/projects";
 import {
   ArchiveButtons,
   DeleteProjectButton,
@@ -56,6 +56,8 @@ export default async function ProjectSettingsPage({
             name={project.name}
             address={project.address ?? ""}
             description={project.description ?? ""}
+            currency={project.currency}
+            currencies={CURRENCIES}
             lang={lang}
           />
         </div>

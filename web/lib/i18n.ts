@@ -269,6 +269,13 @@ const messages = {
   },
   preview_exit: { en: "Back to my language", it: "Torna alla mia lingua", es: "Volver a mi idioma" },
 
+  // Budgets
+  budget_label: { en: "Budget", it: "Budget", es: "Presupuesto" },
+  actual_label: { en: "Actual", it: "Effettivo", es: "Real" },
+  budget_set: { en: "Set budget", it: "Imposta budget", es: "Definir presupuesto" },
+  currency_label: { en: "Currency", it: "Valuta", es: "Moneda" },
+  over_budget: { en: "over budget", it: "oltre il budget", es: "sobre el presupuesto" },
+
   // Item detail
   item_details: { en: "Details", it: "Dettagli", es: "Detalles" },
   field_status: { en: "Status", it: "Stato", es: "Estado" },

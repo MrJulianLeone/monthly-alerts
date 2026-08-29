@@ -56,6 +56,7 @@ CREATE TABLE IF NOT EXISTS projects (
   address           text,
   description       text,
   owner_id          uuid NOT NULL REFERENCES users(id),
+  currency          text NOT NULL DEFAULT 'USD',    -- for section budgets
   paid_at           timestamptz,                    -- null while billing is disabled
   stripe_session_id text,
   archived_at       timestamptz,
@@ -98,6 +99,8 @@ CREATE TABLE IF NOT EXISTS sections (
   project_id uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
   name       text NOT NULL,
   name_lang  text NOT NULL DEFAULT 'en',
+  budget     numeric(14,2),                         -- owner-set, per category
+  actual     numeric(14,2),                         -- owner-set, per category
   position   int NOT NULL DEFAULT 0,
   created_by uuid REFERENCES users(id),
   created_at timestamptz NOT NULL DEFAULT now()
@@ -168,6 +171,9 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash text;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS email_verified_at timestamptz;
 ALTER TABLE login_tokens ADD COLUMN IF NOT EXISTS purpose text NOT NULL DEFAULT 'verify';
 ALTER TABLE invites ADD COLUMN IF NOT EXISTS language text NOT NULL DEFAULT 'en';
+ALTER TABLE sections ADD COLUMN IF NOT EXISTS budget numeric(14,2);
+ALTER TABLE sections ADD COLUMN IF NOT EXISTS actual numeric(14,2);
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'USD';
 
 -- Accounts created in the magic-link era proved their email by logging in;
 -- new password signups have a password_hash and stay unverified until the

@@ -14,10 +14,14 @@ export type Project = {
   address: string | null;
   description: string | null;
   owner_id: string;
+  currency: string;
   paid_at: string | null;
   archived_at: string | null;
   created_at: string;
 };
+
+/** Currencies offered for section budgets. */
+export const CURRENCIES = ["USD", "EUR", "GBP", "CAD", "MXN"] as const;
 
 /**
  * Storage policy (disclosed on the site before payment): projects and their
@@ -48,6 +52,8 @@ export type Section = {
   id: string;
   name: string;
   name_lang: Lang;
+  budget: string | null; // numeric comes back as string
+  actual: string | null;
   position: number;
 };
 
@@ -83,7 +89,7 @@ export async function getMembership(
 
 export async function getProject(projectId: string): Promise<Project | null> {
   const rows = (await sql()`
-    SELECT id, name, name_lang, address, description, owner_id, paid_at, archived_at, created_at
+    SELECT id, name, name_lang, address, description, owner_id, currency, paid_at, archived_at, created_at
     FROM projects WHERE id = ${projectId}
   `) as Project[];
   return rows[0] ?? null;
@@ -106,7 +112,7 @@ export async function listProjectsForUser(userId: string) {
 
 export async function listSections(projectId: string): Promise<Section[]> {
   return (await sql()`
-    SELECT id, name, name_lang, position FROM sections
+    SELECT id, name, name_lang, budget::text, actual::text, position FROM sections
     WHERE project_id = ${projectId}
     ORDER BY position, created_at
   `) as Section[];

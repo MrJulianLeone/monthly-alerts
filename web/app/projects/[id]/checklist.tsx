@@ -2,7 +2,129 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { t, type Lang } from "@/lib/i18n";
+import { locale, t, type Lang } from "@/lib/i18n";
+
+/**
+ * Per-section budget vs. actual. Everyone sees the figures; only the owner
+ * gets the inline editor. Actuals above budget render in red.
+ */
+export function SectionBudget({
+  sectionId,
+  budget,
+  actual,
+  currency,
+  isOwner,
+  lang,
+}: {
+  sectionId: string;
+  budget: string | null;
+  actual: string | null;
+  currency: string;
+  isOwner: boolean;
+  lang: Lang;
+}) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [budgetVal, setBudgetVal] = useState(budget ?? "");
+  const [actualVal, setActualVal] = useState(actual ?? "");
+  const [busy, setBusy] = useState(false);
+
+  const fmt = new Intl.NumberFormat(locale(lang), {
+    style: "currency",
+    currency,
+    maximumFractionDigits: 0,
+  });
+  const b = budget !== null ? Number(budget) : null;
+  const a = actual !== null ? Number(actual) : null;
+  const over = b !== null && a !== null && a > b;
+
+  if (editing) {
+    return (
+      <form
+        className="no-print flex flex-wrap items-center gap-2 py-2"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          setBusy(true);
+          await fetch(`/api/sections/${sectionId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              budget: budgetVal.trim() === "" ? null : Number(budgetVal),
+              actual: actualVal.trim() === "" ? null : Number(actualVal),
+            }),
+          });
+          setBusy(false);
+          setEditing(false);
+          router.refresh();
+        }}
+      >
+        <label className="microlabel">{t(lang, "budget_label")}</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          className="input !w-32 !py-1.5 text-sm"
+          value={budgetVal}
+          onChange={(e) => setBudgetVal(e.target.value)}
+        />
+        <label className="microlabel">{t(lang, "actual_label")}</label>
+        <input
+          type="number"
+          min="0"
+          step="0.01"
+          className="input !w-32 !py-1.5 text-sm"
+          value={actualVal}
+          onChange={(e) => setActualVal(e.target.value)}
+        />
+        <button type="submit" disabled={busy} className="btn btn-primary btn-sm">
+          {t(lang, "save")}
+        </button>
+        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditing(false)}>
+          {t(lang, "cancel")}
+        </button>
+      </form>
+    );
+  }
+
+  if (b === null && a === null) {
+    return isOwner ? (
+      <button
+        className="no-print microlabel hover:text-ink cursor-pointer py-1.5"
+        onClick={() => setEditing(true)}
+      >
+        + {t(lang, "budget_set")}
+      </button>
+    ) : null;
+  }
+
+  return (
+    <p className="microlabel py-1.5 flex items-center gap-3">
+      <span>
+        {t(lang, "budget_label")}: <span className="text-ink">{b !== null ? fmt.format(b) : "—"}</span>
+      </span>
+      <span>
+        {t(lang, "actual_label")}:{" "}
+        <span className={over ? "text-red-700 font-medium" : "text-ink"}>
+          {a !== null ? fmt.format(a) : "—"}
+        </span>
+      </span>
+      {over && b !== null && a !== null && (
+        <span className="text-red-700">
+          +{new Intl.NumberFormat(locale(lang), { style: "currency", currency, maximumFractionDigits: 0 }).format(a - b)}{" "}
+          {t(lang, "over_budget")}
+        </span>
+      )}
+      {isOwner && (
+        <button
+          className="no-print hover:text-ink cursor-pointer uppercase"
+          onClick={() => setEditing(true)}
+        >
+          {t(lang, "edit")}
+        </button>
+      )}
+    </p>
+  );
+}
 
 export function PrintButton({ label }: { label: string }) {
   return (

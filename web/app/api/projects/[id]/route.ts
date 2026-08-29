@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError, requireProject } from "@/lib/api";
 import { sql } from "@/lib/db";
+import { CURRENCIES } from "@/lib/projects";
 
 export async function PATCH(
   request: Request,
@@ -27,12 +28,18 @@ export async function PATCH(
     typeof body.description === "string" ? body.description.trim().slice(0, 2000) : null;
   if (name === "") return jsonError("Project name is required", 400);
 
+  const currency =
+    typeof body.currency === "string" && (CURRENCIES as readonly string[]).includes(body.currency)
+      ? body.currency
+      : null;
+
   await sql()`
     UPDATE projects SET
       name = COALESCE(${name}::text, name),
       name_lang = CASE WHEN ${name}::text IS NULL THEN name_lang ELSE ${auth.user.preferred_language}::text END,
       address = COALESCE(${address}::text, address),
-      description = COALESCE(${description}::text, description)
+      description = COALESCE(${description}::text, description),
+      currency = COALESCE(${currency}::text, currency)
     WHERE id = ${id}
   `;
   return NextResponse.json({ ok: true });

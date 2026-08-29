@@ -14,7 +14,14 @@ import {
   listSections,
 } from "@/lib/projects";
 import { translateBatch, type Translatable } from "@/lib/translate";
-import { AddItemForm, AddSectionForm, PrintButton, SectionTools, StatusCheckbox } from "./checklist";
+import {
+  AddItemForm,
+  AddSectionForm,
+  PrintButton,
+  SectionBudget,
+  SectionTools,
+  StatusCheckbox,
+} from "./checklist";
 
 export const dynamic = "force-dynamic";
 
@@ -57,6 +64,13 @@ export default async function ProjectPage({
 
   const editable = canEdit(role) && !project.archived_at;
   const owner = isOwner(role);
+  const totalBudget = sections.reduce((sum, s) => sum + (s.budget ? Number(s.budget) : 0), 0);
+  const totalActual = sections.reduce((sum, s) => sum + (s.actual ? Number(s.actual) : 0), 0);
+  const moneyFmt = new Intl.NumberFormat(locale(lang), {
+    style: "currency",
+    currency: project.currency,
+    maximumFractionDigits: 0,
+  });
   const done = items.filter((i) => i.status === "done").length;
   const pct = items.length > 0 ? Math.round((done / items.length) * 100) : 0;
   const today = new Date().toISOString().slice(0, 10);
@@ -105,6 +119,17 @@ export default async function ProjectPage({
                 {members.length} · {t(lang, "members")}
               </p>
             </div>
+            {(totalBudget > 0 || totalActual > 0) && (
+              <p className="microlabel mt-2">
+                {t(lang, "budget_label")}:{" "}
+                <span className="text-ink">{moneyFmt.format(totalBudget)}</span>
+                {" · "}
+                {t(lang, "actual_label")}:{" "}
+                <span className={totalActual > totalBudget ? "text-red-700 font-medium" : "text-ink"}>
+                  {moneyFmt.format(totalActual)}
+                </span>
+              </p>
+            )}
           </div>
           <div className="no-print flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-line">
             <PrintButton label={t(lang, "print")} />
@@ -163,6 +188,14 @@ export default async function ProjectPage({
                     {editable && <SectionTools sectionId={section.id} isOwner={owner} lang={lang} />}
                   </div>
                 </div>
+                <SectionBudget
+                  sectionId={section.id}
+                  budget={section.budget}
+                  actual={section.actual}
+                  currency={project.currency}
+                  isOwner={owner && !project.archived_at}
+                  lang={lang}
+                />
                 <ul className="divide-y divide-line">
                   {sectionItems.length === 0 && !editable && (
                     <li className="py-3 text-sm text-ink-faint">{t(lang, "no_items_yet")}</li>

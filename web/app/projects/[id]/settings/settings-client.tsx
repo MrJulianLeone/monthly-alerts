@@ -9,6 +9,8 @@ export function ProjectDetailsForm(props: {
   name: string;
   address: string;
   description: string;
+  currency: string;
+  currencies: readonly string[];
   lang: Lang;
 }) {
   const router = useRouter();
@@ -16,6 +18,7 @@ export function ProjectDetailsForm(props: {
   const [name, setName] = useState(props.name);
   const [address, setAddress] = useState(props.address);
   const [description, setDescription] = useState(props.description);
+  const [currency, setCurrency] = useState(props.currency);
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -28,7 +31,7 @@ export function ProjectDetailsForm(props: {
         await fetch(`/api/projects/${props.projectId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, address, description }),
+          body: JSON.stringify({ name, address, description, currency }),
         });
         setBusy(false);
         setSaved(true);
@@ -52,6 +55,20 @@ export function ProjectDetailsForm(props: {
           value={description}
           onChange={(e) => setDescription(e.target.value)}
         />
+      </div>
+      <div>
+        <label className="field-label">{t(lang, "currency_label")}</label>
+        <select
+          className="input !w-40 cursor-pointer"
+          value={currency}
+          onChange={(e) => setCurrency(e.target.value)}
+        >
+          {props.currencies.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
       </div>
       <button type="submit" disabled={busy} className="btn btn-primary btn-sm">
         {saved ? `✓ ${t(lang, "saved")}` : t(lang, "save")}

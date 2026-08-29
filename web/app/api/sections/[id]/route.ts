@@ -9,6 +9,15 @@ async function sectionProject(id: string): Promise<string | null> {
   return rows[0]?.project_id ?? null;
 }
 
+/** Parses a money field: number → rounded value, null → clear, absent → keep. */
+function money(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return Math.min(999_999_999_999, value).toFixed(2);
+  }
+  return undefined;
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -16,13 +25,30 @@ export async function PATCH(
   const { id } = await params;
   const projectId = await sectionProject(id);
   if (!projectId) return jsonError("Not found", 404);
-  const auth = await requireProject(projectId, "editor", { write: true });
-  if ("response" in auth) return auth.response;
   const body = await request.json().catch(() => ({}));
+
+  const budget = money(body.budget);
+  const actual = money(body.actual);
+  const touchesMoney = "budget" in body || "actual" in body;
+
+  // Budget and actual are owner-only; renaming is open to editors.
+  const auth = await requireProject(projectId, touchesMoney ? "owner" : "editor", {
+    write: true,
+  });
+  if ("response" in auth) return auth.response;
+
+  if (touchesMoney) {
+    await sql()`
+      UPDATE sections SET
+        budget = CASE WHEN ${budget !== undefined}::boolean THEN ${budget ?? null}::numeric ELSE budget END,
+        actual = CASE WHEN ${actual !== undefined}::boolean THEN ${actual ?? null}::numeric ELSE actual END
+      WHERE id = ${id}
+    `;
+    return NextResponse.json({ ok: true });
+  }
 
   const name = typeof body.name === "string" ? body.name.trim().slice(0, 200) : "";
   if (!name) return jsonError("Section name is required", 400);
-
   await sql()`
     UPDATE sections
     SET name = ${name}, name_lang = ${auth.user.preferred_language}
