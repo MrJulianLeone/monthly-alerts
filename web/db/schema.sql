@@ -212,6 +212,17 @@ ALTER TABLE projects ADD COLUMN IF NOT EXISTS currency text NOT NULL DEFAULT 'US
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS amount_paid_cents int;
 ALTER TABLE projects ADD COLUMN IF NOT EXISTS expiry_warned_at timestamptz;
 
+-- Support inbox: spam folder + AI autoresponder bookkeeping.
+-- folder: 'inbox' | 'spam' (moves apply to the whole thread; a thread shows
+-- in the folder of its latest message). ai_verdict on inbound rows records
+-- what the autoresponder did: 'spam' | 'responded' | 'needs_info' | 'skipped'
+-- (null = not classified, e.g. AI unavailable). auto marks outbound rows the
+-- autoresponder sent (replies and admin notifications).
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS folder text NOT NULL DEFAULT 'inbox';
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS ai_verdict text;
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS ai_note text;
+ALTER TABLE support_messages ADD COLUMN IF NOT EXISTS auto boolean NOT NULL DEFAULT false;
+
 -- Accounts created in the magic-link era proved their email by logging in;
 -- new password signups have a password_hash and stay unverified until the
 -- confirmation link is used, so this backfill never touches them.

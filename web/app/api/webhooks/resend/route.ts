@@ -1,7 +1,8 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
+import { runAutoresponder } from "@/lib/autoresponder";
 import { sql } from "@/lib/db";
-import { resolveThreadKey, supportAddress } from "@/lib/support";
+import { resolveThreadKey, supportAddress, type SupportMessage } from "@/lib/support";
 
 export const maxDuration = 30;
 
@@ -41,6 +42,7 @@ export async function POST(request: Request) {
   let messageId = str(d.message_id);
   let inReplyTo = headerValue(d.headers, "in-reply-to");
   let attachments = attachmentMeta(d.attachments);
+  let allHeaders: unknown = d.headers;
 
   // The webhook payload may omit bodies/headers; the receiving API has the
   // full parsed email.
@@ -52,6 +54,7 @@ export async function POST(request: Request) {
       messageId ??= str(full.message_id);
       inReplyTo ??= headerValue(full.headers, "in-reply-to");
       if (attachments.length === 0) attachments = attachmentMeta(full.attachments);
+      if (full.headers) allHeaders = full.headers;
     }
   }
 
@@ -63,7 +66,7 @@ export async function POST(request: Request) {
     crypto.randomUUID();
 
   // resend_id is UNIQUE — webhook retries no-op instead of duplicating.
-  await sql()`
+  const inserted = (await sql()`
     INSERT INTO support_messages
       (direction, resend_id, message_id, in_reply_to, thread_key, counterparty_email,
        from_email, from_name, to_email, subject, text_body, html_body, attachments)
@@ -73,9 +76,28 @@ export async function POST(request: Request) {
        ${fromName ?? null}, ${toEmail.toLowerCase()}, ${subject ?? null},
        ${text ?? null}, ${html ?? null}, ${JSON.stringify(attachments)})
     ON CONFLICT (resend_id) DO NOTHING
-  `;
+    RETURNING *
+  `) as SupportMessage[];
+
+  // AI triage: quarantine spam, auto-reply, or notify the admin. Awaited (the
+  // serverless runtime stops at the response) and loop-guarded via the
+  // Auto-Submitted/Precedence headers. Skipped entirely on webhook retries
+  // (no row inserted).
+  if (inserted.length > 0) {
+    await runAutoresponder(inserted[0], { autoSubmitted: isAutoSubmitted(allHeaders) });
+  }
 
   return NextResponse.json({ ok: true });
+}
+
+/** RFC 3834 & friends: auto-replies, bounces, and bulk mail mark themselves. */
+function isAutoSubmitted(headers: unknown): boolean {
+  const auto = headerValue(headers, "auto-submitted");
+  if (auto && auto.toLowerCase() !== "no") return true;
+  const precedence = headerValue(headers, "precedence");
+  if (precedence && /bulk|junk|auto/i.test(precedence)) return true;
+  return headerValue(headers, "x-autoreply") !== undefined ||
+    headerValue(headers, "x-auto-response-suppress") !== undefined;
 }
 
 // ---------------------------------------------------------------------------

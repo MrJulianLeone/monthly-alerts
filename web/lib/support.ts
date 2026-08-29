@@ -4,6 +4,8 @@ import { sql } from "@/lib/db";
 // Support inbox data layer. See the support_messages comment in db/schema.sql
 // for the threading model.
 
+export type SupportFolder = "inbox" | "spam";
+
 export type SupportMessage = {
   id: string;
   direction: "inbound" | "outbound";
@@ -19,6 +21,10 @@ export type SupportMessage = {
   text_body: string | null;
   html_body: string | null;
   attachments: { filename?: string; content_type?: string; size?: number }[];
+  folder: SupportFolder;
+  ai_verdict: "spam" | "responded" | "needs_info" | "skipped" | null;
+  ai_note: string | null;
+  auto: boolean;
   read_at: string | null;
   created_at: string;
 };
@@ -28,6 +34,9 @@ export type SupportThread = {
   counterparty_email: string;
   subject: string | null;
   last_direction: "inbound" | "outbound";
+  last_auto: boolean;
+  last_to_email: string;
+  last_verdict: string | null;
   last_preview: string | null;
   last_at: string;
   message_count: number;
@@ -80,10 +89,14 @@ export async function resolveThreadKey(
   return null;
 }
 
-export async function listThreads(): Promise<SupportThread[]> {
+export async function listThreads(folder: SupportFolder): Promise<SupportThread[]> {
+  // A thread lives in the folder of its latest message (moves update every
+  // row in the thread, so mixed folders only occur transiently when new mail
+  // lands in a spam thread — which correctly resurfaces it in the inbox).
   return (await sql()`
     SELECT t.thread_key, t.last_at, t.message_count, t.unread_count,
-           m.counterparty_email, m.subject, m.direction AS last_direction,
+           m.counterparty_email, first.subject, m.direction AS last_direction,
+           m.auto AS last_auto, m.to_email AS last_to_email, m.ai_verdict AS last_verdict,
            left(coalesce(m.text_body, ''), 140) AS last_preview
     FROM (
       SELECT thread_key,
@@ -94,13 +107,46 @@ export async function listThreads(): Promise<SupportThread[]> {
       GROUP BY thread_key
     ) t
     JOIN LATERAL (
-      SELECT counterparty_email, subject, direction, text_body
+      SELECT counterparty_email, direction, text_body, folder, auto, to_email, ai_verdict
       FROM support_messages
       WHERE thread_key = t.thread_key
       ORDER BY created_at DESC LIMIT 1
     ) m ON true
+    LEFT JOIN LATERAL (
+      SELECT subject FROM support_messages
+      WHERE thread_key = t.thread_key AND subject IS NOT NULL
+      ORDER BY created_at ASC LIMIT 1
+    ) first ON true
+    WHERE m.folder = ${folder}
     ORDER BY t.last_at DESC
   `) as SupportThread[];
+}
+
+/** Thread counts per folder, for the Inbox/Spam tabs. */
+export async function countThreadsByFolder(): Promise<Record<SupportFolder, number>> {
+  const rows = (await sql()`
+    SELECT folder, count(*)::int AS n FROM (
+      SELECT DISTINCT ON (thread_key) folder
+      FROM support_messages
+      ORDER BY thread_key, created_at DESC
+    ) t GROUP BY folder
+  `) as { folder: SupportFolder; n: number }[];
+  const counts: Record<SupportFolder, number> = { inbox: 0, spam: 0 };
+  for (const r of rows) counts[r.folder] = r.n;
+  return counts;
+}
+
+export async function setThreadFolder(threadKey: string, folder: SupportFolder): Promise<void> {
+  await sql()`
+    UPDATE support_messages SET folder = ${folder} WHERE thread_key = ${threadKey}
+  `;
+}
+
+export async function deleteThread(threadKey: string): Promise<number> {
+  const rows = (await sql()`
+    DELETE FROM support_messages WHERE thread_key = ${threadKey} RETURNING id
+  `) as { id: string }[];
+  return rows.length;
 }
 
 export async function getThreadMessages(threadKey: string): Promise<SupportMessage[]> {
@@ -124,7 +170,7 @@ export async function countUnread(): Promise<number> {
   try {
     const rows = (await sql()`
       SELECT count(*)::int AS n FROM support_messages
-      WHERE direction = 'inbound' AND read_at IS NULL
+      WHERE direction = 'inbound' AND read_at IS NULL AND folder = 'inbox'
     `) as { n: number }[];
     return rows[0]?.n ?? 0;
   } catch (err) {
@@ -141,8 +187,9 @@ export async function countUnread(): Promise<number> {
 export async function sendSupportMessage(opts: {
   to: string;
   subject: string;
-  body: string; // plain text as typed in the admin composer
+  body: string; // plain text as typed in the admin composer (or by the AI)
   threadKey?: string; // omitted = start a new thread
+  auto?: boolean; // sent by the autoresponder rather than the admin
 }): Promise<SupportMessage> {
   const to = opts.to.trim().toLowerCase();
   const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1c1917;white-space:pre-wrap">${escapeHtml(opts.body)}</div>`;
@@ -171,12 +218,12 @@ export async function sendSupportMessage(opts: {
   const rows = (await sql()`
     INSERT INTO support_messages
       (direction, resend_id, in_reply_to, thread_key, counterparty_email,
-       from_email, from_name, to_email, subject, text_body, html_body)
+       from_email, from_name, to_email, subject, text_body, html_body, auto)
     VALUES
       ('outbound', ${sent?.id ?? null}, ${headers?.["In-Reply-To"] ?? null},
        ${opts.threadKey ?? crypto.randomUUID()}, ${to},
        ${supportAddress()}, ${process.env.RESEND_FROM_NAME ?? "MonthlyAlerts"},
-       ${to}, ${opts.subject}, ${opts.body}, ${html})
+       ${to}, ${opts.subject}, ${opts.body}, ${html}, ${opts.auto ?? false})
     RETURNING *
   `) as SupportMessage[];
   return rows[0];
