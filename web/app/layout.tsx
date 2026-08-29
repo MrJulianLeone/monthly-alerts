@@ -31,6 +31,9 @@ export const metadata: Metadata = {
   title: "MonthlyAlerts — Multilingual construction checklists",
   description:
     "One project checklist your whole crew can read. Items, comments, and updates translated automatically into every member's language.",
+  appleWebApp: {
+    title: "Projects",
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

@@ -2,8 +2,8 @@ import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "MonthlyAlerts",
-    short_name: "MonthlyAlerts",
+    name: "Projects",
+    short_name: "Projects",
     description: "Multilingual construction checklists for your whole crew.",
     start_url: "/dashboard",
     display: "standalone",
