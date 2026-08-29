@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { Logo, LogoMark } from "@/components/logo";
+import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { getVisitorLang, getCurrentUser } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 
@@ -36,22 +37,7 @@ export async function LegalPage({
         )}
         <div className="legal-prose">{children}</div>
       </main>
-      <footer className="border-t-[1.5px] border-line-strong">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <LogoMark size={14} />
-            <span className="microlabel">{t(lang, "email_footer")}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/terms" className="microlabel hover:text-ink transition-colors">
-              {t(lang, "footer_terms")}
-            </Link>
-            <Link href="/privacy" className="microlabel hover:text-ink transition-colors">
-              {t(lang, "footer_privacy")}
-            </Link>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter lang={lang} />
     </div>
   );
 }

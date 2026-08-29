@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { getVisitorLang } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { ResetForm } from "./reset-form";
@@ -37,6 +38,7 @@ export default async function ResetPage({
           </p>
         </div>
       </main>
+      <SiteFooter lang={lang} />
     </div>
   );
 }

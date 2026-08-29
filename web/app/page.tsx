@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LangToggle } from "@/components/lang-toggle";
-import { Logo, LogoMark } from "@/components/logo";
+import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { getCurrentUser, getVisitorLang } from "@/lib/auth";
 import { PROJECT_PRICE_DISPLAY } from "@/lib/billing";
 import { LANGUAGES, t } from "@/lib/i18n";
@@ -86,26 +87,7 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t-[1.5px] border-line-strong">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-2">
-            <LogoMark size={14} />
-            <span className="microlabel">{t(lang, "email_footer")}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link href="/terms" className="microlabel hover:text-ink transition-colors">
-              {t(lang, "footer_terms")}
-            </Link>
-            <Link href="/privacy" className="microlabel hover:text-ink transition-colors">
-              {t(lang, "footer_privacy")}
-            </Link>
-            <Link href="/contact" className="microlabel hover:text-ink transition-colors">
-              {t(lang, "footer_contact")}
-            </Link>
-            <span className="microlabel">© {new Date().getFullYear()}</span>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter lang={lang} />
     </div>
   );
 }

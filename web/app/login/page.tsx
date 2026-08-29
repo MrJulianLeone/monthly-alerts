@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { LangToggle } from "@/components/lang-toggle";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { getCurrentUser, getVisitorLang } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { AuthForm } from "./login-form";
@@ -45,6 +46,7 @@ export default async function LoginPage({
           </p>
         </div>
       </main>
+      <SiteFooter lang={lang} />
     </div>
   );
 }

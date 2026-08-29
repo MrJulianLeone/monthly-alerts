@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { LangToggle } from "@/components/lang-toggle";
 import { Logo } from "@/components/logo";
+import { SiteFooter } from "@/components/site-footer";
 import { getVisitorLang } from "@/lib/auth";
 import { issueContactToken } from "@/lib/contact-token";
 import { t } from "@/lib/i18n";
@@ -43,6 +44,7 @@ export default async function ContactPage() {
           }}
         />
       </main>
+      <SiteFooter lang={lang} />
     </div>
   );
 }

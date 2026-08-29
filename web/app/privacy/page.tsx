@@ -38,8 +38,9 @@ export default function PrivacyPage() {
       </ul>
       <p>
         We use only two cookies: a session cookie that keeps you signed in and a
-        cookie remembering your language choice.{" "}
-        <strong>We use no advertising or third-party analytics trackers.</strong>
+        cookie remembering your language choice. We measure page visits with
+        Vercel Web Analytics, which is cookie-less and does not identify
+        individual visitors. <strong>We use no advertising trackers.</strong>
       </p>
 
       <h2>2. How we use data</h2>
