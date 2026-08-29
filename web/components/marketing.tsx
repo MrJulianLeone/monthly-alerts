@@ -154,7 +154,8 @@ export function PricingCta({ lang, blurb }: { lang: Lang; blurb: string }) {
               {t(lang, "pricing_per_project")}
             </span>
           </p>
-          <p className="text-sm text-ink-soft leading-relaxed max-w-md mt-4">{blurb}</p>
+          <p className="text-sm font-semibold mt-3">{t(lang, "pricing_not_monthly")}</p>
+          <p className="text-sm text-ink-soft leading-relaxed max-w-md mt-3">{blurb}</p>
           <p className="chip text-accent mt-4">{t(lang, "pricing_invitees_free")}</p>
         </div>
         <Link href="/login" className="btn btn-primary text-base px-8 py-3 shrink-0">

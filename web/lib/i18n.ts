@@ -48,10 +48,15 @@ const messages = {
   },
 
   // Landing
+  app_descriptor: {
+    en: "Your project. Every language.",
+    it: "Il tuo progetto. Ogni lingua.",
+    es: "Tu proyecto. Cada idioma.",
+  },
   landing_tagline: {
-    en: "Construction checklists your whole crew can read",
-    it: "Liste di controllo per il cantiere che tutta la squadra può leggere",
-    es: "Listas de control de obra que toda tu cuadrilla puede leer",
+    en: "Construction projects shouldn't get lost in translation.",
+    it: "I progetti edili non dovrebbero perdersi nella traduzione.",
+    es: "Los proyectos de construcción no deberían perderse en la traducción.",
   },
   landing_sub: {
     en: "Set up a project punch list once. Everyone on the job — owner, subs, inspectors — works the same list in their own language, translated automatically.",
@@ -539,6 +544,11 @@ const messages = {
   // Pricing
   pricing_label: { en: "Pricing", it: "Prezzi", es: "Precios" },
   pricing_per_project: { en: "per project", it: "a progetto", es: "por proyecto" },
+  pricing_not_monthly: {
+    en: "One project. One payment. Not a subscription.",
+    it: "Un progetto. Un pagamento. Nessun abbonamento.",
+    es: "Un proyecto. Un pago. Sin suscripción.",
+  },
   pricing_body: {
     en: "One-time fee when you create a project — no subscription. Unlimited checklist items and photos, and your whole team of subs, inspectors, and crew joins free.",
     it: "Tariffa una tantum alla creazione del progetto — nessun abbonamento. Voci e foto illimitate, e tutta la squadra di subappaltatori, ispettori e operai partecipa gratis.",

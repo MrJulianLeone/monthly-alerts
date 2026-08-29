@@ -65,7 +65,8 @@ export function HomePage({ lang }: { lang: Lang }) {
         <section className="grid-paper border-b-[1.5px] border-line-strong">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 py-20 sm:py-28">
             <p className="microlabel mb-6">
-              {LANGUAGES.map((l) => l.code.toUpperCase()).join(" ⇄ ")} — {t(lang, "app_name")}
+              {t(lang, "app_name")} — {t(lang, "app_descriptor")} —{" "}
+              {LANGUAGES.map((l) => l.code.toUpperCase()).join(" ⇄ ")}
             </p>
             <h1 className="display text-5xl sm:text-7xl max-w-3xl mb-6">
               {t(lang, "landing_tagline")}
@@ -141,7 +142,8 @@ export function HomePage({ lang }: { lang: Lang }) {
                   {t(lang, "pricing_per_project")}
                 </span>
               </p>
-              <p className="text-sm text-ink-soft leading-relaxed max-w-md mt-4">
+              <p className="text-sm font-semibold mt-3">{t(lang, "pricing_not_monthly")}</p>
+              <p className="text-sm text-ink-soft leading-relaxed max-w-md mt-3">
                 {t(lang, "pricing_body")}
               </p>
               <p className="chip text-accent mt-4">{t(lang, "pricing_invitees_free")}</p>
