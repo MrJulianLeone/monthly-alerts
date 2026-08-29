@@ -24,6 +24,9 @@ export default async function SettingsPage() {
             }}
           />
         </div>
+        <p className="microlabel mt-6">
+          {t(lang, "settings_delete_account", { email: "support@monthlyalerts.com" })}
+        </p>
       </main>
     </div>
   );

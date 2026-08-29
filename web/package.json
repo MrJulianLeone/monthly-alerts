@@ -12,6 +12,8 @@
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.0.1",
+    "@sentry/nextjs": "^10.72.0",
+    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^1.1.1",
     "next": "^15.3.4",
     "openai": "^6.45.0",

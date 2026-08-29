@@ -543,6 +543,12 @@ const messages = {
   // Legal
   footer_terms: { en: "Terms of Use", it: "Termini di utilizzo", es: "Términos de uso" },
   footer_privacy: { en: "Privacy Policy", it: "Informativa sulla privacy", es: "Política de privacidad" },
+  footer_contact: { en: "Contact", it: "Contatti", es: "Contacto" },
+  settings_delete_account: {
+    en: "To delete your account and data, email {email} from your account address.",
+    it: "Per eliminare il tuo account e i tuoi dati, scrivi a {email} dall'indirizzo del tuo account.",
+    es: "Para eliminar tu cuenta y tus datos, escribe a {email} desde la dirección de tu cuenta.",
+  },
   new_project_legal: {
     en: "By creating a project you agree to:",
     it: "Creando un progetto accetti:",

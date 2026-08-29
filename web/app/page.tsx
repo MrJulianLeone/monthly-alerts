@@ -99,6 +99,12 @@ export default async function LandingPage() {
             <Link href="/privacy" className="microlabel hover:text-ink transition-colors">
               {t(lang, "footer_privacy")}
             </Link>
+            <a
+              href="mailto:support@monthlyalerts.com"
+              className="microlabel hover:text-ink transition-colors"
+            >
+              {t(lang, "footer_contact")}
+            </a>
             <span className="microlabel">© {new Date().getFullYear()}</span>
           </div>
         </div>

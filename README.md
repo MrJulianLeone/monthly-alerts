@@ -43,3 +43,21 @@ npm run dev
 `npm run db:wipe` drops and recreates the schema (destructive). In production,
 `POST /api/admin/migrate` (Bearer `MIGRATE_SECRET`, body `{"wipe": true}` to
 reset) does the same without local DB access.
+
+## Operations
+
+- **Errors**: Sentry (set `SENTRY_DSN` + `NEXT_PUBLIC_SENTRY_DSN`); branded
+  boundaries in `web/app/error.tsx` / `global-error.tsx` / `not-found.tsx`.
+- **Analytics**: Vercel Web Analytics (`<Analytics/>` in the root layout;
+  enable in the Vercel dashboard).
+- **Support inbox**: mail to support@monthlyalerts.com → Resend inbound →
+  `/api/webhooks/resend` → AI triage (spam quarantine / auto-reply / admin
+  alert) → `/admin/inbox`.
+- **Privacy & deletion requests** (promised in /privacy — respond within the
+  legally required window, typically 30 days): verify the request came from
+  the account's own email address (the support thread shows the sender);
+  delete the user's photos from Vercel Blob, then
+  `UPDATE users SET deleted_at = now()` plus removal of personal fields, or
+  hard-delete the row (cascades to sessions/memberships/comments). Reply
+  confirming completion from the admin inbox. Data export: send the user's
+  rows (users, their projects/items/comments) as JSON.

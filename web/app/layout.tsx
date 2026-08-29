@@ -1,3 +1,4 @@
+import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
@@ -42,7 +43,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       lang="en"
       className={`${barlow.variable} ${barlowCondensed.variable} ${plexMono.variable}`}
     >
-      <body className="min-h-screen">{children}</body>
+      <body className="min-h-screen">
+        {children}
+        <Analytics />
+      </body>
     </html>
   );
 }
