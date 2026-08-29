@@ -35,8 +35,8 @@ export default function GlobalError({
         <div>
           <h1 style={{ fontSize: "1.5rem", marginBottom: "0.75rem" }}>Something went wrong</h1>
           <p style={{ fontSize: "0.9375rem", color: "#57534e", marginBottom: "1.5rem" }}>
-            The problem has been reported. If it keeps happening, email
-            support@monthlyalerts.com.
+            The problem has been reported. If it keeps happening, reach us at
+            monthlyalerts.com/contact.
           </p>
           <button
             type="button"

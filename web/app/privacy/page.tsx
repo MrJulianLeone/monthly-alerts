@@ -116,8 +116,8 @@ export default function PrivacyPage() {
         may have the right to access, correct, delete, or receive a copy of your
         personal data, to object to or restrict certain processing, and to complain
         to your local data-protection authority. We honor these requests for all
-        users regardless of location: email{" "}
-        <strong>support@monthlyalerts.com</strong> from your account address and we will
+        users regardless of location: submit a request through our{" "}
+        <Link href="/contact">contact form</Link> using your account email address and we will
         verify and respond within the time required by applicable law. We do not
         discriminate against you for exercising any right.
       </p>
@@ -145,7 +145,7 @@ export default function PrivacyPage() {
 
       <h2>10. Contact</h2>
       <p>
-        Privacy questions and requests: <strong>support@monthlyalerts.com</strong>. See
+        Privacy questions and requests: use our <Link href="/contact">contact form</Link>. See
         also our <Link href="/terms">Terms of Use</Link>.
       </p>
     </LegalPage>

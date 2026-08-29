@@ -24,7 +24,7 @@ export default function ErrorPage({
         <h1 className="display text-4xl mb-4">Something went wrong</h1>
         <p className="text-sm text-ink-soft mb-6">
           The problem has been reported. Try again, or head back to your projects — if it
-          keeps happening, email support@monthlyalerts.com.
+          keeps happening, reach us via the <Link href="/contact" className="underline">contact form</Link>.
         </p>
         <div className="flex items-center justify-center gap-3">
           <button type="button" onClick={reset} className="btn btn-primary btn-sm">
