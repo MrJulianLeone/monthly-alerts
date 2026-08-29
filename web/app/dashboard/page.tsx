@@ -27,22 +27,21 @@ export default async function DashboardPage() {
             <p className="microlabel mb-2">{t(lang, "app_name")}</p>
             <h1 className="display text-5xl">{t(lang, "dashboard_title")}</h1>
           </div>
-          <div className="flex items-center gap-3">
-            <FeedbackButton
-              labels={{
-                button: t(lang, "feedback_button"),
-                title: t(lang, "feedback_title"),
-                placeholder: t(lang, "feedback_placeholder"),
-                send: t(lang, "feedback_send"),
-                thanks: t(lang, "feedback_thanks"),
-                error: t(lang, "contact_error"),
-              }}
-            />
-            <Link href="/projects/new" className="btn btn-primary">
-              + {t(lang, "new_project")}
-            </Link>
-          </div>
+          <Link href="/projects/new" className="btn btn-primary">
+            + {t(lang, "new_project")}
+          </Link>
         </div>
+
+        <FeedbackButton
+          labels={{
+            button: t(lang, "feedback_button"),
+            title: t(lang, "feedback_title"),
+            placeholder: t(lang, "feedback_placeholder"),
+            send: t(lang, "feedback_send"),
+            thanks: t(lang, "feedback_thanks"),
+            error: t(lang, "contact_error"),
+          }}
+        />
 
         {projects.length === 0 ? (
           <div className="sheet grid-paper p-12 text-center">
