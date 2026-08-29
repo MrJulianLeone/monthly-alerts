@@ -35,7 +35,6 @@ export async function POST(request: Request) {
   const d = event.data;
   const resendId = str(d.email_id) ?? str(d.id);
   const { name: fromName, email: fromEmail } = parseAddress(str(d.from) ?? "");
-  const toEmail = firstAddress(d.to) ?? supportAddress();
   const subject = str(d.subject);
   let text = str(d.text);
   let html = str(d.html);
@@ -44,10 +43,33 @@ export async function POST(request: Request) {
   let attachments = attachmentMeta(d.attachments);
   let allHeaders: unknown = d.headers;
 
+  // Fetch the full email from the receiving API at most once, on demand.
+  let fullCache: Record<string, unknown> | null | undefined;
+  const fetchFull = async () =>
+    fullCache !== undefined ? fullCache : (fullCache = resendId ? await fetchReceivedEmail(resendId) : null);
+
+  // Resend webhooks are account-wide: every inbound email on every domain in
+  // the Resend account lands here. Only keep mail actually addressed to our
+  // domain. To/Cc usually carry it; for BCC/forwarded deliveries the envelope
+  // recipients (received_for) on the full email are checked before dropping.
+  const domain = "@" + (supportAddress().split("@")[1] ?? "monthlyalerts.com");
+  const ours = (a: string) => a.toLowerCase().endsWith(domain);
+  let recipients = [...addressList(d.to), ...addressList(d.cc), ...addressList(d.received_for)];
+  if (!recipients.some(ours)) {
+    const full = await fetchFull();
+    if (full) {
+      recipients = [...addressList(full.to), ...addressList(full.cc), ...addressList(full.received_for)];
+    }
+  }
+  const toEmail = recipients.find(ours);
+  if (!toEmail) {
+    return NextResponse.json({ ok: true, ignored: `not addressed to ${domain}` });
+  }
+
   // The webhook payload may omit bodies/headers; the receiving API has the
   // full parsed email.
-  if (resendId && text == null && html == null) {
-    const full = await fetchReceivedEmail(resendId);
+  if (text == null && html == null) {
+    const full = await fetchFull();
     if (full) {
       text ??= str(full.text);
       html ??= str(full.html);
@@ -146,9 +168,14 @@ function parseAddress(raw: string): { name?: string; email?: string } {
   return bare.includes("@") ? { email: bare } : {};
 }
 
-function firstAddress(v: unknown): string | undefined {
-  const raw = Array.isArray(v) ? v[0] : v;
-  return typeof raw === "string" ? parseAddress(raw).email : undefined;
+/** Normalizes a recipient field (string or array of "Name <email>") to bare emails. */
+function addressList(v: unknown): string[] {
+  const raw = Array.isArray(v) ? v : typeof v === "string" ? [v] : [];
+  return raw
+    .filter((r): r is string => typeof r === "string")
+    .flatMap((r) => r.split(","))
+    .map((r) => parseAddress(r).email)
+    .filter((e): e is string => !!e);
 }
 
 /** headers may arrive as an object map or as [{name, value}] — handle both. */
