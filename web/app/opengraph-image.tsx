@@ -4,6 +4,8 @@ export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 export const alt = "MonthlyAlerts — multilingual construction checklists";
 
+// ASCII-only text and explicit flex on every multi-child node: the OG
+// renderer (satori) fails the build otherwise.
 export default function OpenGraphImage() {
   return new ImageResponse(
     (
@@ -30,22 +32,28 @@ export default function OpenGraphImage() {
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
-              color: "#ffffff",
-              fontSize: 52,
-              fontWeight: 700,
             }}
           >
-            ✓
+            <div
+              style={{
+                width: 34,
+                height: 18,
+                borderLeft: "7px solid #ffffff",
+                borderBottom: "7px solid #ffffff",
+                transform: "rotate(-45deg) translateY(-4px)",
+              }}
+            />
           </div>
-          <div style={{ fontSize: 56, fontWeight: 700, letterSpacing: 2 }}>
-            Monthly<span style={{ color: "#ea580c" }}>Alerts</span>
+          <div style={{ display: "flex", fontSize: 56, fontWeight: 700, letterSpacing: 2 }}>
+            <span>Monthly</span>
+            <span style={{ color: "#ea580c" }}>Alerts</span>
           </div>
         </div>
-        <div style={{ fontSize: 44, marginTop: 48, lineHeight: 1.25, maxWidth: 900 }}>
+        <div style={{ display: "flex", fontSize: 44, marginTop: 48, lineHeight: 1.25, maxWidth: 900 }}>
           Construction checklists your whole crew can read
         </div>
-        <div style={{ fontSize: 26, marginTop: 24, color: "#a8a29e" }}>
-          EN ⇄ IT ⇄ ES — translated automatically for every member
+        <div style={{ display: "flex", fontSize: 26, marginTop: 24, color: "#a8a29e" }}>
+          EN / IT / ES - translated automatically for every member
         </div>
       </div>
     ),
