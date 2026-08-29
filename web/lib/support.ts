@@ -119,11 +119,18 @@ export async function markThreadRead(threadKey: string): Promise<void> {
 }
 
 export async function countUnread(): Promise<number> {
-  const rows = (await sql()`
-    SELECT count(*)::int AS n FROM support_messages
-    WHERE direction = 'inbound' AND read_at IS NULL
-  `) as { n: number }[];
-  return rows[0]?.n ?? 0;
+  // Fails soft so the admin dashboard still renders on a database that
+  // hasn't had the support_messages migration applied yet.
+  try {
+    const rows = (await sql()`
+      SELECT count(*)::int AS n FROM support_messages
+      WHERE direction = 'inbound' AND read_at IS NULL
+    `) as { n: number }[];
+    return rows[0]?.n ?? 0;
+  } catch (err) {
+    console.error("countUnread failed (support_messages migration missing?)", err);
+    return 0;
+  }
 }
 
 /**
