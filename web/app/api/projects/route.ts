@@ -28,6 +28,10 @@ export async function POST(request: Request) {
     const session = await stripe().checkout.sessions.create({
       mode: "payment",
       line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
+      // Stripe Tax (enabled in the dashboard) only applies when the session
+      // asks for it; billing address is required for tax calculation.
+      automatic_tax: { enabled: true },
+      billing_address_collection: "required",
       customer_email: auth.user.email,
       success_url: `${appUrl()}/projects/activated?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl()}/projects/new`,
