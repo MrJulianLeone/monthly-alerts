@@ -434,36 +434,44 @@ export function ItemMove({
   );
 }
 
-/** One-click standard construction sections for an empty checklist. */
-export function TemplateButton({
+/** Trade-specific ready-made section sets for an empty checklist. */
+export function TemplatePicker({
   projectId,
-  sections,
+  templates,
   lang,
 }: {
   projectId: string;
-  sections: string[];
+  templates: { key: string; name: string; sections: string[] }[];
   lang: Lang;
 }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  const [busyKey, setBusyKey] = useState<string | null>(null);
   return (
-    <button
-      disabled={busy}
-      className="btn btn-ghost"
-      onClick={async () => {
-        setBusy(true);
-        for (const name of sections) {
-          await fetch(`/api/projects/${projectId}/sections`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ name }),
-          });
-        }
-        setBusy(false);
-        router.refresh();
-      }}
-    >
-      {busy ? "…" : `⚏ ${t(lang, "template_button")}`}
-    </button>
+    <div>
+      <p className="microlabel mb-3">{t(lang, "template_pick_label")}</p>
+      <div className="flex flex-wrap gap-2">
+        {templates.map((tpl) => (
+          <button
+            key={tpl.key}
+            disabled={busyKey !== null}
+            className="btn btn-ghost btn-sm"
+            onClick={async () => {
+              setBusyKey(tpl.key);
+              for (const name of tpl.sections) {
+                await fetch(`/api/projects/${projectId}/sections`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ name }),
+                });
+              }
+              setBusyKey(null);
+              router.refresh();
+            }}
+          >
+            {busyKey === tpl.key ? "…" : `⚏ ${tpl.name}`}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }

@@ -284,10 +284,10 @@ const messages = {
   confirm_delete: { en: "Confirm delete", it: "Conferma eliminazione", es: "Confirmar eliminación" },
   move_up: { en: "Move up", it: "Sposta su", es: "Subir" },
   move_down: { en: "Move down", it: "Sposta giù", es: "Bajar" },
-  template_button: {
-    en: "Start from standard sections",
-    it: "Parti dalle sezioni standard",
-    es: "Empezar con secciones estándar",
+  template_pick_label: {
+    en: "Or start from a template for your kind of job:",
+    it: "Oppure parti da un modello per il tuo tipo di lavoro:",
+    es: "O empieza con una plantilla para tu tipo de trabajo:",
   },
   caption_placeholder: { en: "Add caption…", it: "Aggiungi didascalia…", es: "Añadir leyenda…" },
   photo_unsupported: {
@@ -559,6 +559,26 @@ const messages = {
   footer_terms: { en: "Terms of Use", it: "Termini di utilizzo", es: "Términos de uso" },
   footer_privacy: { en: "Privacy Policy", it: "Informativa sulla privacy", es: "Política de privacidad" },
   footer_contact: { en: "Contact", it: "Contatti", es: "Contacto" },
+  footer_for_contractors: {
+    en: "For contractors",
+    it: "Per imprese edili",
+    es: "Para contratistas",
+  },
+  footer_renovating_italy: {
+    en: "Renovating in Italy",
+    it: "Ristrutturare in Italia",
+    es: "Renovar en Italia",
+  },
+  footer_for_designers: {
+    en: "For designers & architects",
+    it: "Per designer e architetti",
+    es: "Para diseñadores y arquitectos",
+  },
+  footer_for_homeowners: {
+    en: "For homeowners",
+    it: "Per proprietari di casa",
+    es: "Para propietarios",
+  },
 
   // Landing: how it works
   hiw_title: { en: "How it works", it: "Come funziona", es: "Cómo funciona" },
