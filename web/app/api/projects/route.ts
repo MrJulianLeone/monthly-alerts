@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       // asks for it; billing address is required for tax calculation.
       automatic_tax: { enabled: true },
       billing_address_collection: "required",
+      allow_promotion_codes: true,
       customer_email: auth.user.email,
       success_url: `${appUrl()}/projects/activated?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${appUrl()}/projects/new`,
