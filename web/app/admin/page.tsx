@@ -7,6 +7,7 @@ import { sql } from "@/lib/db";
 import { langName, type Lang } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
 import { projectExpiresAt } from "@/lib/projects";
+import { countUnread } from "@/lib/support";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +42,7 @@ export default async function AdminPage() {
   const { user } = await requireOnboardedUser("/admin");
   if (!isAdmin(user)) notFound();
 
-  const [users, projects] = await Promise.all([
+  const [users, projects, unreadSupport] = await Promise.all([
     sql()`
       SELECT u.id, u.email, u.name, u.company, u.preferred_language, u.created_at, u.onboarded_at,
              (SELECT count(*) FROM project_members m WHERE m.user_id = u.id)::int AS project_count
@@ -58,6 +59,7 @@ export default async function AdminPage() {
       FROM projects p JOIN users o ON o.id = p.owner_id
       ORDER BY p.created_at DESC
     ` as unknown as Promise<ProjectRow[]>,
+    countUnread(),
   ]);
 
   const payments = projects.filter((p) => p.paid_at);
@@ -82,7 +84,13 @@ export default async function AdminPage() {
       <AppHeader lang={user.preferred_language} user={user} />
       <main className="mx-auto max-w-5xl px-4 sm:px-6 py-10">
         <p className="microlabel mb-2">Site administration</p>
-        <h1 className="display text-5xl mb-8">Admin</h1>
+        <div className="flex items-end justify-between gap-4 mb-8">
+          <h1 className="display text-5xl">Admin</h1>
+          <Link href="/admin/inbox" className="btn btn-ghost btn-sm">
+            Support inbox
+            {unreadSupport > 0 && <span className="text-accent-deep">{unreadSupport}</span>}
+          </Link>
+        </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line-strong border-[1.5px] border-line-strong mb-10">
           {stat("Users", users.length)}

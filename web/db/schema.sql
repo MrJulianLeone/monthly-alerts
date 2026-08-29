@@ -170,6 +170,34 @@ CREATE TABLE IF NOT EXISTS translations (
 );
 
 -- ---------------------------------------------------------------------------
+-- Support inbox. Inbound mail to support@monthlyalerts.com arrives via the
+-- Resend email.received webhook; outbound rows are replies/messages sent from
+-- the admin inbox. A "thread" is the set of rows sharing thread_key: replies
+-- inherit it via the In-Reply-To header, with a counterparty + normalized
+-- subject fallback (Resend assigns its own Message-ID to outbound sends, so
+-- customer replies to us can only be matched by that fallback).
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS support_messages (
+  id                 uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  direction          text NOT NULL,                 -- 'inbound' | 'outbound'
+  resend_id          text UNIQUE,                   -- Resend email id (dedupes webhook retries)
+  message_id         text,                          -- RFC 5322 Message-ID header (inbound only)
+  in_reply_to        text,                          -- Message-ID being replied to
+  thread_key         text NOT NULL,                 -- conversation grouping key
+  counterparty_email text NOT NULL,                 -- the non-support party (stored lowercased)
+  from_email         text NOT NULL,
+  from_name          text,
+  to_email           text NOT NULL,
+  subject            text,
+  text_body          text,
+  html_body          text,
+  attachments        jsonb NOT NULL DEFAULT '[]',   -- [{filename, content_type, size}]
+  read_at            timestamptz,                   -- inbound only; null = unread
+  created_at         timestamptz NOT NULL DEFAULT now()
+);
+
+-- ---------------------------------------------------------------------------
 -- In-place upgrades for databases created before these columns existed
 -- (CREATE TABLE IF NOT EXISTS skips existing tables, so alter idempotently).
 -- ---------------------------------------------------------------------------
@@ -204,3 +232,5 @@ CREATE INDEX IF NOT EXISTS idx_items_project       ON items(project_id);
 CREATE INDEX IF NOT EXISTS idx_items_section       ON items(section_id);
 CREATE INDEX IF NOT EXISTS idx_comments_item       ON comments(item_id);
 CREATE INDEX IF NOT EXISTS idx_photos_item         ON photos(item_id);
+CREATE INDEX IF NOT EXISTS idx_support_thread      ON support_messages(thread_key, created_at);
+CREATE INDEX IF NOT EXISTS idx_support_message_id  ON support_messages(message_id);

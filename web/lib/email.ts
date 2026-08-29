@@ -39,16 +39,32 @@ const button = (href: string, label: string) => `
 <a href="${href}" style="display:inline-block;background:#1c1917;color:#ffffff;text-decoration:none;padding:12px 24px;border-radius:8px;font-size:15px;font-weight:600">${label}</a>`;
 
 async function send(to: string, subject: string, html: string) {
+  return sendRawEmail({ from: from(), to, subject, html });
+}
+
+/**
+ * Low-level send used by both the notification templates above (via send())
+ * and the support inbox, which sends from a different address with threading
+ * headers and a plain-text part.
+ */
+export async function sendRawEmail(opts: {
+  from: string;
+  to: string;
+  subject: string;
+  html: string;
+  text?: string;
+  headers?: Record<string, string>;
+}) {
   // Test/CI hook: log instead of sending (EMAIL_DISABLED=true).
   if (process.env.EMAIL_DISABLED === "true") {
-    console.log(`[email disabled] to=${to} subject=${subject}`);
+    console.log(`[email disabled] to=${opts.to} subject=${opts.subject}`);
     return null;
   }
   // The Resend SDK reports failures via the error field instead of throwing —
   // without this check, failed sends would look like successes to callers.
-  const { data, error } = await resend().emails.send({ from: from(), to, subject, html });
+  const { data, error } = await resend().emails.send(opts);
   if (error) {
-    throw new Error(`Email to ${to} failed: ${error.message}`);
+    throw new Error(`Email to ${opts.to} failed: ${error.message}`);
   }
   return data;
 }
