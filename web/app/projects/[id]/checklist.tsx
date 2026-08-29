@@ -98,7 +98,7 @@ export function SectionBudget({
   }
 
   return (
-    <p className="microlabel py-1.5 flex items-center gap-3">
+    <p className="microlabel py-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
       <span>
         {t(lang, "budget_label")}: <span className="text-ink">{b !== null ? fmt.format(b) : "—"}</span>
       </span>

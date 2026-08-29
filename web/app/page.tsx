@@ -4,7 +4,7 @@ import { LangToggle } from "@/components/lang-toggle";
 import { Logo, LogoMark } from "@/components/logo";
 import { getCurrentUser, getVisitorLang } from "@/lib/auth";
 import { PROJECT_PRICE_DISPLAY } from "@/lib/billing";
-import { t } from "@/lib/i18n";
+import { LANGUAGES, t } from "@/lib/i18n";
 
 export default async function LandingPage() {
   const user = await getCurrentUser();
@@ -34,7 +34,9 @@ export default async function LandingPage() {
       <main className="flex-1">
         <section className="grid-paper border-b-[1.5px] border-line-strong">
           <div className="mx-auto max-w-5xl px-4 sm:px-6 py-20 sm:py-28">
-            <p className="microlabel mb-6">EN ⇄ IT — {t(lang, "app_name")}</p>
+            <p className="microlabel mb-6">
+              {LANGUAGES.map((l) => l.code.toUpperCase()).join(" ⇄ ")} — {t(lang, "app_name")}
+            </p>
             <h1 className="display text-5xl sm:text-7xl max-w-3xl mb-6">
               {t(lang, "landing_tagline")}
             </h1>

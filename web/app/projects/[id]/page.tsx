@@ -85,7 +85,7 @@ export default async function ProjectPage({
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
         {/* Title block */}
         <div className="sheet grid-paper p-6 sm:p-8 mb-8">
-          <div className="flex items-start justify-between gap-4">
+          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
             <div className="min-w-0">
               <p className="microlabel mb-2">
                 <Link href="/dashboard" className="hover:text-ink transition-colors">
@@ -93,7 +93,7 @@ export default async function ProjectPage({
                 </Link>{" "}
                 / {project.archived_at ? t(lang, "archived") : `${pct}%`}
               </p>
-              <h1 className="display text-4xl sm:text-5xl break-words">{projectName}</h1>
+              <h1 className="display text-3xl sm:text-5xl break-words">{projectName}</h1>
               {project.address && (
                 <p className="text-sm text-ink-soft mt-2">{project.address}</p>
               )}
@@ -101,7 +101,7 @@ export default async function ProjectPage({
             {owner && (
               <Link
                 href={`/projects/${id}/settings`}
-                className="btn btn-ghost btn-sm shrink-0"
+                className="btn btn-ghost btn-sm shrink-0 self-start"
               >
                 {t(lang, "project_settings")}
               </Link>
