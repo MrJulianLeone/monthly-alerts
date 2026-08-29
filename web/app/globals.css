@@ -138,6 +138,13 @@ body {
   .input::placeholder {
     color: var(--color-ink-faint);
   }
+  /* iOS Safari auto-zooms any focused input under 16px; keep mobile inputs
+     at 16px so focusing a field never zooms the page. */
+  @media (max-width: 640px) {
+    .input {
+      font-size: 1rem;
+    }
+  }
 
   .sheet {
     background: var(--color-sheet);
