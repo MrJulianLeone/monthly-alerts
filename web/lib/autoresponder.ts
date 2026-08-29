@@ -14,6 +14,10 @@ import {
 // the support address), or needs_info (the admin is notified by email).
 // Everything the AI sends is recorded in the thread; failures leave the
 // message unclassified in the inbox, so nothing is ever lost.
+//
+// The admin is emailed exactly once for every non-spam inbound message: the
+// needs_info notification (recorded in the thread) or a plain alert (not
+// recorded) for auto-replied / unclassified mail.
 
 let client: OpenAI | null = null;
 
@@ -64,11 +68,13 @@ export async function runAutoresponder(
   try {
     if (!process.env.OPENAI_API_KEY) {
       await record(message.id, "skipped", "OPENAI_API_KEY not configured");
+      await alertAdmin(message, "Stored unclassified (AI not configured)");
       return;
     }
     // Never auto-reply to machines — that's how mail loops start.
     if (opts.autoSubmitted || AUTOMATED_SENDER.test(message.from_email)) {
       await record(message.id, "skipped", "Automated sender — not auto-replied");
+      await alertAdmin(message, "Automated sender — stored without a reply");
       return;
     }
 
@@ -113,6 +119,7 @@ export async function runAutoresponder(
         auto: true,
       });
       await record(message.id, "responded", verdict.reason);
+      await alertAdmin(message, "Auto-replied", verdict.reply);
       return;
     }
 
@@ -120,7 +127,38 @@ export async function runAutoresponder(
     await record(message.id, "needs_info", verdict.reason);
   } catch (err) {
     console.error("autoresponder failed; message left unclassified:", err);
+    await alertAdmin(message, "Stored unclassified (AI triage failed)").catch(() => {});
   }
+}
+
+/**
+ * Plain new-mail alert to the site admin, with the inbound text (and the
+ * auto-reply, when one was sent). Deliberately NOT recorded in the inbox —
+ * unlike notifyAdmin, this is a heads-up, not part of the correspondence.
+ */
+async function alertAdmin(
+  message: SupportMessage,
+  action: string,
+  autoReply?: string
+): Promise<void> {
+  const link = `${appUrl()}/admin/inbox/${encodeURIComponent(message.thread_key)}`;
+  const body = `New support email — ${action}.
+
+From: ${message.from_name ?? ""} <${message.from_email}>
+Subject: ${message.subject ?? "(no subject)"}
+
+--- Message ---
+${(message.text_body ?? "(no text body)").slice(0, 4000)}
+${autoReply ? `\n--- Auto-reply sent ---\n${autoReply}\n` : ""}
+View the thread: ${link}`;
+
+  await sendRawEmail({
+    from: supportFrom(),
+    to: ADMIN_EMAIL,
+    subject: `[Support] New email: ${message.subject ?? "(no subject)"}`,
+    text: body,
+    html: `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1c1917;white-space:pre-wrap">${escapeHtml(body)}</div>`,
+  });
 }
 
 async function classify(message: SupportMessage): Promise<Verdict> {
