@@ -559,6 +559,53 @@ const messages = {
   footer_terms: { en: "Terms of Use", it: "Termini di utilizzo", es: "Términos de uso" },
   footer_privacy: { en: "Privacy Policy", it: "Informativa sulla privacy", es: "Política de privacidad" },
   footer_contact: { en: "Contact", it: "Contatti", es: "Contacto" },
+
+  // Landing: how it works
+  hiw_title: { en: "How it works", it: "Come funziona", es: "Cómo funciona" },
+  hiw_step1_title: { en: "Set up your checklist", it: "Crea la tua checklist", es: "Crea tu lista" },
+  hiw_step1_body: {
+    en: "Create a project and pick your construction phases — site prep to final inspection — from ready-made templates, or build your own.",
+    it: "Crea un progetto e scegli le fasi di cantiere — dalla preparazione al collaudo finale — da modelli pronti, o costruisci le tue.",
+    es: "Crea un proyecto y elige tus fases de obra — de la preparación del terreno a la inspección final — con plantillas listas, o crea las tuyas.",
+  },
+  hiw_step2_title: { en: "Invite your crew", it: "Invita la tua squadra", es: "Invita a tu equipo" },
+  hiw_step2_body: {
+    en: "Add subs, inspectors, and clients by email, each with their own language. Invitees join free.",
+    it: "Aggiungi subappaltatori, ispettori e clienti via email, ognuno con la propria lingua. Gli invitati partecipano gratis.",
+    es: "Agrega subcontratistas, inspectores y clientes por correo, cada uno con su propio idioma. Los invitados participan gratis.",
+  },
+  hiw_step3_title: { en: "Work the same list", it: "Lavorate sulla stessa lista", es: "Trabajen la misma lista" },
+  hiw_step3_body: {
+    en: "Everyone sees the checklist in their language — items, comments, and photo captions translated automatically.",
+    it: "Tutti vedono la checklist nella propria lingua: voci, commenti e didascalie delle foto tradotti automaticamente.",
+    es: "Todos ven la lista en su idioma: tareas, comentarios y leyendas de fotos traducidos automáticamente.",
+  },
+  hiw_step4_title: { en: "Get the monthly update", it: "Ricevi l'aggiornamento mensile", es: "Recibe la actualización mensual" },
+  hiw_step4_body: {
+    en: "Every member gets a monthly status email in their language: progress, what's done, what's overdue.",
+    it: "Ogni membro riceve ogni mese un'email di stato nella propria lingua: avanzamento, cosa è fatto, cosa è in ritardo.",
+    es: "Cada miembro recibe cada mes un correo de estado en su idioma: avance, lo terminado y lo atrasado.",
+  },
+  hiw_demo_label: {
+    en: "The same item, seen by three crew members",
+    it: "La stessa voce, vista da tre membri della squadra",
+    es: "La misma tarea, vista por tres miembros del equipo",
+  },
+
+  // In-app feedback
+  feedback_button: { en: "Feedback", it: "Feedback", es: "Comentarios" },
+  feedback_title: { en: "Send us feedback", it: "Inviaci un feedback", es: "Envíanos tus comentarios" },
+  feedback_placeholder: {
+    en: "What's working? What's missing?",
+    it: "Cosa funziona? Cosa manca?",
+    es: "¿Qué funciona? ¿Qué falta?",
+  },
+  feedback_send: { en: "Send", it: "Invia", es: "Enviar" },
+  feedback_thanks: {
+    en: "Thanks — your feedback is on its way.",
+    it: "Grazie — il tuo feedback è stato inviato.",
+    es: "Gracias — tus comentarios fueron enviados.",
+  },
   contact_title: { en: "Contact us", it: "Contattaci", es: "Contáctanos" },
   contact_intro: {
     en: "Questions, feedback, or a problem with your account — send us a message and we'll get back to you by email.",

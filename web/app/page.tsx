@@ -18,6 +18,13 @@ export default async function LandingPage() {
     { title: t(lang, "landing_feature_3_title"), body: t(lang, "landing_feature_3_body") },
   ];
 
+  const steps = [
+    { title: t(lang, "hiw_step1_title"), body: t(lang, "hiw_step1_body") },
+    { title: t(lang, "hiw_step2_title"), body: t(lang, "hiw_step2_body") },
+    { title: t(lang, "hiw_step3_title"), body: t(lang, "hiw_step3_body") },
+    { title: t(lang, "hiw_step4_title"), body: t(lang, "hiw_step4_body") },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col">
       <header className="border-b-[1.5px] border-line-strong bg-sheet">
@@ -62,7 +69,47 @@ export default async function LandingPage() {
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-4 sm:px-6 pb-20">
+        <section className="border-y-[1.5px] border-line-strong bg-sheet">
+          <div className="mx-auto max-w-5xl px-4 sm:px-6 py-16">
+            <h2 className="display text-4xl mb-10">{t(lang, "hiw_title")}</h2>
+            <ol className="grid sm:grid-cols-2 gap-x-10 gap-y-8 mb-12">
+              {steps.map((s, i) => (
+                <li key={s.title} className="flex gap-4">
+                  <span className="display text-4xl text-accent shrink-0 leading-none">
+                    {i + 1}
+                  </span>
+                  <div>
+                    <h3 className="display text-xl mb-1.5">{s.title}</h3>
+                    <p className="text-sm text-ink-soft leading-relaxed">{s.body}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            <div className="sheet grid-paper p-6 sm:p-8 max-w-xl">
+              <p className="microlabel mb-4">{t(lang, "hiw_demo_label")}</p>
+              <ul className="space-y-2.5">
+                {[
+                  { code: "EN", text: "Install kitchen cabinets" },
+                  { code: "IT", text: "Installare i mobili della cucina" },
+                  { code: "ES", text: "Instalar los gabinetes de cocina" },
+                ].map((row) => (
+                  <li key={row.code} className="flex items-center gap-3">
+                    <span
+                      className="inline-flex h-4 w-4 shrink-0 items-center justify-center border-[1.5px] border-ink rounded-[2px] bg-ink text-white text-[10px] leading-none"
+                      aria-hidden="true"
+                    >
+                      ✓
+                    </span>
+                    <span className="text-sm flex-1">{row.text}</span>
+                    <span className="chip text-ink-faint">{row.code}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl px-4 sm:px-6 py-20">
           <div className="sheet grid-paper p-10 sm:p-14 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-8">
             <div>
               <p className="microlabel mb-3">{t(lang, "pricing_label")}</p>
