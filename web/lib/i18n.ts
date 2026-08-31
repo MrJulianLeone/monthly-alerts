@@ -289,10 +289,26 @@ const messages = {
   confirm_delete: { en: "Confirm delete", it: "Conferma eliminazione", es: "Confirmar eliminación" },
   move_up: { en: "Move up", it: "Sposta su", es: "Subir" },
   move_down: { en: "Move down", it: "Sposta giù", es: "Bajar" },
-  template_pick_label: {
-    en: "Or start from a template for your kind of job:",
-    it: "Oppure parti da un modello per il tuo tipo di lavoro:",
-    es: "O empieza con una plantilla para tu tipo de trabajo:",
+  template_describe_label: {
+    en: "Describe your project and AI will draft your checklist sections:",
+    it: "Descrivi il tuo progetto e l'AI preparerà le sezioni della checklist:",
+    es: "Describe tu proyecto y la IA redactará las secciones de tu lista:",
+  },
+  template_describe_placeholder: {
+    en: "e.g. Renovating a two-bedroom farmhouse: new roof, rewiring, new kitchen and bathroom…",
+    it: "es. Ristrutturazione di un casale con due camere: nuovo tetto, rifacimento impianto elettrico, nuova cucina e bagno…",
+    es: "ej. Renovación de una casa de campo de dos habitaciones: techo nuevo, instalación eléctrica, cocina y baño nuevos…",
+  },
+  template_generate: {
+    en: "Draft sections with AI",
+    it: "Genera le sezioni con l'AI",
+    es: "Generar secciones con IA",
+  },
+  template_generating: { en: "Drafting…", it: "Generazione…", es: "Generando…" },
+  template_generate_failed: {
+    en: "Couldn't draft sections — try again, or add sections below.",
+    it: "Impossibile generare le sezioni — riprova o aggiungile qui sotto.",
+    es: "No se pudieron generar las secciones — inténtalo de nuevo o añádelas abajo.",
   },
   caption_placeholder: { en: "Add caption…", it: "Aggiungi didascalia…", es: "Añadir leyenda…" },
   photo_unsupported: {

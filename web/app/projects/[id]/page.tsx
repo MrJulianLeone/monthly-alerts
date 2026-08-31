@@ -14,7 +14,6 @@ import {
   listSections,
 } from "@/lib/projects";
 import { translateBatch, type Translatable } from "@/lib/translate";
-import { PROJECT_TEMPLATES } from "@/lib/templates";
 import {
   AddItemForm,
   AddSectionForm,
@@ -23,7 +22,7 @@ import {
   SectionBudget,
   SectionTools,
   StatusCheckbox,
-  TemplatePicker,
+  TemplateGenerator,
 } from "./checklist";
 
 export const dynamic = "force-dynamic";
@@ -303,15 +302,7 @@ export default async function ProjectPage({
         {editable && (
           <div className="no-print mt-10 space-y-3">
             {sections.length === 0 && (
-              <TemplatePicker
-                projectId={id}
-                templates={PROJECT_TEMPLATES.map((tpl) => ({
-                  key: tpl.key,
-                  name: tpl.name[userLang],
-                  sections: tpl.sections[userLang],
-                }))}
-                lang={lang}
-              />
+              <TemplateGenerator projectId={id} lang={lang} />
             )}
             <AddSectionForm projectId={id} lang={lang} />
           </div>

@@ -434,44 +434,54 @@ export function ItemMove({
   );
 }
 
-/** Trade-specific ready-made section sets for an empty checklist. */
-export function TemplatePicker({
-  projectId,
-  templates,
-  lang,
-}: {
-  projectId: string;
-  templates: { key: string; name: string; sections: string[] }[];
-  lang: Lang;
-}) {
+/** Drafts an empty checklist's sections with AI from a project description. */
+export function TemplateGenerator({ projectId, lang }: { projectId: string; lang: Lang }) {
   const router = useRouter();
-  const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [description, setDescription] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
   return (
-    <div>
-      <p className="microlabel mb-3">{t(lang, "template_pick_label")}</p>
-      <div className="flex flex-wrap gap-2">
-        {templates.map((tpl) => (
-          <button
-            key={tpl.key}
-            disabled={busyKey !== null}
-            className="btn btn-ghost btn-sm"
-            onClick={async () => {
-              setBusyKey(tpl.key);
-              for (const name of tpl.sections) {
-                await fetch(`/api/projects/${projectId}/sections`, {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({ name }),
-                });
-              }
-              setBusyKey(null);
-              router.refresh();
-            }}
-          >
-            {busyKey === tpl.key ? "…" : `⚏ ${tpl.name}`}
-          </button>
-        ))}
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (description.trim().length < 10) return;
+        setBusy(true);
+        setFailed(false);
+        const res = await fetch(`/api/projects/${projectId}/generate-sections`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ description }),
+        }).catch(() => null);
+        setBusy(false);
+        if (res?.ok) {
+          router.refresh();
+        } else {
+          setFailed(true);
+        }
+      }}
+    >
+      <p className="microlabel mb-3">{t(lang, "template_describe_label")}</p>
+      <textarea
+        className="input w-full"
+        rows={3}
+        maxLength={2000}
+        placeholder={t(lang, "template_describe_placeholder")}
+        value={description}
+        disabled={busy}
+        onChange={(e) => setDescription(e.target.value)}
+      />
+      <div className="mt-2 flex items-center gap-3">
+        <button
+          type="submit"
+          disabled={busy || description.trim().length < 10}
+          className="btn btn-primary"
+        >
+          {busy ? t(lang, "template_generating") : t(lang, "template_generate")}
+        </button>
+        {failed && (
+          <span className="microlabel text-red-700">{t(lang, "template_generate_failed")}</span>
+        )}
       </div>
-    </div>
+    </form>
   );
 }
