@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: "*",
         allow: "/",
-        disallow: ["/api/", "/admin", "/dashboard", "/projects/", "/settings"],
+        disallow: ["/api/", "/admin", "/dashboard", "/projects/", "/settings", "/w/"],
       },
     ],
     sitemap: "https://www.monthlyalerts.com/sitemap.xml",

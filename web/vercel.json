@@ -1,6 +1,7 @@
 {
   "crons": [
     { "path": "/api/cron/monthly-status", "schedule": "0 6 1 * *" },
-    { "path": "/api/cron/expire-projects", "schedule": "0 4 * * *" }
+    { "path": "/api/cron/expire-projects", "schedule": "0 4 * * *" },
+    { "path": "/api/cron/prospecting", "schedule": "0 15 * * *" }
   ]
 }
