@@ -87,10 +87,15 @@ export default async function AdminPage() {
         <p className="microlabel mb-2">Site administration</p>
         <div className="flex items-end justify-between gap-4 mb-8">
           <h1 className="display text-5xl">Admin</h1>
-          <Link href="/admin/inbox" className="btn btn-ghost btn-sm">
-            Support inbox
-            {unreadSupport > 0 && <span className="text-accent-deep">{unreadSupport}</span>}
-          </Link>
+          <div className="flex gap-2">
+            <Link href="/admin/prospects" className="btn btn-ghost btn-sm">
+              Prospecting
+            </Link>
+            <Link href="/admin/inbox" className="btn btn-ghost btn-sm">
+              Support inbox
+              {unreadSupport > 0 && <span className="text-accent-deep">{unreadSupport}</span>}
+            </Link>
+          </div>
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-line-strong border-[1.5px] border-line-strong mb-10">

@@ -259,3 +259,123 @@ CREATE INDEX IF NOT EXISTS idx_comments_item       ON comments(item_id);
 CREATE INDEX IF NOT EXISTS idx_photos_item         ON photos(item_id);
 CREATE INDEX IF NOT EXISTS idx_support_thread      ON support_messages(thread_key, created_at);
 CREATE INDEX IF NOT EXISTS idx_support_message_id  ON support_messages(message_id);
+
+-- ---------------------------------------------------------------------------
+-- Prospecting pipeline (admin-only outbound). State machine per prospect:
+--   new -> researched -> scored -> pending_approval -> approved -> sent
+--       -> followed_up -> replied / converted
+-- with parking/terminal states: no_website, no_email, rejected_fit, closed,
+-- bounced, suppressed, snoozed. Drafts live on the prospect row (editable in
+-- the approval UI); the emails actually sent/received are prospect_emails.
+-- Outbound goes through a dedicated Gmail mailbox (lib/outreach.ts), never
+-- Resend, so cold outreach can't touch transactional deliverability.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS prospects (
+  id               uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source           text NOT NULL DEFAULT 'manual',  -- 'manual' | 'roster:<name>'
+  company          text NOT NULL,
+  contact_name     text,
+  website          text,
+  email            text,                            -- verified-ish business email (lowercased)
+  phone            text,
+  city             text,
+  region           text,                            -- state / license jurisdiction
+  license_no       text,
+  classification   text,                            -- e.g. CSLB "B", "B-2"
+  license_issued   date,
+  status           text NOT NULL DEFAULT 'new',
+  status_note      text,                            -- why parked/closed/rejected
+  research         text,                            -- LLM research summary of the website
+  score            int,                             -- 0-10 fit score
+  score_reason     text,
+  draft_subject    text,                            -- initial email draft
+  draft_body       text,
+  followup_subject text,                            -- follow-up draft (approved as a pair)
+  followup_body    text,
+  visit_token      text UNIQUE,                     -- /w/<token> attribution link
+  reply_class      text,                            -- interested|not_now|no|unsubscribe|ooo|other
+  resume_at        timestamptz,                     -- snoozed prospects re-enter here
+  approved_at      timestamptz,
+  sent_at          timestamptz,                     -- initial send
+  followup_sent_at timestamptz,
+  replied_at       timestamptz,
+  converted_at     timestamptz,
+  gmail_thread_id  text,                            -- Gmail thread of the outreach
+  created_at       timestamptz NOT NULL DEFAULT now(),
+  updated_at       timestamptz NOT NULL DEFAULT now()
+);
+
+-- Sent + received mail per prospect, in Gmail. kind: 'initial' | 'follow_up'
+-- | 'reply' | 'bounce'. gmail_message_id dedupes inbox polling.
+CREATE TABLE IF NOT EXISTS prospect_emails (
+  id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  prospect_id       uuid NOT NULL REFERENCES prospects(id) ON DELETE CASCADE,
+  direction         text NOT NULL,                  -- 'outbound' | 'inbound'
+  kind              text NOT NULL,
+  subject           text,
+  body_text         text,
+  gmail_message_id  text UNIQUE,
+  gmail_thread_id   text,
+  message_id_header text,                           -- RFC 5322 Message-ID (for threading)
+  ai_class          text,                           -- classifier verdict on inbound rows
+  ai_note           text,
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+
+-- Permanent do-not-contact list. Checked on import/promote and before every
+-- send; unsubscribes and "no" replies land here and never leave.
+CREATE TABLE IF NOT EXISTS prospect_suppressions (
+  email      text PRIMARY KEY,                      -- lowercased
+  reason     text NOT NULL,                         -- 'unsubscribe'|'declined'|'bounced'|'manual'
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Site visits attributed via the per-prospect token link.
+CREATE TABLE IF NOT EXISTS prospect_visits (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  prospect_id uuid NOT NULL REFERENCES prospects(id) ON DELETE CASCADE,
+  user_agent  text,
+  created_at  timestamptz NOT NULL DEFAULT now()
+);
+
+-- Staging area for state license roster imports (CSV upload or URL fetch).
+-- Raw row kept as jsonb; extracted columns power filter + promote. Promoted
+-- rows become prospects and are marked so re-imports skip them.
+CREATE TABLE IF NOT EXISTS roster_candidates (
+  id             uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  source         text NOT NULL,                     -- import label, e.g. 'cslb-2026-09'
+  company        text NOT NULL,
+  city           text,
+  region         text,
+  phone          text,
+  classification text,
+  license_no     text,
+  license_issued date,
+  license_status text,
+  raw            jsonb NOT NULL DEFAULT '{}',
+  promoted_at    timestamptz,
+  created_at     timestamptz NOT NULL DEFAULT now()
+);
+
+-- Singleton settings row for the pipeline (id is always true).
+CREATE TABLE IF NOT EXISTS prospecting_settings (
+  id                bool PRIMARY KEY DEFAULT true CHECK (id),
+  paused            bool NOT NULL DEFAULT false,
+  daily_cap         int NOT NULL DEFAULT 15,
+  score_threshold   int NOT NULL DEFAULT 6,
+  followup_days     int NOT NULL DEFAULT 4,
+  snooze_months     int NOT NULL DEFAULT 3,
+  target_notes      text,                           -- admin guidance fed to scoring/drafting
+  warmup_started_at timestamptz,                    -- set on first send; drives the ramp
+  last_poll_at      timestamptz,                    -- inbox polling high-water mark
+  created_at        timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO prospecting_settings (id) VALUES (true) ON CONFLICT (id) DO NOTHING;
+
+CREATE INDEX IF NOT EXISTS idx_prospects_status        ON prospects(status);
+CREATE INDEX IF NOT EXISTS idx_prospects_email         ON prospects(email);
+CREATE INDEX IF NOT EXISTS idx_prospect_emails_p       ON prospect_emails(prospect_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_prospect_visits_p       ON prospect_visits(prospect_id);
+CREATE INDEX IF NOT EXISTS idx_roster_candidates_src   ON roster_candidates(source);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_dedupe    ON roster_candidates(source, company, license_no);

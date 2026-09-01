@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isAdmin } from "@/lib/admin";
 import { getCurrentUser, type SessionUser } from "@/lib/auth";
 import { canEdit, getMembership, getProject, type Project, type Role } from "@/lib/projects";
 
@@ -44,6 +45,16 @@ export async function requireProject(
     return { response: jsonError("Project is archived", 409) };
   }
   return { user: auth.user, role, project };
+}
+
+/** Guard for admin-only API routes (404s non-admins like the admin pages do). */
+export async function requireAdmin(): Promise<
+  { user: SessionUser } | { response: NextResponse }
+> {
+  const auth = await requireUser();
+  if ("response" in auth) return auth;
+  if (!isAdmin(auth.user)) return { response: jsonError("Not found", 404) };
+  return auth;
 }
 
 /** Guard for Vercel cron endpoints (Authorization: Bearer CRON_SECRET). */
