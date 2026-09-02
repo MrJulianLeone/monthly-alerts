@@ -756,6 +756,11 @@ const messages = {
     es: "No se pudo subir \"{name}\".",
   },
   files_download: { en: "Download", it: "Scarica", es: "Descargar" },
+  files_upload_done: {
+    en: "Upload complete — {n} added.",
+    it: "Caricamento completato — {n} aggiunti.",
+    es: "Subida completada — {n} añadidos.",
+  },
   files_archived_note: {
     en: "This project is archived — files are read-only.",
     it: "Questo progetto è archiviato — i documenti sono in sola lettura.",

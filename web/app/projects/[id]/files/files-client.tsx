@@ -31,6 +31,10 @@ type Progress = { name: string; n: number; total: number; pct: number };
 
 const VIOLATIONS: LimitViolation[] = ["too_large", "too_many", "total_exceeded"];
 
+/** Hard ceilings so a stalled request can never leave the button stuck. */
+const UPLOAD_TIMEOUT_MS = 10 * 60 * 1000;
+const REGISTER_TIMEOUT_MS = 60 * 1000;
+
 /** A real PDF starts with "%PDF-"; the extension and MIME type are just hints. */
 async function looksLikePdf(file: File): Promise<boolean> {
   try {
@@ -65,6 +69,7 @@ export function FileCabinet({
   const fileRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<Progress | null>(null);
   const [errors, setErrors] = useState<string[]>([]);
+  const [done, setDone] = useState<string | null>(null);
 
   const violationMessage = (violation: LimitViolation, name: string) => {
     switch (violation) {
@@ -79,60 +84,69 @@ export function FileCabinet({
     }
   };
 
+  async function uploadOne(file: File, running: FileUsage, report: (pct: number) => void) {
+    const name = file.name;
+    if (!(await looksLikePdf(file))) return t(lang, "files_not_pdf", { name });
+    const violation = limitViolation(running, file.size);
+    if (violation) return violationMessage(violation, name);
+
+    try {
+      const blob = await upload(filePathname(projectId, crypto.randomUUID()), file, {
+        access: "public",
+        handleUploadUrl: `/api/projects/${projectId}/files/upload`,
+        contentType: PDF_CONTENT_TYPE,
+        clientPayload: JSON.stringify({ name, size: file.size }),
+        onUploadProgress: ({ percentage }) => report(Math.round(percentage)),
+        abortSignal: AbortSignal.timeout(UPLOAD_TIMEOUT_MS),
+      });
+      report(100);
+      const res = await fetch(`/api/projects/${projectId}/files`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: blob.url, name }),
+        signal: AbortSignal.timeout(REGISTER_TIMEOUT_MS),
+      });
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { code?: string };
+        if (data.code === "not_pdf") return t(lang, "files_not_pdf", { name });
+        if (VIOLATIONS.includes(data.code as LimitViolation)) {
+          return violationMessage(data.code as LimitViolation, name);
+        }
+        return t(lang, "files_upload_failed", { name });
+      }
+      running.count += 1;
+      running.bytes += file.size;
+      return null;
+    } catch {
+      return t(lang, "files_upload_failed", { name });
+    }
+  }
+
   async function handleFiles(list: FileList) {
     const picked = Array.from(list);
     const running: FileUsage = { ...usage };
     const failed: string[] = [];
+    let added = 0;
     setErrors([]);
+    setDone(null);
 
-    for (let i = 0; i < picked.length; i++) {
-      const file = picked[i];
-      const name = file.name;
-      const report = (pct: number) =>
-        setProgress({ name, n: i + 1, total: picked.length, pct });
-      report(0);
-
-      if (!(await looksLikePdf(file))) {
-        failed.push(t(lang, "files_not_pdf", { name }));
-        continue;
+    try {
+      for (let i = 0; i < picked.length; i++) {
+        const file = picked[i];
+        const report = (pct: number) =>
+          setProgress({ name: file.name, n: i + 1, total: picked.length, pct });
+        report(0);
+        const problem = await uploadOne(file, running, report);
+        if (problem) failed.push(problem);
+        else added += 1;
       }
-      const violation = limitViolation(running, file.size);
-      if (violation) {
-        failed.push(violationMessage(violation, name));
-        continue;
-      }
-
-      try {
-        const blob = await upload(filePathname(projectId, crypto.randomUUID()), file, {
-          access: "public",
-          handleUploadUrl: `/api/projects/${projectId}/files/upload`,
-          contentType: PDF_CONTENT_TYPE,
-          clientPayload: JSON.stringify({ name, size: file.size }),
-          onUploadProgress: ({ percentage }) => report(Math.round(percentage)),
-        });
-        const res = await fetch(`/api/projects/${projectId}/files`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: blob.url, name }),
-        });
-        if (!res.ok) {
-          const data = (await res.json().catch(() => ({}))) as { code?: string };
-          if (data.code === "not_pdf") failed.push(t(lang, "files_not_pdf", { name }));
-          else if (VIOLATIONS.includes(data.code as LimitViolation)) {
-            failed.push(violationMessage(data.code as LimitViolation, name));
-          } else failed.push(t(lang, "files_upload_failed", { name }));
-          continue;
-        }
-        running.count += 1;
-        running.bytes += file.size;
-      } catch {
-        failed.push(t(lang, "files_upload_failed", { name }));
-      }
+    } finally {
+      // Whatever happened above, the button must come back.
+      setProgress(null);
+      setErrors(failed);
+      if (added > 0) setDone(t(lang, "files_upload_done", { n: added }));
+      router.refresh();
     }
-
-    setProgress(null);
-    setErrors(failed);
-    router.refresh();
   }
 
   return (
@@ -171,8 +185,14 @@ export function FileCabinet({
         </div>
       )}
 
+      {done && (
+        <p className="no-print mb-6 text-sm text-ok" role="status">
+          ✓ {done}
+        </p>
+      )}
+
       {errors.length > 0 && (
-        <ul className="no-print mb-6 space-y-1">
+        <ul className="no-print mb-6 space-y-1" role="alert">
           {errors.map((message, i) => (
             <li key={i} className="text-sm text-accent-deep">
               {message}

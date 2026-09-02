@@ -71,7 +71,7 @@ export async function POST(
     return reject("Only PDF files are accepted", 415, "not_pdf");
   }
 
-  // Already registered (e.g. by the upload-completed callback)? Just return it.
+  // Already registered (a retried registration)? Just refresh the name.
   const existing = (await sql()`
     SELECT id FROM project_files WHERE pathname = ${stored.pathname}
   `) as { id: string }[];
