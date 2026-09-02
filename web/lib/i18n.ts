@@ -350,9 +350,9 @@ const messages = {
     es: "\"{project}\" se eliminará el {date}",
   },
   email_expiry_body: {
-    en: "Your project \"{project}\" reaches the end of its two-year storage period on {date}. On that date the project — checklist, comments, budgets, and photos — will be permanently deleted. Print the checklist or save anything you need to keep before then.",
-    it: "Il tuo progetto \"{project}\" raggiunge la fine del periodo di conservazione di due anni il {date}. In quella data il progetto — lista, commenti, budget e foto — sarà eliminato definitivamente. Stampa la lista o salva ciò che ti serve prima di allora.",
-    es: "Tu proyecto \"{project}\" llega al final de su período de almacenamiento de dos años el {date}. En esa fecha el proyecto — lista, comentarios, presupuestos y fotos — se eliminará permanentemente. Imprime la lista o guarda lo que necesites antes.",
+    en: "Your project \"{project}\" reaches the end of its two-year storage period on {date}. On that date the project — checklist, comments, budgets, photos, and files — will be permanently deleted. Print the checklist or save anything you need to keep before then.",
+    it: "Il tuo progetto \"{project}\" raggiunge la fine del periodo di conservazione di due anni il {date}. In quella data il progetto — lista, commenti, budget, foto e documenti — sarà eliminato definitivamente. Stampa la lista o salva ciò che ti serve prima di allora.",
+    es: "Tu proyecto \"{project}\" llega al final de su período de almacenamiento de dos años el {date}. En esa fecha el proyecto — lista, comentarios, presupuestos, fotos y archivos — se eliminará permanentemente. Imprime la lista o guarda lo que necesites antes.",
   },
 
   // Budgets
@@ -409,9 +409,9 @@ const messages = {
   },
   delete_project: { en: "Delete project", it: "Elimina progetto", es: "Eliminar proyecto" },
   delete_project_confirm: {
-    en: "Permanently delete this project, its checklist, photos, and members? This cannot be undone.",
-    it: "Eliminare definitivamente questo progetto con lista, foto e membri? L'operazione non può essere annullata.",
-    es: "¿Eliminar permanentemente este proyecto con su lista, fotos y miembros? No se puede deshacer.",
+    en: "Permanently delete this project, its checklist, photos, files, and members? This cannot be undone.",
+    it: "Eliminare definitivamente questo progetto con lista, foto, documenti e membri? L'operazione non può essere annullata.",
+    es: "¿Eliminar permanentemente este proyecto con su lista, fotos, archivos y miembros? No se puede deshacer.",
   },
   project_expires: {
     en: "Project storage until {date}",
@@ -704,6 +704,62 @@ const messages = {
     en: "Payment received — your project is ready.",
     it: "Pagamento ricevuto — il tuo progetto è pronto.",
     es: "Pago recibido — tu proyecto está listo.",
+  },
+  // Project file cabinet (PDF documents)
+  files_nav: { en: "Files", it: "Documenti", es: "Archivos" },
+  files_title: { en: "File cabinet", it: "Archivio documenti", es: "Archivador" },
+  files_intro: {
+    en: "PDF documents for this project — plans, permits, quotes, contracts. Every member can open and download them.",
+    it: "Documenti PDF di questo progetto — planimetrie, permessi, preventivi, contratti. Ogni membro può aprirli e scaricarli.",
+    es: "Documentos PDF de este proyecto — planos, permisos, presupuestos, contratos. Todos los miembros pueden abrirlos y descargarlos.",
+  },
+  files_empty: { en: "No files yet.", it: "Nessun documento ancora.", es: "Aún no hay archivos." },
+  files_upload: { en: "Upload PDF", it: "Carica PDF", es: "Subir PDF" },
+  files_limits: {
+    en: "PDF only · up to {size} per file · {count} files per project · {total} in total",
+    it: "Solo PDF · massimo {size} per file · {count} file per progetto · {total} in totale",
+    es: "Solo PDF · hasta {size} por archivo · {count} archivos por proyecto · {total} en total",
+  },
+  files_usage: {
+    en: "{count} of {max} files · {used} of {total} used",
+    it: "{count} di {max} file · {used} di {total} usati",
+    es: "{count} de {max} archivos · {used} de {total} usados",
+  },
+  files_uploading: {
+    en: "Uploading {name} ({n} of {total})… {pct}%",
+    it: "Caricamento di {name} ({n} di {total})… {pct}%",
+    es: "Subiendo {name} ({n} de {total})… {pct}%",
+  },
+  files_not_pdf: {
+    en: "\"{name}\" is not a PDF.",
+    it: "\"{name}\" non è un PDF.",
+    es: "\"{name}\" no es un PDF.",
+  },
+  files_too_large: {
+    en: "\"{name}\" is larger than {size}.",
+    it: "\"{name}\" supera i {size}.",
+    es: "\"{name}\" supera los {size}.",
+  },
+  files_too_many: {
+    en: "This project already has {count} files — delete one to upload more.",
+    it: "Questo progetto ha già {count} file — eliminane uno per caricarne altri.",
+    es: "Este proyecto ya tiene {count} archivos — elimina uno para subir más.",
+  },
+  files_total_exceeded: {
+    en: "Not enough space: this project can store {total} in total.",
+    it: "Spazio insufficiente: questo progetto può contenere {total} in totale.",
+    es: "Espacio insuficiente: este proyecto puede almacenar {total} en total.",
+  },
+  files_upload_failed: {
+    en: "\"{name}\" could not be uploaded.",
+    it: "Impossibile caricare \"{name}\".",
+    es: "No se pudo subir \"{name}\".",
+  },
+  files_download: { en: "Download", it: "Scarica", es: "Descargar" },
+  files_archived_note: {
+    en: "This project is archived — files are read-only.",
+    it: "Questo progetto è archiviato — i documenti sono in sola lettura.",
+    es: "Este proyecto está archivado — los archivos son de solo lectura.",
   },
 } as const;
 

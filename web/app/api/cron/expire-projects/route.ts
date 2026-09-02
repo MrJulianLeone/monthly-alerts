@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
-import { del } from "@vercel/blob";
 import { requireCronSecret } from "@/lib/api";
 import { sql } from "@/lib/db";
 import { sendExpiryWarningEmail } from "@/lib/email";
+import { deleteProjectBlobs } from "@/lib/files";
 import { locale, type Lang } from "@/lib/i18n";
 import { PROJECT_RETENTION_YEARS, projectExpiresAt } from "@/lib/projects";
 import { translateOne } from "@/lib/translate";
@@ -14,7 +14,7 @@ export const maxDuration = 300;
  *   1. Warn owners of projects entering their final 30 days (once, in their
  *      language, with a print-before-deletion reminder).
  *   2. Delete projects past the two-year retention period — a policy
- *      disclosed on the site before checkout — including Blob photos.
+ *      disclosed on the site before checkout — including Blob photos and files.
  *   3. Housekeeping: sweep expired tokens, sessions, stale invites, and old
  *      rate-limit windows.
  */
@@ -69,17 +69,9 @@ export async function GET(request: Request) {
           < now() - make_interval(years => ${PROJECT_RETENTION_YEARS} + extended_years)
   `) as { id: string; name: string }[];
 
-  let photosDeleted = 0;
+  let blobsDeleted = 0;
   for (const project of expired) {
-    const photos = (await sql()`
-      SELECT url FROM photos WHERE project_id = ${project.id}
-    `) as { url: string }[];
-    if (photos.length > 0) {
-      await del(photos.map((p) => p.url)).catch((err) =>
-        console.error(`expire-projects: blob cleanup failed for ${project.id}:`, err)
-      );
-      photosDeleted += photos.length;
-    }
+    blobsDeleted += await deleteProjectBlobs(project.id);
     await sql()`DELETE FROM projects WHERE id = ${project.id}`;
     console.log(`expire-projects: deleted "${project.name}" (${project.id})`);
   }
@@ -95,6 +87,6 @@ export async function GET(request: Request) {
   return NextResponse.json({
     warned,
     deleted: expired.length,
-    photos_deleted: photosDeleted,
+    blobs_deleted: blobsDeleted,
   });
 }

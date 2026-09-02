@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { isAdmin } from "@/lib/admin";
+import { fileUsage } from "@/lib/files";
 import { isLang, LANGUAGES, langName, locale, t } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
 import {
@@ -49,10 +50,11 @@ export default async function ProjectPage({
   const lang = previewLang ?? userLang;
   const mineOnly = sp.mine === "1";
 
-  const [sections, items, members] = await Promise.all([
+  const [sections, items, members, files] = await Promise.all([
     listSections(id),
     listItems(id),
     listMembers(id),
+    fileUsage(id),
   ]);
 
   // One batched, cached translation pass for everything on the page.
@@ -138,6 +140,10 @@ export default async function ProjectPage({
           <div className="no-print flex flex-wrap items-center justify-between gap-3 mt-5 pt-4 border-t border-line">
             <div className="flex items-center gap-2">
               <PrintButton label={t(lang, "print")} />
+              <Link href={`/projects/${id}/files`} className="btn btn-ghost btn-sm">
+                {t(lang, "files_nav")}
+                {files.count > 0 ? ` · ${files.count}` : ""}
+              </Link>
               {items.some((i) => i.assignee_id === user.id) && (
                 <Link
                   href={mineOnly ? `/projects/${id}` : `/projects/${id}?mine=1`}

@@ -379,3 +379,22 @@ CREATE INDEX IF NOT EXISTS idx_prospect_emails_p       ON prospect_emails(prospe
 CREATE INDEX IF NOT EXISTS idx_prospect_visits_p       ON prospect_visits(prospect_id);
 CREATE INDEX IF NOT EXISTS idx_roster_candidates_src   ON roster_candidates(source);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_dedupe    ON roster_candidates(source, company, license_no);
+
+-- ---------------------------------------------------------------------------
+-- Project file cabinet: PDF documents (plans, permits, quotes, contracts)
+-- stored in Vercel Blob. Limits (per-file size, per-project count and total
+-- bytes) are enforced in lib/files.ts, not here.
+-- ---------------------------------------------------------------------------
+
+CREATE TABLE IF NOT EXISTS project_files (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  project_id   uuid NOT NULL REFERENCES projects(id) ON DELETE CASCADE,
+  name         text NOT NULL,                       -- original filename, shown in the UI
+  url          text NOT NULL,
+  pathname     text NOT NULL UNIQUE,                -- blob store path, for deletion
+  content_type text NOT NULL DEFAULT 'application/pdf',
+  size_bytes   bigint NOT NULL,
+  uploaded_by  uuid REFERENCES users(id),
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS project_files_project_idx ON project_files (project_id, created_at);

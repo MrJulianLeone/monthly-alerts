@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { jsonError, requireProject } from "@/lib/api";
 import { sql } from "@/lib/db";
+import { deleteProjectBlobs } from "@/lib/files";
 import { CURRENCIES } from "@/lib/projects";
 
 export async function PATCH(
@@ -52,6 +53,7 @@ export async function DELETE(
   const { id } = await params;
   const auth = await requireProject(id, "owner");
   if ("response" in auth) return auth.response;
+  await deleteProjectBlobs(id);
   await sql()`DELETE FROM projects WHERE id = ${id}`;
   return NextResponse.json({ ok: true });
 }
