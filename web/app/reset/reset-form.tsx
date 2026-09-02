@@ -4,7 +4,15 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { t, type Lang } from "@/lib/i18n";
 
-export function ResetForm({ lang, token }: { lang: Lang; token: string }) {
+export function ResetForm({
+  lang,
+  token,
+  email,
+}: {
+  lang: Lang;
+  token: string;
+  email: string;
+}) {
   const router = useRouter();
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -35,11 +43,23 @@ export function ResetForm({ lang, token }: { lang: Lang; token: string }) {
         }
       }}
     >
+      {/* Present but hidden so password managers update the existing entry for this email. */}
+      <input
+        type="email"
+        name="email"
+        autoComplete="username"
+        value={email}
+        readOnly
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <label className="field-label" htmlFor="password">
         {t(lang, "password_label")}
       </label>
       <input
         id="password"
+        name="password"
         type="password"
         required
         minLength={8}

@@ -78,6 +78,19 @@ export async function createEmailToken(
   return token;
 }
 
+/** Reads the email behind a still-valid token without consuming it. */
+export async function peekEmailToken(token: string, purpose: TokenPurpose): Promise<string | null> {
+  const rows = (await sql()`
+    SELECT email
+    FROM login_tokens
+    WHERE token_hash = ${hashToken(token)}
+      AND purpose = ${purpose}
+      AND used_at IS NULL
+      AND expires_at > now()
+  `) as { email: string }[];
+  return rows[0]?.email ?? null;
+}
+
 export async function consumeEmailToken(
   token: string,
   purpose: TokenPurpose

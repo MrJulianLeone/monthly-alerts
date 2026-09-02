@@ -78,10 +78,11 @@ export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
         </label>
         <input
           id="email"
+          name="email"
           type="email"
           required
           autoFocus
-          autoComplete="email"
+          autoComplete="username"
           className="input mb-4"
           placeholder="name@company.com"
           value={email}
@@ -99,6 +100,7 @@ export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
         </div>
         <input
           id="password"
+          name="password"
           type="password"
           required
           minLength={8}

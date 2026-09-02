@@ -47,11 +47,23 @@ export function InviteRegisterForm({
       <p className="text-sm text-ink-soft leading-relaxed mb-4">
         {t(lang, "invite_create_password", { email })}
       </p>
+      {/* Present but hidden so password managers pair the password with the account email. */}
+      <input
+        type="email"
+        name="email"
+        autoComplete="username"
+        value={email}
+        readOnly
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+      />
       <label className="field-label" htmlFor="password">
         {t(lang, "password_label")}
       </label>
       <input
         id="password"
+        name="password"
         type="password"
         required
         minLength={8}

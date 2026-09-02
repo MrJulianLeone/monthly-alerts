@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { Logo } from "@/components/logo";
 import { SiteFooter } from "@/components/site-footer";
-import { getVisitorLang } from "@/lib/auth";
+import { getVisitorLang, peekEmailToken } from "@/lib/auth";
 import { t } from "@/lib/i18n";
 import { ResetForm } from "./reset-form";
 
@@ -12,6 +12,7 @@ export default async function ResetPage({
 }) {
   const lang = await getVisitorLang();
   const { token } = await searchParams;
+  const email = token ? await peekEmailToken(token, "reset") : null;
 
   return (
     <div className="min-h-screen grid-paper flex flex-col">
@@ -25,8 +26,8 @@ export default async function ResetPage({
           <div className="sheet p-8 sm:p-10">
             <p className="microlabel mb-3">{t(lang, "app_name")}</p>
             <h1 className="display text-4xl mb-6">{t(lang, "reset_title")}</h1>
-            {token ? (
-              <ResetForm lang={lang} token={token} />
+            {token && email ? (
+              <ResetForm lang={lang} token={token} email={email} />
             ) : (
               <p className="text-sm text-accent-deep">{t(lang, "login_invalid_link")}</p>
             )}
