@@ -11,13 +11,18 @@ import { sendRawEmail } from "@/lib/email";
  *   - Every draft is approved by hand before it can send.
  *   - Warm-up ramp (5 → 8 → 12 → cap per day), hard ceiling in HARD_DAILY_MAX,
  *     weekdays only, one send per prospect per stage.
- *   - RFC 8058 one-click List-Unsubscribe plus a footer link on every email.
+ *   - A plain unsubscribe link in every footer (one click, no confirmation).
+ *     The RFC 8058 List-Unsubscribe headers are available behind
+ *     OUTREACH_LIST_UNSUBSCRIBE=true: Gmail requires them only above ~5,000
+ *     messages/day, and at our volume they mostly push a personal email into
+ *     the Promotions tab.
  *   - Any spam complaint (Resend email.complained webhook) pauses the pipeline
  *     and alerts the admin; bounces over 5% in 7 days do the same.
  *   - Replies come back through the same domain's inbound webhook and never
  *     get the support autoresponder.
  *
- * Text-only, one recipient per call, no tracking pixels, no link tracking.
+ * Text-only (no HTML part), one recipient per call, no tracking pixels, no
+ * link tracking — it should look exactly like an email a person typed.
  */
 
 export const HARD_DAILY_MAX = 30;
@@ -51,9 +56,13 @@ export async function outreachProfile(): Promise<{ emailAddress: string; fromNam
 export type OutreachSent = {
   /** Resend email id — stored for bounce/complaint webhook matching. */
   providerId: string;
-  /** Our own RFC 5322 Message-ID, so follow-ups can thread onto this send. */
-  messageIdHeader: string;
-  /** Thread key: the initial email's Message-ID (or the one passed in). */
+  /**
+   * Message-ID as delivered, when known. Resend/SES replaces any Message-ID
+   * we set with its own, so this is null for sends; follow-ups thread by
+   * subject ("Re: …") instead, which Gmail and Outlook both honour.
+   */
+  messageIdHeader: string | null;
+  /** Thread key for our own bookkeeping (initial send's provider id). */
   threadId: string;
 };
 
@@ -73,15 +82,13 @@ export async function outreachSend(opts: {
 }): Promise<OutreachSent> {
   if (!outreachConfigured()) throw new Error("Outreach sending is not enabled");
   const address = outreachAddress();
-  const domain = address.split("@")[1];
-  const messageId = `<${randomUUID()}@${domain}>`;
 
-  const headers: Record<string, string> = { "Message-ID": messageId };
+  const headers: Record<string, string> = {};
   if (opts.inReplyTo) {
     headers["In-Reply-To"] = opts.inReplyTo;
     headers.References = opts.inReplyTo;
   }
-  if (opts.listUnsubscribeUrl) {
+  if (opts.listUnsubscribeUrl && process.env.OUTREACH_LIST_UNSUBSCRIBE === "true") {
     headers["List-Unsubscribe"] = `<${opts.listUnsubscribeUrl}>`;
     if (opts.listUnsubscribePostUrl) {
       // RFC 8058: mailbox providers show a native "Unsubscribe" button and
@@ -97,25 +104,16 @@ export async function outreachSend(opts: {
     to: opts.to,
     subject: opts.subject,
     text: opts.text,
-    // Resend requires an HTML part; keep it a faithful plain rendering.
-    html: `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1c1917;white-space:pre-wrap">${escape(opts.text)}</div>`,
     headers,
     replyTo: address,
   });
 
+  const providerId = sent?.id ?? `disabled-${randomUUID()}`;
   return {
-    providerId: sent?.id ?? `disabled-${randomUUID()}`,
-    messageIdHeader: messageId,
-    threadId: opts.threadId ?? messageId,
+    providerId,
+    messageIdHeader: null,
+    threadId: opts.threadId ?? providerId,
   };
-}
-
-function escape(s: string): string {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/https?:\/\/[^\s<]+/g, (url) => `<a href="${url}" style="color:#1c1917">${url}</a>`);
 }
 
 /** True when the sending window is open (Mon–Fri, UTC). */

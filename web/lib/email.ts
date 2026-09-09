@@ -51,7 +51,7 @@ export async function sendRawEmail(opts: {
   from: string;
   to: string;
   subject: string;
-  html: string;
+  html?: string;
   text?: string;
   headers?: Record<string, string>;
   replyTo?: string;
@@ -63,7 +63,10 @@ export async function sendRawEmail(opts: {
   }
   // The Resend SDK reports failures via the error field instead of throwing —
   // without this check, failed sends would look like successes to callers.
-  const { data, error } = await resend().emails.send(opts);
+  if (!opts.html && !opts.text) throw new Error("Email needs a text or html body");
+  const { data, error } = await resend().emails.send(
+    opts.html ? { ...opts, html: opts.html } : { ...opts, text: opts.text as string }
+  );
   if (error) {
     throw new Error(`Email to ${opts.to} failed: ${error.message}`);
   }

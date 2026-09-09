@@ -864,7 +864,7 @@ async function sendBatch(): Promise<StageResult> {
         text: renderBody(p, p.followup_body ?? ""),
         fromName: FROM_NAME(),
         threadId: p.gmail_thread_id ?? undefined,
-        inReplyTo: initial[0]?.message_id_header ?? p.gmail_thread_id ?? undefined,
+        inReplyTo: initial[0]?.message_id_header ?? undefined,
         listUnsubscribeUrl: `${appUrl()}/w/${p.visit_token}/u`,
         listUnsubscribePostUrl: `${appUrl()}/api/outreach/unsubscribe/${p.visit_token}`,
       });
