@@ -1,14 +1,20 @@
 import { NextResponse } from "next/server";
 import { jsonError, requireUser } from "@/lib/api";
-import { billingEnabled, stripe } from "@/lib/billing";
+import { readAttribution } from "@/lib/attribution";
+import { billingEnabled, DRAFT_DAYS } from "@/lib/billing";
+import { getTemplate } from "@/lib/content";
+import { applyTemplate } from "@/lib/content/apply";
 import { sql } from "@/lib/db";
-import { appUrl } from "@/lib/email";
+
+/** Unactivated drafts a user may hold at once (billing on). */
+const MAX_OPEN_DRAFTS = 3;
 
 /**
- * Creates a project. While billing is disabled this is direct and free; once
- * BILLING_ENABLED=true it returns a Stripe Checkout URL instead, and the
- * project is created when payment completes (webhook, with a success-page
- * fallback).
+ * Creates a project. While billing is disabled it is simply free. With
+ * billing on it starts as a DRAFT: fully editable for DRAFT_DAYS so the owner
+ * can build the checklist, preview every language and the monthly report,
+ * and only then activate it (POST /api/projects/[id]/activate). Optionally
+ * seeds sections and items from a public checklist template.
  */
 export async function POST(request: Request) {
   const auth = await requireUser();
@@ -20,41 +26,51 @@ export async function POST(request: Request) {
     typeof body.address === "string" ? body.address.trim().slice(0, 300) : null;
   const description =
     typeof body.description === "string" ? body.description.trim().slice(0, 2000) : null;
+  const templateSlug =
+    typeof body.template === "string" && getTemplate(body.template) ? body.template : null;
   if (!name) return jsonError("Project name is required", 400);
 
   const lang = auth.user.preferred_language;
+  const draft = billingEnabled();
 
-  if (billingEnabled()) {
-    const session = await stripe().checkout.sessions.create({
-      mode: "payment",
-      line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
-      // Stripe Tax (enabled in the dashboard) only applies when the session
-      // asks for it; billing address is required for tax calculation.
-      automatic_tax: { enabled: true },
-      billing_address_collection: "required",
-      allow_promotion_codes: true,
-      customer_email: auth.user.email,
-      success_url: `${appUrl()}/projects/activated?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${appUrl()}/projects/new`,
-      metadata: {
-        user_id: auth.user.id,
-        name,
-        name_lang: lang,
-        address: address ?? "",
-        description: description ?? "",
-      },
-    });
-    return NextResponse.json({ checkout_url: session.url });
+  if (draft) {
+    const open = (await sql()`
+      SELECT count(*)::int AS count FROM projects
+      WHERE owner_id = ${auth.user.id} AND paid_at IS NULL AND draft_expires_at IS NOT NULL
+    `) as { count: number }[];
+    if (open[0].count >= MAX_OPEN_DRAFTS) return jsonError("too_many_drafts", 409);
   }
 
+  // Attribution: the account's first touch wins; otherwise the current cookies.
+  const account = (await sql()`
+    SELECT referred_by_code, acquisition FROM users WHERE id = ${auth.user.id}
+  `) as { referred_by_code: string | null; acquisition: unknown }[];
+  const attribution = await readAttribution();
+  const referralCode = account[0]?.referred_by_code ?? attribution.referralCode;
+  const acquisition = account[0]?.acquisition ?? attribution.acquisition;
+
   const rows = (await sql()`
-    INSERT INTO projects (name, name_lang, address, description, owner_id)
-    VALUES (${name}, ${lang}, ${address}, ${description}, ${auth.user.id})
+    INSERT INTO projects (name, name_lang, address, description, owner_id, draft_expires_at,
+                          referral_code, acquisition)
+    VALUES (${name}, ${lang}, ${address}, ${description}, ${auth.user.id},
+            CASE WHEN ${draft}::boolean THEN now() + make_interval(days => ${DRAFT_DAYS}) ELSE NULL END,
+            ${referralCode}, ${acquisition ? JSON.stringify(acquisition) : null}::jsonb)
     RETURNING id
   `) as { id: string }[];
+  const id = rows[0].id;
   await sql()`
     INSERT INTO project_members (project_id, user_id, role)
-    VALUES (${rows[0].id}, ${auth.user.id}, 'owner')
+    VALUES (${id}, ${auth.user.id}, 'owner')
   `;
-  return NextResponse.json({ id: rows[0].id });
+
+  let seeded = 0;
+  if (templateSlug) {
+    try {
+      seeded = await applyTemplate(id, templateSlug, auth.user.id);
+    } catch (err) {
+      console.error(`template ${templateSlug} failed for ${id}:`, err);
+    }
+  }
+
+  return NextResponse.json({ id, draft, template_items: seeded });
 }

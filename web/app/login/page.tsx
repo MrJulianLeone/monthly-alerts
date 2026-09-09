@@ -25,7 +25,7 @@ export default async function LoginPage({
     <div className="min-h-screen grid-paper flex flex-col">
       <header className="border-b-[1.5px] border-line-strong bg-sheet">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Logo />
+          <Logo descriptor={t(lang, "app_descriptor")} />
           <LangToggle current={lang} />
         </div>
       </header>

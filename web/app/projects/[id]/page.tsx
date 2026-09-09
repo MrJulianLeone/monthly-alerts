@@ -2,6 +2,9 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
 import { isAdmin } from "@/lib/admin";
+import { billingEnabled, draftDaysLeft, isDraft, PROJECT_PRICE_CENTS, PROJECT_PRICE_DISPLAY } from "@/lib/billing";
+import { formatCents } from "@/lib/pricing";
+import { creditBalanceCents } from "@/lib/referrals";
 import { fileUsage } from "@/lib/files";
 import { isLang, LANGUAGES, langName, locale, t } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
@@ -25,6 +28,7 @@ import {
   StatusCheckbox,
   TemplateGenerator,
 } from "./checklist";
+import { ActivateBanner } from "./activate-banner";
 
 export const dynamic = "force-dynamic";
 
@@ -70,6 +74,12 @@ export default async function ProjectPage({
 
   const editable = canEdit(role) && !project.archived_at;
   const owner = isOwner(role);
+  const draft = isDraft(project);
+  const creditBalance = owner && draft && billingEnabled() ? await creditBalanceCents(user.id) : 0;
+  const anyTranslated =
+    project.name_lang !== lang ||
+    sections.some((s) => s.name_lang !== lang) ||
+    items.some((i) => i.source_lang !== lang);
   const totalBudget = sections.reduce((sum, s) => sum + (s.budget ? Number(s.budget) : 0), 0);
   const totalActual = sections.reduce((sum, s) => sum + (s.actual ? Number(s.actual) : 0), 0);
   const moneyFmt = new Intl.NumberFormat(locale(lang), {
@@ -89,6 +99,16 @@ export default async function ProjectPage({
     <div className="min-h-screen">
       <AppHeader lang={lang} user={user} />
       <main className="mx-auto max-w-3xl px-4 sm:px-6 py-10">
+        {owner && draft && !project.archived_at && (
+          <ActivateBanner
+            projectId={id}
+            daysLeft={draftDaysLeft(project)}
+            price={PROJECT_PRICE_DISPLAY}
+            creditBalance={creditBalance > 0 ? formatCents(creditBalance) : null}
+            creditCovers={creditBalance >= PROJECT_PRICE_CENTS}
+            lang={lang}
+          />
+        )}
         {/* Title block */}
         <div className="sheet grid-paper p-6 sm:p-8 mb-8">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 sm:gap-4">
@@ -97,7 +117,7 @@ export default async function ProjectPage({
                 <Link href="/dashboard" className="hover:text-ink transition-colors">
                   {t(lang, "dashboard_title")}
                 </Link>{" "}
-                / {project.archived_at ? t(lang, "archived") : `${pct}%`}
+                / {project.archived_at ? t(lang, "archived") : draft ? t(lang, "draft_chip") : `${pct}%`}
               </p>
               <h1 className="display text-3xl sm:text-5xl break-words">{projectName}</h1>
               {project.address && (
@@ -143,6 +163,9 @@ export default async function ProjectPage({
               <Link href={`/projects/${id}/files`} className="btn btn-ghost btn-sm">
                 {t(lang, "files_nav")}
                 {files.count > 0 ? ` · ${files.count}` : ""}
+              </Link>
+              <Link href={`/projects/${id}/report`} className="btn btn-ghost btn-sm">
+                {t(lang, "report_nav")}
               </Link>
               {items.some((i) => i.assignee_id === user.id) && (
                 <Link
@@ -312,6 +335,12 @@ export default async function ProjectPage({
             )}
             <AddSectionForm projectId={id} lang={lang} />
           </div>
+        )}
+
+        {anyTranslated && (
+          <p className="microlabel leading-relaxed mt-12 max-w-2xl">
+            {t(lang, "translation_disclosure")}
+          </p>
         )}
       </main>
     </div>

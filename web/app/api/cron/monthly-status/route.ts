@@ -30,6 +30,7 @@ export async function GET(request: Request) {
         AND i.status <> 'done' AND i.due_date < current_date)::int AS overdue_count
     FROM projects p
     WHERE p.archived_at IS NULL
+      AND (p.paid_at IS NOT NULL OR p.draft_expires_at IS NULL)  -- drafts get no report
   `) as {
     id: string;
     name: string;

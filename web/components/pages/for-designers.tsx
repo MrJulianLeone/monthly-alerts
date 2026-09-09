@@ -51,7 +51,7 @@ const COPY: Record<Lang, Copy> = {
       },
       {
         title: "From concept to install",
-        body: "Start from the interior-design template — concept, approvals, space planning, FF&E, procurement, trades coordination, deliveries, installation, styling, handover — or any construction-trade template.",
+        body: "Start from a ready-made checklist — kitchen, bathroom, whole-house renovation, punch list, or renovation abroad — or describe the project and AI drafts the phases. Then adjust it to the job.",
       },
       {
         title: "Every trade, every language",

@@ -51,7 +51,7 @@ export function HomePage({ lang }: { lang: Lang }) {
       <HtmlLang lang={lang} />
       <header className="border-b-[1.5px] border-line-strong bg-sheet">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Logo />
+          <Logo descriptor={t(lang, "app_descriptor")} />
           <div className="flex items-center gap-4">
             <LangToggle current={lang} basePath="/" />
             <Link href="/login" className="btn btn-ghost btn-sm">
@@ -74,9 +74,17 @@ export function HomePage({ lang }: { lang: Lang }) {
             <p className="text-lg text-ink-soft max-w-xl mb-10 leading-relaxed">
               {t(lang, "landing_sub")}
             </p>
-            <Link href="/login" className="btn btn-primary text-base px-8 py-3">
-              {t(lang, "landing_cta")}
-            </Link>
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+              <Link href="/login" className="btn btn-primary text-base px-8 py-3">
+                {t(lang, "landing_cta")}
+              </Link>
+              <Link href="/checklists" className="microlabel underline hover:text-ink">
+                {t(lang, "home_templates_cta")}
+              </Link>
+              <Link href="/demo" className="microlabel underline hover:text-ink">
+                {t(lang, "home_demo_cta")}
+              </Link>
+            </div>
           </div>
         </section>
 

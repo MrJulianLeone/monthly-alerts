@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
-import { EXTENSION_PRICE_DISPLAY, EXTENSION_YEARS, extensionsEnabled } from "@/lib/billing";
+import { EXTENSION_PRICE_DISPLAY, EXTENSION_YEARS, extensionsEnabled, isDraft } from "@/lib/billing";
 import { sql } from "@/lib/db";
 import { t, type Lang, locale } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
@@ -31,10 +31,10 @@ export default async function ProjectSettingsPage({
   const [members, invites] = await Promise.all([
     listMembers(id),
     sql()`
-      SELECT id, email, role, expires_at FROM invites
-      WHERE project_id = ${id} AND accepted_at IS NULL AND expires_at > now()
+      SELECT id, email, role, expires_at, held FROM invites
+      WHERE project_id = ${id} AND accepted_at IS NULL AND (expires_at > now() OR held)
       ORDER BY created_at DESC
-    ` as unknown as Promise<{ id: string; email: string; role: string; expires_at: string }[]>,
+    ` as unknown as Promise<{ id: string; email: string; role: string; expires_at: string; held: boolean }[]>,
   ]);
 
   const dateFmt = new Intl.DateTimeFormat(locale(lang), {
@@ -84,6 +84,9 @@ export default async function ProjectSettingsPage({
           </ul>
 
           <h3 className="display text-lg mb-3">{t(lang, "invite_member")}</h3>
+          {isDraft(project) && (
+            <p className="text-sm text-ink-soft mb-3">{t(lang, "draft_invite_held")}</p>
+          )}
           <InviteForm projectId={id} lang={lang} />
 
           {invites.length > 0 && (
@@ -96,9 +99,13 @@ export default async function ProjectSettingsPage({
                     inviteId={inv.id}
                     email={inv.email}
                     role={inv.role as "editor" | "commenter"}
-                    expires={t(lang, "invite_expires", {
-                      date: dateFmt.format(new Date(inv.expires_at)),
-                    })}
+                    expires={
+                      inv.held
+                        ? t(lang, "invite_held")
+                        : t(lang, "invite_expires", {
+                            date: dateFmt.format(new Date(inv.expires_at)),
+                          })
+                    }
                     lang={lang}
                   />
                 ))}

@@ -32,6 +32,8 @@ type ProjectRow = {
   item_count: number;
   done_count: number;
   paid_at: string | null;
+  draft_expires_at: string | null;
+  activation_source: string | null;
   stripe_session_id: string | null;
   amount_paid_cents: number | null;
   archived_at: string | null;
@@ -52,7 +54,8 @@ export default async function AdminPage() {
       ORDER BY u.created_at DESC
     ` as unknown as Promise<UserRow[]>,
     sql()`
-      SELECT p.id, p.name, o.email AS owner_email, p.paid_at, p.stripe_session_id,
+      SELECT p.id, p.name, o.email AS owner_email, p.paid_at, p.draft_expires_at, p.activation_source,
+             p.stripe_session_id,
              p.amount_paid_cents, p.archived_at, p.extended_years, p.created_at,
              (SELECT count(*) FROM project_members m WHERE m.project_id = p.id)::int AS member_count,
              (SELECT count(*) FROM items i WHERE i.project_id = p.id)::int AS item_count,
@@ -87,7 +90,13 @@ export default async function AdminPage() {
         <p className="microlabel mb-2">Site administration</p>
         <div className="flex items-end justify-between gap-4 mb-8">
           <h1 className="display text-5xl">Admin</h1>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
+            <Link href="/admin/kpis" className="btn btn-ghost btn-sm">
+              KPIs
+            </Link>
+            <Link href="/admin/referrals" className="btn btn-ghost btn-sm">
+              Referrals
+            </Link>
             <Link href="/admin/prospects" className="btn btn-ghost btn-sm">
               Prospecting
             </Link>
@@ -130,7 +139,18 @@ export default async function AdminPage() {
                   <td className="py-2.5 pr-4">{p.member_count}</td>
                   <td className="py-2.5 pr-4">{p.done_count}/{p.item_count}</td>
                   <td className="py-2.5 pr-4">
-                    {p.paid_at ? fmt.format(new Date(p.paid_at)) : <span className="text-ink-faint">free</span>}
+                    {p.paid_at ? (
+                      <>
+                        {fmt.format(new Date(p.paid_at))}
+                        {p.activation_source && p.activation_source !== "stripe" && (
+                          <span className="chip text-ink-faint ml-2">{p.activation_source}</span>
+                        )}
+                      </>
+                    ) : p.draft_expires_at ? (
+                      <span className="text-accent">draft</span>
+                    ) : (
+                      <span className="text-ink-faint">free</span>
+                    )}
                   </td>
                   <td className="py-2.5 pr-4 text-ink-soft">{fmt.format(projectExpiresAt(p))}</td>
                   <td className="py-2.5 text-ink-soft">{fmt.format(new Date(p.created_at))}</td>

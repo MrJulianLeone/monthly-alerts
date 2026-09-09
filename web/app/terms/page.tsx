@@ -4,9 +4,11 @@ import { LegalPage } from "@/components/legal-page";
 
 export const metadata: Metadata = { title: "Terms of Use — MonthlyAlerts" };
 
+const EFFECTIVE = "Effective September 8, 2026";
+
 export default function TermsPage() {
   return (
-    <LegalPage title="Terms of Use" effective="Effective August 28, 2026">
+    <LegalPage title="Terms of Use" effective={EFFECTIVE}>
       <p>
         These Terms of Use (&quot;Terms&quot;) govern your access to and use of
         MonthlyAlerts.com (the &quot;Service&quot;), operated by MonthlyAlerts
@@ -48,13 +50,18 @@ export default function TermsPage() {
         language its author wrote it in) is the authoritative version between users. Do
         not rely on a translation alone for anything safety-critical, contractual, or
         code-related — confirm it in the original language or with a qualified
-        translator.
+        translator. <strong>Automated translations are for project communication
+        and should not replace certified translations of legal, engineering, or
+        safety-critical documentation.</strong> The Service keeps the original
+        text, its language, its author, and the time it was written, and keeps the
+        previous wording when an entry is edited.
       </p>
 
       <h2>3. Accounts</h2>
       <p>
-        You sign in with a one-time link sent to your email address; there are no
-        passwords. You are responsible for maintaining control of your email account
+        You sign in with your email address and a password, after confirming your
+        email address through a link we send you. You are responsible for keeping
+        your password confidential, for maintaining control of your email account,
         and for all activity that occurs under your MonthlyAlerts account. You must
         provide accurate information and be at least 16 years old (or the age of
         digital consent in your country, if higher) to use the Service.
@@ -71,9 +78,13 @@ export default function TermsPage() {
         to share it.
       </p>
 
-      <h2>5. Payments</h2>
+      <h2>5. Payments, drafts, and credits</h2>
       <p>
-        Creating a project may require a one-time project fee, shown before checkout.{" "}
+        A new project may start as a <strong>draft</strong>: free to build and preview,
+        but not shared with invited members, not included in monthly reports, and{" "}
+        <strong>deleted automatically if it is not activated within 30 days</strong> of
+        creation. Activating a project requires a one-time project fee, shown before
+        checkout.{" "}
         <strong>
           All payments are processed by Stripe. We never receive, capture, or store
           your card number or other payment credentials
@@ -82,6 +93,16 @@ export default function TermsPage() {
         Stripe&apos;s own terms and privacy policy. We retain only a payment reference
         and date. Except where required by applicable law, fees are non-refundable.
         Prices may change, but changes do not affect projects already paid for.
+      </p>
+      <p>
+        <strong>Credits.</strong> We may grant account credit — for example through
+        the referral program (credit earned when a project is activated by someone
+        who arrived through your referral link) or as a complimentary project. Credit
+        is applied automatically to your own project fees once it covers a full fee.
+        Credit has no cash value, cannot be transferred, withdrawn, or exchanged, may
+        expire or be withdrawn if obtained through self-referral, fraud, or abuse, and
+        the program terms (including the credit amount) may change or end at any
+        time. Credits already applied to an activated project are not affected.
       </p>
 
       <h2>6. Storage and expiration</h2>

@@ -9,6 +9,7 @@ type ItemState = {
   project_id: string;
   section_id: string;
   title: string;
+  description: string | null;
   source_lang: Lang;
   assignee_id: string | null;
   due_date: string | null;
@@ -16,7 +17,7 @@ type ItemState = {
 
 async function itemState(id: string): Promise<ItemState | null> {
   const rows = (await sql()`
-    SELECT project_id, section_id, title, source_lang, assignee_id,
+    SELECT project_id, section_id, title, description, source_lang, assignee_id,
            due_date::text AS due_date
     FROM items WHERE id = ${id}
   `) as ItemState[];
@@ -79,6 +80,15 @@ export async function PATCH(
       SELECT 1 FROM project_members WHERE project_id = ${item.project_id} AND user_id = ${assigneeId}
     `) as unknown[];
     if (member.length === 0) return jsonError("Assignee is not a project member", 400);
+  }
+
+  // Keep the wording being replaced: original language, text, and who
+  // replaced it — so an edit never erases what was actually written.
+  if (textChanged) {
+    await sql()`
+      INSERT INTO item_revisions (item_id, title, description, source_lang, replaced_by)
+      VALUES (${id}, ${item.title}, ${item.description}, ${item.source_lang}, ${auth.user.id})
+    `;
   }
 
   await sql()`

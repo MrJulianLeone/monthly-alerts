@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AppHeader } from "@/components/app-header";
+import { isDraft } from "@/lib/billing";
 import { FeedbackButton } from "@/components/feedback-button";
 import { t } from "@/lib/i18n";
 import { requireOnboardedUser } from "@/lib/page-auth";
@@ -69,8 +70,14 @@ export default async function DashboardPage() {
                     <h2 className="display text-2xl group-hover:text-accent transition-colors">
                       {names[i]}
                     </h2>
-                    <span className="chip text-ink-faint shrink-0 mt-1.5">
-                      {p.archived_at ? t(lang, "archived") : t(lang, roleKey[p.role])}
+                    <span
+                      className={`chip shrink-0 mt-1.5 ${isDraft(p) ? "text-accent" : "text-ink-faint"}`}
+                    >
+                      {p.archived_at
+                        ? t(lang, "archived")
+                        : isDraft(p)
+                          ? t(lang, "draft_chip")
+                          : t(lang, roleKey[p.role])}
                     </span>
                   </div>
                   {p.address && <p className="text-sm text-ink-soft mb-4">{p.address}</p>}

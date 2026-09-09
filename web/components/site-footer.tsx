@@ -6,8 +6,16 @@ import { localePath } from "@/lib/seo";
 const MARKET_LINKS: { href: string; label: MessageKey }[] = [
   { href: "/for-contractors", label: "footer_for_contractors" },
   { href: "/renovating-abroad", label: "footer_renovating_abroad" },
+  { href: "/renovating-in-italy", label: "footer_renovating_in_italy" },
   { href: "/for-designers", label: "footer_for_designers" },
   { href: "/for-homeowners", label: "footer_for_homeowners" },
+];
+
+/** English-only resources (not locale-prefixed). */
+const RESOURCE_LINKS: { href: string; label: MessageKey }[] = [
+  { href: "/checklists", label: "footer_checklists" },
+  { href: "/guides", label: "footer_guides" },
+  { href: "/demo", label: "footer_demo" },
 ];
 
 /* Phone-size taps: links get tall touch targets, and the footer keeps clear
@@ -23,6 +31,11 @@ export function SiteFooter({ lang }: { lang: Lang }) {
         <nav className="flex flex-wrap items-center gap-x-5 sm:gap-x-4 gap-y-0 sm:gap-y-1">
           {MARKET_LINKS.map((link) => (
             <Link key={link.href} href={localePath(lang, link.href)} className={LINK_CLASS}>
+              {t(lang, link.label)}
+            </Link>
+          ))}
+          {RESOURCE_LINKS.map((link) => (
+            <Link key={link.href} href={link.href} className={LINK_CLASS}>
               {t(lang, link.label)}
             </Link>
           ))}

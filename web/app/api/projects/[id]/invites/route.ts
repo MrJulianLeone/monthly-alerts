@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { jsonError, requireProject } from "@/lib/api";
 import { generateToken, hashToken } from "@/lib/auth";
 import { sql } from "@/lib/db";
+import { isDraft } from "@/lib/billing";
 import { sendInviteEmail } from "@/lib/email";
 import { isLang } from "@/lib/i18n";
 
@@ -34,13 +35,17 @@ export async function POST(
     WHERE project_id = ${id} AND email = ${email} AND accepted_at IS NULL
   `;
 
+  // Drafts hold their invites: the row is created now and the email goes
+  // out (with a fresh token) when the owner activates the project.
+  const held = isDraft(auth.project);
   const token = generateToken();
   const expiresAt = new Date(Date.now() + INVITE_DAYS * 24 * 60 * 60 * 1000);
   await sql()`
-    INSERT INTO invites (project_id, email, role, language, token_hash, invited_by, expires_at)
+    INSERT INTO invites (project_id, email, role, language, token_hash, invited_by, expires_at, held)
     VALUES (${id}, ${email}, ${role}, ${language}, ${hashToken(token)}, ${auth.user.id},
-            ${expiresAt.toISOString()})
+            ${expiresAt.toISOString()}, ${held})
   `;
+  if (held) return NextResponse.json({ ok: true, held: true });
   await sendInviteEmail(
     email,
     auth.user.name ?? auth.user.email,

@@ -16,7 +16,7 @@ function from(): string {
 }
 
 export function appUrl(): string {
-  return process.env.NEXT_PUBLIC_APP_URL ?? "https://monthlyalerts.com";
+  return process.env.NEXT_PUBLIC_APP_URL ?? "https://www.monthlyalerts.com";
 }
 
 export function escapeHtml(s: string): string {
@@ -182,6 +182,32 @@ export async function sendExpiryWarningEmail(
       <p style="margin:24px 0">${button(
         `${appUrl()}/projects/${data.projectId}`,
         t(lang, "email_monthly_open_project")
+      )}</p>
+      `,
+      lang
+    )
+  );
+}
+
+/** Draft deadline reminder: the unactivated project is deleted in {days} days. */
+export async function sendDraftExpiringEmail(
+  to: string,
+  lang: Lang,
+  data: { projectName: string; projectId: string; days: number }
+) {
+  await send(
+    to,
+    t(lang, "email_draft_subject", { project: data.projectName, days: data.days }),
+    wrapper(
+      `
+      <h1 style="font-size:22px;margin:0 0 16px">${escapeHtml(data.projectName)}</h1>
+      <p style="font-size:15px;line-height:1.6;color:#44403c">${t(lang, "email_draft_body", {
+        project: escapeHtml(data.projectName),
+        days: data.days,
+      })}</p>
+      <p style="margin:24px 0">${button(
+        `${appUrl()}/projects/${data.projectId}`,
+        t(lang, "email_draft_button")
       )}</p>
       `,
       lang

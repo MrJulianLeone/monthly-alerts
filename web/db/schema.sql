@@ -398,3 +398,74 @@ CREATE TABLE IF NOT EXISTS project_files (
   created_at   timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS project_files_project_idx ON project_files (project_id, created_at);
+
+-- ---------------------------------------------------------------------------
+-- Marketing plan (Sept 2026): try-before-you-pay drafts, referral program,
+-- credits, acquisition attribution, item edit history, marketing spend.
+-- ---------------------------------------------------------------------------
+
+-- Draft projects: with billing on, a project is created free and fully
+-- editable, then activated for the one-time fee. draft_expires_at is set at
+-- creation (null for free-mode and activated projects) and cleared on
+-- activation; the daily cron deletes drafts past it.
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS draft_expires_at timestamptz;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS draft_warned_at timestamptz;
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS activation_source text;   -- 'stripe' | 'credit' | 'comp'
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS referral_code text;       -- attributed referrer code
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS template_slug text;       -- public template it started from
+ALTER TABLE projects ADD COLUMN IF NOT EXISTS acquisition jsonb;        -- first-touch utm/landing snapshot
+
+-- Invites created on a draft are held and emailed when the project activates.
+ALTER TABLE invites ADD COLUMN IF NOT EXISTS held boolean NOT NULL DEFAULT false;
+
+-- Acquisition attribution on the account (first touch, captured at signup).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS referred_by_code text;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS acquisition jsonb;           -- {utm_source, utm_medium, utm_campaign, landing, gclid, fbclid, ref}
+ALTER TABLE users ADD COLUMN IF NOT EXISTS prospect_id uuid REFERENCES prospects(id) ON DELETE SET NULL;
+
+-- Referral codes: monthlyalerts.com/CODE sets a cookie; activated projects by
+-- referred users credit the code's owner.
+CREATE TABLE IF NOT EXISTS referral_codes (
+  code       text PRIMARY KEY,                       -- uppercase A-Z0-9, 4-20 chars
+  user_id    uuid NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Credit ledger: positive rows are referral credits or comped projects
+-- ("try your next project on us"); negative rows are redemptions.
+CREATE TABLE IF NOT EXISTS credit_ledger (
+  id           uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id      uuid NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount_cents int NOT NULL,
+  reason       text NOT NULL,                        -- 'referral' | 'comp' | 'redeem'
+  project_id   uuid REFERENCES projects(id) ON DELETE SET NULL,
+  note         text,
+  created_by   uuid REFERENCES users(id),
+  created_at   timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_credit_ledger_user ON credit_ledger(user_id);
+-- One referral credit per activated project.
+CREATE UNIQUE INDEX IF NOT EXISTS idx_credit_ledger_referral
+  ON credit_ledger(project_id) WHERE reason = 'referral';
+
+-- Item edit history: the previous title/description is snapshotted before
+-- every text edit so the original wording, author, and time are preserved.
+CREATE TABLE IF NOT EXISTS item_revisions (
+  id          uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  item_id     uuid NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+  title       text NOT NULL,
+  description text,
+  source_lang text NOT NULL DEFAULT 'en',
+  replaced_by uuid REFERENCES users(id),             -- who made the edit that replaced this version
+  replaced_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_item_revisions_item ON item_revisions(item_id, replaced_at);
+
+-- Monthly marketing spend by channel, entered by the admin, for CAC on /admin/kpis.
+CREATE TABLE IF NOT EXISTS marketing_spend (
+  month        date NOT NULL,                        -- first day of the month
+  channel      text NOT NULL,                        -- 'google' | 'meta' | 'outreach' | 'content' | 'other'
+  amount_cents int NOT NULL DEFAULT 0,
+  updated_at   timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (month, channel)
+);

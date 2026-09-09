@@ -2,6 +2,8 @@ import { Analytics } from "@vercel/analytics/next";
 import type { Metadata, Viewport } from "next";
 import { Barlow, Barlow_Condensed, IBM_Plex_Mono } from "next/font/google";
 import "./globals.css";
+import { AdPixels } from "@/components/ad-pixels";
+import { AttributionCapture } from "@/components/attribution-capture";
 
 const barlow = Barlow({
   subsets: ["latin", "latin-ext"],
@@ -46,6 +48,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen">
         {children}
         <Analytics />
+        <AttributionCapture />
+        <AdPixels />
       </body>
     </html>
   );

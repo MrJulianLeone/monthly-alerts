@@ -33,6 +33,15 @@ type CommentRow = {
   created_at: string;
 };
 
+type RevisionRow = {
+  id: string;
+  title: string;
+  description: string | null;
+  source_lang: Lang;
+  replaced_by_name: string | null;
+  replaced_at: string;
+};
+
 type PhotoRow = {
   id: string;
   url: string;
@@ -63,7 +72,7 @@ export default async function ItemPage({
   if (items.length === 0) notFound();
   const item = items[0];
 
-  const [comments, photos, members] = await Promise.all([
+  const [comments, photos, members, revisions] = await Promise.all([
     sql()`
       SELECT c.id, c.body, c.source_lang, c.author_id, u.name AS author_name, c.created_at
       FROM comments c JOIN users u ON u.id = c.author_id
@@ -75,6 +84,12 @@ export default async function ItemPage({
       FROM photos WHERE item_id = ${itemId} ORDER BY created_at
     ` as unknown as Promise<PhotoRow[]>,
     listMembers(id),
+    sql()`
+      SELECT r.id, r.title, r.description, r.source_lang, u.name AS replaced_by_name, r.replaced_at
+      FROM item_revisions r LEFT JOIN users u ON u.id = r.replaced_by
+      WHERE r.item_id = ${itemId}
+      ORDER BY r.replaced_at DESC
+    ` as unknown as Promise<RevisionRow[]>,
   ]);
 
   const texts: Translatable[] = [
@@ -82,12 +97,18 @@ export default async function ItemPage({
     { text: item.description ?? "", lang: item.source_lang },
     ...comments.map((c) => ({ text: c.body, lang: c.source_lang })),
     ...photos.map((p) => ({ text: p.caption ?? "", lang: p.caption_lang ?? lang })),
+    ...revisions.map((r) => ({ text: r.title, lang: r.source_lang })),
   ];
   const translated = await translateBatch(texts, lang);
   const title = translated[0];
   const description = translated[1];
   const commentBodies = translated.slice(2, 2 + comments.length);
-  const photoCaptions = translated.slice(2 + comments.length);
+  const photoCaptions = translated.slice(2 + comments.length, 2 + comments.length + photos.length);
+  const revisionTitles = translated.slice(2 + comments.length + photos.length);
+  const anyTranslated =
+    item.source_lang !== lang ||
+    comments.some((c) => c.source_lang !== lang) ||
+    revisions.some((r) => r.source_lang !== lang);
 
   const editable = canEdit(role) && !project.archived_at;
   const owner = isOwner(role);
@@ -128,7 +149,38 @@ export default async function ItemPage({
               ? `${t(lang, "added_by", { name: item.created_by_name })} — `
               : ""}
             {dateFmt.format(new Date(item.created_at))}
+            {" · "}
+            {t(lang, "written_in", { lang: langName(item.source_lang) })}
           </p>
+          {revisions.length > 0 && (
+            <details className="mt-4 pt-4 border-t border-line">
+              <summary className="microlabel cursor-pointer hover:text-ink">
+                {t(lang, "history_title")} · {revisions.length}
+              </summary>
+              <ul className="mt-3 space-y-3">
+                {revisions.map((r, i) => (
+                  <li key={r.id} className="border-l-2 border-line-strong pl-4">
+                    <p className="text-sm" title={revisionTitles[i] !== r.title ? r.title : undefined}>
+                      {revisionTitles[i]}
+                    </p>
+                    {r.description && (
+                      <p className="text-xs text-ink-soft whitespace-pre-wrap mt-1">{r.description}</p>
+                    )}
+                    <p className="microlabel mt-1">
+                      {t(lang, "history_replaced", {
+                        name: r.replaced_by_name ?? "—",
+                        date: dateFmt.format(new Date(r.replaced_at)),
+                        lang: langName(r.source_lang),
+                      })}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          )}
+          {anyTranslated && (
+            <p className="microlabel mt-4 leading-relaxed">{t(lang, "translation_disclosure")}</p>
+          )}
           {owner && !project.archived_at && (
             <div className="mt-4 pt-4 border-t border-line">
               <DeleteItemButton itemId={item.id} projectId={id} lang={lang} />

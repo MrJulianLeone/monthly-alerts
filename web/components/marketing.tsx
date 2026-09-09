@@ -17,19 +17,22 @@ export function MarketingShell({
   lang,
   basePath,
   children,
+  langToggle = true,
 }: {
   lang: Lang;
   basePath: string;
   children: React.ReactNode;
+  /** English-only pages (guides, templates, demo) hide the language toggle. */
+  langToggle?: boolean;
 }) {
   return (
     <div className="min-h-screen flex flex-col">
       <HtmlLang lang={lang} />
       <header className="border-b-[1.5px] border-line-strong bg-sheet">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 h-14 flex items-center justify-between">
-          <Logo />
+          <Logo descriptor={t(lang, "app_descriptor")} />
           <div className="flex items-center gap-4">
-            <LangToggle current={lang} basePath={basePath} />
+            {langToggle && <LangToggle current={lang} basePath={basePath} />}
             <Link href="/login" className="btn btn-ghost btn-sm">
               {t(lang, "log_in")}
             </Link>
@@ -204,6 +207,19 @@ const MARKET_PAGES: {
     },
   },
   {
+    href: "/renovating-in-italy",
+    title: {
+      en: "Renovating in Italy",
+      it: "Ristrutturare in Italia",
+      es: "Renovar en Italia",
+    },
+    blurb: {
+      en: "Manage your Italian renovation from anywhere, in English.",
+      it: "Clienti americani, cantiere in Italia: tutti nella propria lingua.",
+      es: "Gestiona tu renovación en Italia desde cualquier lugar.",
+    },
+  },
+  {
     href: "/for-designers",
     title: {
       en: "For designers & architects",
@@ -236,7 +252,7 @@ export function MarketCrossLinks({ lang, current }: { lang: Lang; current: strin
   return (
     <section className="mx-auto max-w-5xl px-4 sm:px-6 pb-20">
       <p className="microlabel mb-4">{CROSS_LINKS_LABEL[lang]}</p>
-      <div className="grid sm:grid-cols-3 gap-px bg-line-strong border-[1.5px] border-line-strong">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-px bg-line-strong border-[1.5px] border-line-strong">
         {MARKET_PAGES.filter((p) => p.href !== current).map((p) => (
           <Link
             key={p.href}

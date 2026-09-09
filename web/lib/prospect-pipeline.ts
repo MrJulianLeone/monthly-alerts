@@ -41,8 +41,12 @@ const PRODUCT_CONTEXT = `MonthlyAlerts (monthlyalerts.com) is a multilingual con
 A project owner sets up a checklist once; subs, inspectors, and crew all work the same list, each in their
 own language (English, Italian, Spanish) — content is translated automatically. Items carry status,
 assignee, due dates, photos, and comments; sections track budget vs. actual. Every project member gets a
-monthly status email in their language. Projects are free to create today. The pitch to contractors:
-fewer walkthrough disputes, one shared list instead of texts and paper, clients see progress monthly.`;
+monthly status email in their language. Pricing: $100 one time per project, not a subscription, and
+everyone invited joins free. THE OFFER for outreach: "try your next project on us" — the first project is
+free (the link in the email grants the credit automatically when they sign up). Never say "buy our
+software"; the ask is to run one real project on it. The pitch to contractors: fewer walkthrough disputes,
+one shared list instead of texts and paper, Spanish-speaking crews read the same list in Spanish, clients
+see progress monthly without the contractor writing reports.`;
 
 export type StageResult = { [key: string]: number | string };
 export type PipelineSummary = Record<string, StageResult>;
@@ -615,6 +619,7 @@ Rules:
 - Plain text only. No markdown, no HTML, no bullet lists, no placeholders like [Name] — write the final text.
 - Short: initial under 120 words, follow-up under 60. Sound like a busy founder, not a marketer.
 - Personalize from the research: reference something concrete about THEIR business in the first sentence.
+- The ask is the offer: run their next project on MonthlyAlerts free (the link grants it). Not a demo, not a purchase.
 - Address the contact by first name if known, otherwise open naturally without a name.
 - Include the literal token {{link}} exactly once in the initial body where the site link belongs
   (e.g. "you can see how it works here: {{link}}"). The follow-up must NOT contain {{link}}.

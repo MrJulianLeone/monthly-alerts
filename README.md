@@ -12,10 +12,10 @@ status email in their language.
 - **Next.js 15** (App Router, TypeScript, Tailwind 4) in [`web/`](web)
 - **Neon Postgres** — raw SQL via `@neondatabase/serverless`, schema in
   [`web/db/schema.sql`](web/db/schema.sql)
-- **Resend** — magic-link sign-in, invitations, monthly status emails
+- **Resend** — email verification, password resets, invitations, monthly status emails
 - **OpenAI** — content translation
 - **Vercel Blob** — item photo attachments and the per-project PDF file cabinet
-- **Stripe** — per-project fee, dormant until `BILLING_ENABLED=true`
+- **Stripe** — one-time per-project fee (`BILLING_ENABLED=true`); projects start as free drafts and are activated at checkout or with credits
 - Deployed on **Vercel** (cron in [`web/vercel.json`](web/vercel.json))
 
 ## Model
@@ -43,6 +43,46 @@ npm run dev
 `npm run db:wipe` drops and recreates the schema (destructive). In production,
 `POST /api/admin/migrate` (Bearer `MIGRATE_SECRET`, body `{"wipe": true}` to
 reset) does the same without local DB access.
+
+## Marketing plan (Sept 2026)
+
+The customer-acquisition plan lives as the "Marketing Plan" checklist project in
+the app (owner julianleone@gmail.com); operational playbooks are in
+[`marketing/`](marketing) (Google Ads, Meta ads, social calendar, contractor
+outreach, Italy partners, KPI definitions). What the app implements:
+
+- **Try before you pay**: with billing on, a new project is a free *draft* for
+  30 days (`projects.draft_expires_at`): build the checklist, preview it in every
+  language, preview the monthly report at `/projects/[id]/report`, then activate
+  (`POST /api/projects/[id]/activate` → Stripe Checkout, or instant when credits
+  cover the fee). Drafts hold invitations (`invites.held`, emailed on
+  activation), get no monthly report, and are deleted by the daily cron after a
+  reminder email 3 days out. Max 3 open drafts per user.
+- **Public templates & guides** (SEO): `/checklists/[slug]` (6 phase-by-phase
+  templates, `web/lib/content/templates.ts`) and `/guides/[slug]` (17 articles,
+  `guides-italy.ts` / `guides-us.ts`), English-only; "Start a project from this
+  template" copies sections/items in English (`lib/content/apply.ts`) and the
+  app translates per viewer. `/demo` renders one template in EN/IT/ES live.
+  `/renovating-in-italy` is the Italy campaign landing page (EN/IT/ES).
+- **Referral program**: `monthlyalerts.com/CODE` → `/r/CODE` sets a 90-day
+  cookie; signup stores `users.referred_by_code`; activation credits the
+  referrer $20 (`credit_ledger`), and credits auto-redeem once they cover a full
+  fee. The claim UI in Settings is gated by `REFERRALS_ENABLED=true` (planned
+  Month 3); attribution and credits already run. Admin view: `/admin/referrals`,
+  which also comps projects ("try your next project on us"). Outreach prospects
+  who sign up via their `/w/<token>` link get the comp automatically.
+- **Attribution & KPIs**: first-touch `utm_*`/`gclid`/`fbclid`/landing captured
+  client-side (`components/attribution-capture.tsx`) and snapshotted on
+  `users.acquisition` / `projects.acquisition`; channel buckets in
+  `lib/attribution.ts`; `/admin/kpis` shows monthly funnel, per-channel
+  activations, spend (entered there) and CAC vs. the plan's targets.
+- **Conversion events** (`lib/analytics.ts`): signup, project_created,
+  template_used, checkout_started, project_activated → Vercel Analytics, plus
+  Google Ads / Meta when `NEXT_PUBLIC_GOOGLE_ADS_ID` / `NEXT_PUBLIC_META_PIXEL_ID`
+  are set (tags load on public pages only; disclosed in /privacy).
+- **Trust**: item edits snapshot the previous wording (`item_revisions`, shown
+  as "Edit history" on the item page); translation disclosure on checklists,
+  items, /demo and in the Terms.
 
 ## Operations
 

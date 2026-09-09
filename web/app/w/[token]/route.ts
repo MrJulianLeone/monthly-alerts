@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { sql } from "@/lib/db";
+import { ATTRIBUTION_DAYS, PROSPECT_COOKIE } from "@/lib/attribution";
 import { appUrl } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
@@ -24,5 +25,17 @@ export async function GET(request: Request, ctx: { params: Promise<{ token: stri
   } catch (err) {
     console.error("prospect visit logging failed:", err);
   }
-  return NextResponse.redirect(dest, 302);
+  const res = NextResponse.redirect(dest, 302);
+  // Remember the prospect so a later signup is attributed to outreach and
+  // receives the "first project on us" credit.
+  if (token && /^[A-Za-z0-9_-]{6,64}$/.test(token)) {
+    res.cookies.set(PROSPECT_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: ATTRIBUTION_DAYS * 86_400,
+    });
+  }
+  return res;
 }

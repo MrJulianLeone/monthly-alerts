@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { t, type Lang, type MessageKey } from "@/lib/i18n";
 
 const ERROR_KEYS: Record<string, MessageKey> = {
@@ -57,6 +58,7 @@ export function AuthForm({ lang, next }: { lang: Lang; next: string | null }) {
           });
           const data = await res.json().catch(() => ({}));
           if (res.ok && mode === "signup") {
+            track("signup");
             setVerifySent(true);
           } else if (res.ok) {
             router.push(

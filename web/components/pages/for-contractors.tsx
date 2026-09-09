@@ -52,7 +52,7 @@ const COPY: Record<Lang, Copy> = {
       },
       {
         title: "Templates for your trade",
-        body: "Kitchen and bath remodels, painting, roofing, landscaping, full renovations — start every job from a phase-by-phase checklist and adjust it to the site.",
+        body: "Kitchen and bath remodels, whole-house renovations, punch lists — start every job from a phase-by-phase checklist template, or describe the job and AI drafts the phases, then adjust it to the site.",
       },
       {
         title: "The homeowner stays informed",

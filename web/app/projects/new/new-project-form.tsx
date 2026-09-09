@@ -2,11 +2,18 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { track } from "@/lib/analytics";
 import { t, type Lang } from "@/lib/i18n";
 
-export function NewProjectForm({ lang }: { lang: Lang }) {
+export function NewProjectForm({
+  lang,
+  template,
+}: {
+  lang: Lang;
+  template: { slug: string; name: string } | null;
+}) {
   const router = useRouter();
-  const [name, setName] = useState("");
+  const [name, setName] = useState(template?.name ?? "");
   const [address, setAddress] = useState("");
   const [description, setDescription] = useState("");
   const [busy, setBusy] = useState(false);
@@ -21,15 +28,17 @@ export function NewProjectForm({ lang }: { lang: Lang }) {
         const res = await fetch("/api/projects", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name, address, description }),
+          body: JSON.stringify({ name, address, description, template: template?.slug }),
         });
         const data = await res.json().catch(() => ({}));
-        if (res.ok && data.checkout_url) {
-          // Billing is enabled: the project is created after payment.
-          window.location.href = data.checkout_url;
-        } else if (res.ok && data.id) {
+        if (res.ok && data.id) {
+          track("project_created", { draft: !!data.draft, template: template?.slug ?? "" });
+          if (template) track("template_used", { template: template.slug });
           router.push(`/projects/${data.id}`);
           router.refresh();
+        } else if (res.status === 409 && data.error === "too_many_drafts") {
+          setBusy(false);
+          setError(t(lang, "too_many_drafts"));
         } else {
           setBusy(false);
           setError(t(lang, "error_generic"));

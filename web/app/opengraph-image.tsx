@@ -49,11 +49,14 @@ export default function OpenGraphImage() {
             <span style={{ color: "#ea580c" }}>Alerts</span>
           </div>
         </div>
-        <div style={{ display: "flex", fontSize: 44, marginTop: 48, lineHeight: 1.25, maxWidth: 900 }}>
-          Construction checklists your whole crew can read
+        <div style={{ display: "flex", fontSize: 26, marginTop: 20, color: "#ea580c", letterSpacing: 3 }}>
+          YOUR PROJECT. EVERY LANGUAGE.
+        </div>
+        <div style={{ display: "flex", fontSize: 44, marginTop: 40, lineHeight: 1.25, maxWidth: 900 }}>
+          Construction projects should not get lost in translation.
         </div>
         <div style={{ display: "flex", fontSize: 26, marginTop: 24, color: "#a8a29e" }}>
-          EN / IT / ES - translated automatically for every member
+          One checklist, EN / IT / ES - $100 per project, not a subscription
         </div>
       </div>
     ),

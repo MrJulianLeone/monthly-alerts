@@ -552,9 +552,9 @@ const messages = {
     es: "Dejar de recibir estas actualizaciones mensuales",
   },
   email_footer: {
-    en: "MonthlyAlerts.com — multilingual construction checklists.",
-    it: "MonthlyAlerts.com — liste di controllo multilingue per l'edilizia.",
-    es: "MonthlyAlerts.com — listas de control de obra multilingües.",
+    en: "MonthlyAlerts.com — Your project. Every language. Multilingual construction checklists.",
+    it: "MonthlyAlerts.com — Il tuo progetto. Ogni lingua. Liste di controllo multilingue per l'edilizia.",
+    es: "MonthlyAlerts.com — Tu proyecto. Cada idioma. Listas de control de obra multilingües.",
   },
 
   // Pricing
@@ -566,9 +566,9 @@ const messages = {
     es: "Un proyecto. Un pago. Sin suscripción.",
   },
   pricing_body: {
-    en: "One-time fee when you create a project — no subscription. Unlimited checklist items and photos, and your whole team of subs, inspectors, and crew joins free.",
-    it: "Tariffa una tantum alla creazione del progetto — nessun abbonamento. Voci e foto illimitate, e tutta la squadra di subappaltatori, ispettori e operai partecipa gratis.",
-    es: "Pago único al crear el proyecto — sin suscripción. Tareas y fotos ilimitadas, y todo tu equipo de subcontratistas, inspectores y cuadrilla participa gratis.",
+    en: "Build your checklist free and preview it in every language. One-time fee when you activate — no subscription. Unlimited checklist items and photos, and your whole team of subs, inspectors, and crew joins free.",
+    it: "Costruisci la lista gratis e guardala in ogni lingua. Tariffa una tantum all'attivazione — nessun abbonamento. Voci e foto illimitate, e tutta la squadra di subappaltatori, ispettori e operai partecipa gratis.",
+    es: "Construye tu lista gratis y revísala en cada idioma. Pago único al activar — sin suscripción. Tareas y fotos ilimitadas, y todo tu equipo de subcontratistas, inspectores y cuadrilla participa gratis.",
   },
   pricing_invitees_free: {
     en: "Free for everyone you invite",
@@ -765,6 +765,194 @@ const messages = {
     en: "This project is archived — files are read-only.",
     it: "Questo progetto è archiviato — i documenti sono in sola lettura.",
     es: "Este proyecto está archivado — los archivos son de solo lectura.",
+  },
+
+  // Drafts (try before you pay), activation, credits
+  draft_chip: { en: "Draft", it: "Bozza", es: "Borrador" },
+  draft_banner_title: {
+    en: "Draft — {days} days left to activate",
+    it: "Bozza — {days} giorni per attivare",
+    es: "Borrador — {days} días para activar",
+  },
+  draft_banner_body: {
+    en: "Build your checklist, preview it in every language, and preview the monthly report. Activate for {price} — one time, not a subscription — to invite your team, start monthly reports, and keep the project for two years. Unactivated drafts are deleted.",
+    it: "Costruisci la lista, guardala in ogni lingua e vedi in anteprima il report mensile. Attiva per {price} — una tantum, nessun abbonamento — per invitare la squadra, avviare i report mensili e conservare il progetto per due anni. Le bozze non attivate vengono eliminate.",
+    es: "Construye la lista, revísala en cada idioma y mira el informe mensual. Activa por {price} — pago único, sin suscripción — para invitar a tu equipo, iniciar los informes mensuales y conservar el proyecto dos años. Los borradores no activados se eliminan.",
+  },
+  draft_credit_covers: {
+    en: "You have {balance} in credit — this project activates free.",
+    it: "Hai {balance} di credito — questo progetto si attiva gratis.",
+    es: "Tienes {balance} de crédito — este proyecto se activa gratis.",
+  },
+  draft_activate: { en: "Activate for {price}", it: "Attiva per {price}", es: "Activar por {price}" },
+  draft_activate_credit: {
+    en: "Activate with credit",
+    it: "Attiva con il credito",
+    es: "Activar con crédito",
+  },
+  draft_invite_held: {
+    en: "This project is a draft: invitations are saved now and emailed when you activate it.",
+    it: "Questo progetto è una bozza: gli inviti vengono salvati ora e inviati quando lo attivi.",
+    es: "Este proyecto es un borrador: las invitaciones se guardan ahora y se envían al activarlo.",
+  },
+  invite_held: {
+    en: "Sends when the project is activated",
+    it: "Verrà inviato all'attivazione del progetto",
+    es: "Se envía al activar el proyecto",
+  },
+  too_many_drafts: {
+    en: "You already have 3 unactivated drafts. Activate or delete one first.",
+    it: "Hai già 3 bozze non attivate. Attivane o eliminane una prima.",
+    es: "Ya tienes 3 borradores sin activar. Activa o elimina uno primero.",
+  },
+  new_project_draft_fee: {
+    en: "Free to build. Activate later for {price} — one time, not a subscription — to invite your team and start monthly reports.",
+    it: "Gratis da costruire. Attiva in seguito per {price} — una tantum, nessun abbonamento — per invitare la squadra e avviare i report mensili.",
+    es: "Gratis para construir. Actívalo después por {price} — pago único, sin suscripción — para invitar a tu equipo e iniciar los informes mensuales.",
+  },
+  new_project_template_note: {
+    en: "Starting from the template “{name}” ({count} items). You can edit, add, or remove anything.",
+    it: "Parti dal modello “{name}” ({count} voci). Puoi modificare, aggiungere o eliminare qualsiasi cosa.",
+    es: "Empiezas con la plantilla “{name}” ({count} tareas). Puedes editar, añadir o eliminar lo que quieras.",
+  },
+  email_draft_subject: {
+    en: "{project}: your draft is deleted in {days} days",
+    it: "{project}: la bozza verrà eliminata tra {days} giorni",
+    es: "{project}: tu borrador se elimina en {days} días",
+  },
+  email_draft_body: {
+    en: "Your project “{project}” is still a draft and will be deleted in {days} days. Activate it to invite your team, start monthly status reports, and keep it for two years.",
+    it: "Il progetto “{project}” è ancora una bozza e verrà eliminato tra {days} giorni. Attivalo per invitare la squadra, avviare i report mensili e conservarlo per due anni.",
+    es: "Tu proyecto “{project}” sigue siendo un borrador y se eliminará en {days} días. Actívalo para invitar a tu equipo, iniciar los informes mensuales y conservarlo dos años.",
+  },
+  email_draft_button: { en: "Open the draft", it: "Apri la bozza", es: "Abrir el borrador" },
+
+  // Monthly report preview
+  report_nav: { en: "Monthly report", it: "Report mensile", es: "Informe mensual" },
+  report_preview_link: {
+    en: "Preview the monthly report every member will receive",
+    it: "Anteprima del report mensile che riceverà ogni membro",
+    es: "Vista previa del informe mensual que recibirá cada miembro",
+  },
+  report_title: {
+    en: "Monthly status report",
+    it: "Report mensile di stato",
+    es: "Informe mensual de estado",
+  },
+  report_preview_note: {
+    en: "Every member receives this by email on the 1st of the month, in their own language, generated from the checklist. Nobody writes it.",
+    it: "Ogni membro lo riceve via email il primo del mese, nella propria lingua, generato dalla lista. Nessuno deve scriverlo.",
+    es: "Cada miembro lo recibe por correo el día 1 de cada mes, en su idioma, generado a partir de la lista. Nadie tiene que escribirlo.",
+  },
+  report_recipients_note: {
+    en: "{count} members will read it in a different language than this preview.",
+    it: "{count} membri lo leggeranno in una lingua diversa da questa anteprima.",
+    es: "{count} miembros lo leerán en un idioma distinto al de esta vista previa.",
+  },
+  report_draft_note: {
+    en: "This is what every member will receive on the 1st of the month, in their own language, once the project is activated.",
+    it: "Questo è ciò che ogni membro riceverà il primo del mese, nella propria lingua, una volta attivato il progetto.",
+    es: "Esto es lo que cada miembro recibirá el día 1 de cada mes, en su idioma, una vez activado el proyecto.",
+  },
+
+  // Trust: originals, history, disclosure
+  written_in: { en: "written in {lang}", it: "scritto in {lang}", es: "escrito en {lang}" },
+  history_title: { en: "Edit history", it: "Cronologia modifiche", es: "Historial de cambios" },
+  history_replaced: {
+    en: "Written in {lang} · replaced by {name} on {date}",
+    it: "Scritto in {lang} · sostituito da {name} il {date}",
+    es: "Escrito en {lang} · reemplazado por {name} el {date}",
+  },
+  translation_disclosure: {
+    en: "Automated translations are for project communication and should not replace certified translations of legal, engineering, or safety-critical documentation. The original-language version is authoritative.",
+    it: "Le traduzioni automatiche servono alla comunicazione di progetto e non sostituiscono traduzioni certificate di documenti legali, tecnici o rilevanti per la sicurezza. Fa fede la versione nella lingua originale.",
+    es: "Las traducciones automáticas sirven para la comunicación del proyecto y no sustituyen traducciones certificadas de documentación legal, técnica o crítica para la seguridad. La versión en el idioma original es la que prevalece.",
+  },
+
+  // Referral program
+  referral_label: { en: "Referral program", it: "Programma referral", es: "Programa de referidos" },
+  referral_title: {
+    en: "Refer a project, earn credit",
+    it: "Presenta un progetto, guadagna credito",
+    es: "Recomienda un proyecto, gana crédito",
+  },
+  referral_body: {
+    en: "Share your link with clients and colleagues. Every project activated by someone who arrived through it earns you {credit} in credit toward your own projects.",
+    it: "Condividi il tuo link con clienti e colleghi. Ogni progetto attivato da chi arriva dal tuo link ti fa guadagnare {credit} di credito per i tuoi progetti.",
+    es: "Comparte tu enlace con clientes y colegas. Cada proyecto activado por alguien que llegue a través de él te da {credit} de crédito para tus propios proyectos.",
+  },
+  referral_code_label: { en: "Your code", it: "Il tuo codice", es: "Tu código" },
+  referral_claim: { en: "Claim link", it: "Crea il link", es: "Crear enlace" },
+  referral_copy: { en: "Copy link", it: "Copia link", es: "Copiar enlace" },
+  referral_copied: { en: "Copied", it: "Copiato", es: "Copiado" },
+  referral_stats: {
+    en: "{signups} sign-ups · {activated} activated projects · {earned} earned",
+    it: "{signups} iscrizioni · {activated} progetti attivati · {earned} guadagnati",
+    es: "{signups} registros · {activated} proyectos activados · {earned} ganados",
+  },
+  referral_balance: {
+    en: "Credit balance: {balance}",
+    it: "Saldo credito: {balance}",
+    es: "Saldo de crédito: {balance}",
+  },
+  referral_balance_hint: {
+    en: "Credit is applied automatically when you activate a project and the balance covers the full fee ({price}). Credit has no cash value.",
+    it: "Il credito viene usato automaticamente quando attivi un progetto e il saldo copre l'intera tariffa ({price}). Il credito non ha valore in denaro.",
+    es: "El crédito se aplica automáticamente al activar un proyecto cuando el saldo cubre la tarifa completa ({price}). El crédito no tiene valor en efectivo.",
+  },
+  referral_error_taken: {
+    en: "That code is already taken.",
+    it: "Questo codice è già in uso.",
+    es: "Ese código ya está en uso.",
+  },
+  referral_error_reserved: {
+    en: "That code is reserved.",
+    it: "Questo codice è riservato.",
+    es: "Ese código está reservado.",
+  },
+  referral_error_invalid: {
+    en: "Use 4 to 20 letters or numbers.",
+    it: "Usa da 4 a 20 lettere o numeri.",
+    es: "Usa de 4 a 20 letras o números.",
+  },
+  ledger_referral: {
+    en: "Referral credit · {project}",
+    it: "Credito referral · {project}",
+    es: "Crédito por referido · {project}",
+  },
+  ledger_redeem: {
+    en: "Activated with credit · {project}",
+    it: "Attivato con il credito · {project}",
+    es: "Activado con crédito · {project}",
+  },
+  ledger_comp: {
+    en: "Complimentary project",
+    it: "Progetto in omaggio",
+    es: "Proyecto de cortesía",
+  },
+
+  // Public resources
+  footer_renovating_in_italy: {
+    en: "Renovating in Italy",
+    it: "Ristrutturare in Italia",
+    es: "Renovar en Italia",
+  },
+  footer_checklists: {
+    en: "Checklist templates",
+    it: "Modelli di checklist",
+    es: "Plantillas de listas",
+  },
+  footer_guides: { en: "Guides", it: "Guide", es: "Guías" },
+  footer_demo: { en: "Demo", it: "Demo", es: "Demo" },
+  home_templates_cta: {
+    en: "Or start from a template",
+    it: "Oppure parti da un modello",
+    es: "O empieza con una plantilla",
+  },
+  home_demo_cta: {
+    en: "See the demo in three languages",
+    it: "Guarda la demo in tre lingue",
+    es: "Ver la demo en tres idiomas",
   },
 } as const;
 

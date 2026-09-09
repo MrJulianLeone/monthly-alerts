@@ -18,6 +18,10 @@ export type Project = {
   paid_at: string | null;
   archived_at: string | null;
   extended_years: number;
+  draft_expires_at: string | null; // set while a billing-on project awaits activation
+  activation_source: string | null;
+  referral_code: string | null;
+  template_slug: string | null;
   created_at: string;
 };
 
@@ -94,7 +98,8 @@ export async function getMembership(
 export async function getProject(projectId: string): Promise<Project | null> {
   const rows = (await sql()`
     SELECT id, name, name_lang, address, description, owner_id, currency, paid_at, archived_at,
-           extended_years, created_at
+           extended_years, draft_expires_at, activation_source, referral_code, template_slug,
+           created_at
     FROM projects WHERE id = ${projectId}
   `) as Project[];
   return rows[0] ?? null;
@@ -103,6 +108,7 @@ export async function getProject(projectId: string): Promise<Project | null> {
 export async function listProjectsForUser(userId: string) {
   return (await sql()`
     SELECT p.id, p.name, p.name_lang, p.address, p.archived_at, p.created_at,
+           p.paid_at, p.draft_expires_at,
            m.role,
            count(i.id)::int AS total_items,
            count(i.id) FILTER (WHERE i.status = 'done')::int AS done_items

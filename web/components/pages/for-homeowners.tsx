@@ -77,7 +77,7 @@ const COPY: Record<Lang, Copy> = {
     features: [
       {
         title: "Start from a real checklist",
-        body: "Kitchen remodel, bathroom, painting, roofing, landscaping, or a full renovation — pick a phase-by-phase template so nothing gets forgotten between demolition and final inspection.",
+        body: "Kitchen remodel, bathroom, whole-house renovation, or the final punch list — start from a phase-by-phase checklist template with the items people forget, so nothing slips between demolition and final inspection.",
       },
       {
         title: "Photos as proof of progress",

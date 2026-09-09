@@ -1,11 +1,16 @@
 import { NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { applyExtensionFromSession, createProjectFromSession, stripe } from "@/lib/billing";
+import {
+  activateProjectFromSession,
+  applyExtensionFromSession,
+  createProjectFromSession,
+  stripe,
+} from "@/lib/billing";
 
 /**
- * Creates the paid project when Stripe Checkout completes. Idempotent on
- * stripe_session_id, and mirrored by a fallback on the /projects/activated
- * success page in case the webhook is delayed.
+ * Activates the draft (or, for legacy sessions, creates the project) when
+ * Stripe Checkout completes. Idempotent, and mirrored by a fallback on the
+ * /projects/activated success page in case the webhook is delayed.
  */
 export async function POST(request: Request) {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -31,6 +36,8 @@ export async function POST(request: Request) {
     if (session.payment_status === "paid") {
       if (session.metadata?.extend_project_id) {
         await applyExtensionFromSession(session);
+      } else if (session.metadata?.activate_project_id) {
+        await activateProjectFromSession(session);
       } else {
         await createProjectFromSession(session);
       }

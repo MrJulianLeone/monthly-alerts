@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Privacy Policy — MonthlyAlerts" };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Privacy Policy" effective="Effective August 28, 2026">
+    <LegalPage title="Privacy Policy" effective="Effective September 8, 2026">
       <p>
         This Privacy Policy explains what personal data MonthlyAlerts.com (the
         &quot;Service,&quot; &quot;we,&quot; &quot;us&quot;) collects, how we use it,
@@ -37,10 +37,16 @@ export default function PrivacyPage() {
         </li>
       </ul>
       <p>
-        We use only two cookies: a session cookie that keeps you signed in and a
-        cookie remembering your language choice. We measure page visits with
-        Vercel Web Analytics, which is cookie-less and does not identify
-        individual visitors. <strong>We use no advertising trackers.</strong>
+        We use a session cookie that keeps you signed in, a cookie remembering your
+        language choice, and short-lived (90-day) first-party cookies that remember
+        how you first arrived — a referral link, a campaign tag in the URL, or an
+        outreach email link — so we can credit referrals and measure which channels
+        bring projects. We measure page visits with Vercel Web Analytics, which is
+        cookie-less and does not identify individual visitors. When we run advertising
+        campaigns, the public pages may load the Google Ads and Meta conversion tags
+        so those platforms can measure sign-ups and activated projects from their
+        ads; these tags are never loaded inside your projects, and you can block them
+        with standard browser settings.
       </p>
 
       <h2>2. How we use data</h2>
@@ -125,8 +131,8 @@ export default function PrivacyPage() {
 
       <h2>7. Security</h2>
       <p>
-        Data is encrypted in transit; sign-in uses one-time emailed links (no
-        passwords to steal); session and sign-in tokens are stored only as
+        Data is encrypted in transit; passwords are stored only as salted scrypt
+        hashes, and session, verification, and reset tokens are stored only as
         cryptographic hashes. No system is perfectly secure, so use judgment about
         what you upload.
       </p>
