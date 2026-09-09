@@ -103,14 +103,14 @@ export default async function ProspectsPage(props: {
           <h1 className="display text-5xl">Prospects</h1>
           <div className="flex gap-2">
             <Link href="/admin/prospects/import" className="btn btn-ghost btn-sm">Import</Link>
-            <Link href="/admin/prospects/setup" className="btn btn-ghost btn-sm">Gmail setup</Link>
+            <Link href="/admin/prospects/setup" className="btn btn-ghost btn-sm">Sending setup</Link>
           </div>
         </div>
 
         {!outreachConfigured() && (
           <p className="text-sm mb-6 border-[1.5px] border-accent-deep text-accent-deep px-4 py-3">
-            The outreach mailbox isn&apos;t connected yet — emails will queue but nothing sends.{" "}
-            <Link href="/admin/prospects/setup" className="underline">Finish the Gmail setup</Link>.
+            Outreach sending is switched off (OUTREACH_ENABLED) — research and drafts continue, nothing sends.{" "}
+            <Link href="/admin/prospects/setup" className="underline">Sending setup and safeguards</Link>.
           </p>
         )}
         {settings.paused && (

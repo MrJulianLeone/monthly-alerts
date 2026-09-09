@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-/** Live Gmail connection check + optional test send, for the setup page. */
+/** Sending switch check + optional test send, for the setup page. */
 export function SetupCheck({ envReady }: { envReady: boolean }) {
   const [busy, setBusy] = useState(false);
   const [result, setResult] = useState<string | null>(null);
@@ -24,8 +24,8 @@ export function SetupCheck({ envReady }: { envReady: boolean }) {
       } else {
         setOk(true);
         setResult(
-          `Connected as ${data.mailbox}.` +
-            (data.testSent ? " Test email sent to your admin address — check inbox vs spam, and the SPF/DKIM/DMARC headers." : "")
+          `Sending as ${data.mailbox}.` +
+            (data.testSent ? " Test email sent to your admin address — check Inbox vs Promotions vs Spam, open Show original for SPF/DKIM/DMARC = PASS, then reply to it and confirm the reply shows up in /admin/inbox." : "")
         );
       }
     } catch {
@@ -39,7 +39,7 @@ export function SetupCheck({ envReady }: { envReady: boolean }) {
   return (
     <div className="sheet p-5">
       <p className="text-sm mb-3">
-        Environment variables:{" "}
+        OUTREACH_ENABLED + RESEND_API_KEY:{" "}
         {envReady ? (
           <span className="chip text-ink">present</span>
         ) : (

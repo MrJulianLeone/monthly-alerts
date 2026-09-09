@@ -1,80 +1,65 @@
-// Gmail adapter for the prospecting pipeline. Outreach mail goes through a
-// dedicated Google Workspace mailbox on a separate domain (see
-// /admin/prospects/setup), NEVER through Resend — cold outreach must not be
-// able to touch transactional deliverability. Uses the Gmail REST API
-// directly via fetch (OAuth refresh-token flow), so no SDK dependency.
+import { randomUUID } from "node:crypto";
+import { sendRawEmail } from "@/lib/email";
 
-const TOKEN_URL = "https://oauth2.googleapis.com/token";
-const GMAIL = "https://gmail.googleapis.com/gmail/v1/users/me";
+/**
+ * Outreach transport: cold emails go out through Resend from an address on
+ * monthlyalerts.com itself (default julian@monthlyalerts.com), the same
+ * domain the product's transactional mail uses. Because a spam problem here
+ * would hurt invites and password resets too, sending is fenced in:
+ *
+ *   - OUTREACH_ENABLED=true is required; nothing sends until the owner flips it.
+ *   - Every draft is approved by hand before it can send.
+ *   - Warm-up ramp (5 → 8 → 12 → cap per day), hard ceiling in HARD_DAILY_MAX,
+ *     weekdays only, one send per prospect per stage.
+ *   - RFC 8058 one-click List-Unsubscribe plus a footer link on every email.
+ *   - Any spam complaint (Resend email.complained webhook) pauses the pipeline
+ *     and alerts the admin; bounces over 5% in 7 days do the same.
+ *   - Replies come back through the same domain's inbound webhook and never
+ *     get the support autoresponder.
+ *
+ * Text-only, one recipient per call, no tracking pixels, no link tracking.
+ */
 
+export const HARD_DAILY_MAX = 30;
+
+export function outreachEnabled(): boolean {
+  return process.env.OUTREACH_ENABLED === "true";
+}
+
+/** Sending is possible: switched on and Resend is available. */
 export function outreachConfigured(): boolean {
-  return Boolean(
-    process.env.OUTREACH_GOOGLE_CLIENT_ID &&
-      process.env.OUTREACH_GOOGLE_CLIENT_SECRET &&
-      process.env.OUTREACH_GOOGLE_REFRESH_TOKEN
-  );
+  return outreachEnabled() && Boolean(process.env.RESEND_API_KEY);
 }
 
-let cachedToken: { token: string; expires: number } | null = null;
-
-async function accessToken(): Promise<string> {
-  if (cachedToken && Date.now() < cachedToken.expires - 60_000) return cachedToken.token;
-  const res = await fetch(TOKEN_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      client_id: process.env.OUTREACH_GOOGLE_CLIENT_ID ?? "",
-      client_secret: process.env.OUTREACH_GOOGLE_CLIENT_SECRET ?? "",
-      refresh_token: process.env.OUTREACH_GOOGLE_REFRESH_TOKEN ?? "",
-      grant_type: "refresh_token",
-    }),
-  });
-  if (!res.ok) {
-    throw new Error(`Gmail token refresh failed (${res.status}): ${await res.text()}`);
-  }
-  const data = (await res.json()) as { access_token: string; expires_in: number };
-  cachedToken = { token: data.access_token, expires: Date.now() + data.expires_in * 1000 };
-  return cachedToken.token;
+/** The From / Reply-To address for outreach (an address on our own domain). */
+export function outreachAddress(): string {
+  const configured = process.env.OUTREACH_FROM_EMAIL?.trim().toLowerCase();
+  if (configured && configured.includes("@")) return configured;
+  const domain = (process.env.SUPPORT_EMAIL ?? "support@monthlyalerts.com").split("@")[1];
+  return `julian@${domain}`;
 }
 
-async function gmail<T>(path: string, init?: RequestInit): Promise<T> {
-  const token = await accessToken();
-  const res = await fetch(`${GMAIL}${path}`, {
-    ...init,
-    headers: {
-      Authorization: `Bearer ${token}`,
-      "Content-Type": "application/json",
-      ...init?.headers,
-    },
-  });
-  if (!res.ok) throw new Error(`Gmail API ${path} failed (${res.status}): ${await res.text()}`);
-  return (await res.json()) as T;
+export function outreachFromName(): string {
+  return process.env.OUTREACH_FROM_NAME ?? "Julian";
 }
 
-/** The connected mailbox address — also the outreach From address. */
-export async function outreachProfile(): Promise<{ emailAddress: string }> {
-  return gmail<{ emailAddress: string }>("/profile");
-}
-
-function b64url(s: string): string {
-  return Buffer.from(s).toString("base64url");
-}
-
-/** RFC 2047-encode a display name when it needs it. */
-function encodeName(name: string): string {
-  return /^[\x20-\x7e]*$/.test(name) ? `"${name.replace(/"/g, "")}"` : `=?UTF-8?B?${Buffer.from(name).toString("base64")}?=`;
+/** Sanity check used by the setup page: what a send would go out as. */
+export async function outreachProfile(): Promise<{ emailAddress: string; fromName: string }> {
+  return { emailAddress: outreachAddress(), fromName: outreachFromName() };
 }
 
 export type OutreachSent = {
-  gmailMessageId: string;
-  gmailThreadId: string;
-  messageIdHeader: string | null;
+  /** Resend email id — stored for bounce/complaint webhook matching. */
+  providerId: string;
+  /** Our own RFC 5322 Message-ID, so follow-ups can thread onto this send. */
+  messageIdHeader: string;
+  /** Thread key: the initial email's Message-ID (or the one passed in). */
+  threadId: string;
 };
 
 /**
- * Sends a plain-text email from the outreach mailbox. Pass threadId +
- * inReplyTo (the prior message's Message-ID header) to keep follow-ups in
- * the same Gmail thread for both sides.
+ * Sends one plain-text outreach email. Pass inReplyTo (the initial's
+ * Message-ID) for a follow-up so it threads in the recipient's client.
  */
 export async function outreachSend(opts: {
   to: string;
@@ -84,109 +69,57 @@ export async function outreachSend(opts: {
   threadId?: string;
   inReplyTo?: string;
   listUnsubscribeUrl?: string;
+  listUnsubscribePostUrl?: string;
 }): Promise<OutreachSent> {
-  const profile = await outreachProfile();
-  const from = opts.fromName
-    ? `${encodeName(opts.fromName)} <${profile.emailAddress}>`
-    : profile.emailAddress;
+  if (!outreachConfigured()) throw new Error("Outreach sending is not enabled");
+  const address = outreachAddress();
+  const domain = address.split("@")[1];
+  const messageId = `<${randomUUID()}@${domain}>`;
 
-  const headers = [
-    `From: ${from}`,
-    `To: ${opts.to}`,
-    `Subject: =?UTF-8?B?${Buffer.from(opts.subject).toString("base64")}?=`,
-    "MIME-Version: 1.0",
-    'Content-Type: text/plain; charset="UTF-8"',
-    "Content-Transfer-Encoding: base64",
-  ];
+  const headers: Record<string, string> = { "Message-ID": messageId };
   if (opts.inReplyTo) {
-    headers.push(`In-Reply-To: ${opts.inReplyTo}`, `References: ${opts.inReplyTo}`);
+    headers["In-Reply-To"] = opts.inReplyTo;
+    headers.References = opts.inReplyTo;
   }
   if (opts.listUnsubscribeUrl) {
-    headers.push(`List-Unsubscribe: <${opts.listUnsubscribeUrl}>`);
+    headers["List-Unsubscribe"] = `<${opts.listUnsubscribeUrl}>`;
+    if (opts.listUnsubscribePostUrl) {
+      // RFC 8058: mailbox providers show a native "Unsubscribe" button and
+      // POST to this URL — required by Gmail/Yahoo for bulk senders.
+      headers["List-Unsubscribe"] = `<${opts.listUnsubscribePostUrl}>, <${opts.listUnsubscribeUrl}>`;
+      headers["List-Unsubscribe-Post"] = "List-Unsubscribe=One-Click";
+    }
   }
-  const raw = `${headers.join("\r\n")}\r\n\r\n${Buffer.from(opts.text).toString("base64")}`;
 
-  const sent = await gmail<{ id: string; threadId: string }>("/messages/send", {
-    method: "POST",
-    body: JSON.stringify({ raw: b64url(raw), threadId: opts.threadId }),
+  const name = (opts.fromName ?? outreachFromName()).replace(/["<>]/g, "");
+  const sent = await sendRawEmail({
+    from: `${name} <${address}>`,
+    to: opts.to,
+    subject: opts.subject,
+    text: opts.text,
+    // Resend requires an HTML part; keep it a faithful plain rendering.
+    html: `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1c1917;white-space:pre-wrap">${escape(opts.text)}</div>`,
+    headers,
+    replyTo: address,
   });
 
-  // Fetch the stored copy to learn the Message-ID Gmail assigned — needed so
-  // the follow-up can thread onto this send.
-  let messageIdHeader: string | null = null;
-  try {
-    const full = await gmail<GmailMessage>(
-      `/messages/${sent.id}?format=metadata&metadataHeaders=Message-ID`
-    );
-    messageIdHeader = header(full, "Message-ID");
-  } catch {
-    // Non-fatal: the follow-up falls back to threadId-only threading.
-  }
-  return { gmailMessageId: sent.id, gmailThreadId: sent.threadId, messageIdHeader };
-}
-
-export type GmailMessage = {
-  id: string;
-  threadId: string;
-  internalDate?: string;
-  payload?: GmailPart;
-};
-
-type GmailPart = {
-  mimeType?: string;
-  headers?: { name: string; value: string }[];
-  body?: { data?: string; size?: number };
-  parts?: GmailPart[];
-};
-
-export function header(msg: GmailMessage, name: string): string | null {
-  const h = msg.payload?.headers?.find((x) => x.name.toLowerCase() === name.toLowerCase());
-  return h?.value ?? null;
-}
-
-/** Extracts the best-effort plain-text body from a Gmail payload tree. */
-export function textBody(msg: GmailMessage): string {
-  const collect = (part: GmailPart | undefined, want: string): string | null => {
-    if (!part) return null;
-    if (part.mimeType?.startsWith(want) && part.body?.data) {
-      return Buffer.from(part.body.data, "base64url").toString("utf8");
-    }
-    for (const p of part.parts ?? []) {
-      const found = collect(p, want);
-      if (found) return found;
-    }
-    return null;
+  return {
+    providerId: sent?.id ?? `disabled-${randomUUID()}`,
+    messageIdHeader: messageId,
+    threadId: opts.threadId ?? messageId,
   };
-  const plain = collect(msg.payload, "text/plain");
-  if (plain) return plain;
-  const html = collect(msg.payload, "text/html");
-  if (html) {
-    return html
-      .replace(/<style[\s\S]*?<\/style>/gi, "")
-      .replace(/<[^>]+>/g, " ")
-      .replace(/&nbsp;/g, " ")
-      .replace(/&amp;/g, "&")
-      .replace(/&lt;/g, "<")
-      .replace(/&gt;/g, ">")
-      .replace(/\s+/g, " ")
-      .trim();
-  }
-  return "";
 }
 
-/**
- * Lists inbox messages received after the given time (full payloads).
- * Includes bounces (mailer-daemon DSNs land in the inbox too).
- */
-export async function outreachListInbox(after: Date, max = 40): Promise<GmailMessage[]> {
-  const afterSec = Math.floor(after.getTime() / 1000);
-  const q = encodeURIComponent(`in:inbox after:${afterSec}`);
-  const list = await gmail<{ messages?: { id: string }[] }>(
-    `/messages?q=${q}&maxResults=${max}`
-  );
-  const out: GmailMessage[] = [];
-  for (const m of list.messages ?? []) {
-    out.push(await gmail<GmailMessage>(`/messages/${m.id}?format=full`));
-  }
-  return out;
+function escape(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/https?:\/\/[^\s<]+/g, (url) => `<a href="${url}" style="color:#1c1917">${url}</a>`);
+}
+
+/** True when the sending window is open (Mon–Fri, UTC). */
+export function inSendWindow(now = new Date()): boolean {
+  const day = now.getUTCDay();
+  return day >= 1 && day <= 5;
 }

@@ -5,8 +5,8 @@ import { runPipeline } from "@/lib/prospect-pipeline";
 export const maxDuration = 300;
 
 /**
- * Daily prospecting run (vercel.json). Polls the outreach inbox for replies
- * and bounces, marks conversions, then advances batches through enrichment,
+ * Daily prospecting run (vercel.json). Sweeps inbound mail for outreach
+ * replies (the webhook normally handles them live), marks conversions, then advances batches through enrichment,
  * scoring, drafting, and sending (approved emails + due follow-ups, under
  * the warm-up-aware daily cap). Every stage is idempotent.
  */

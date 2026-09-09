@@ -74,16 +74,29 @@ business:
 Rule: if you cannot name a specific reason this contractor has a language gap,
 skip them. Generic sends to this list will burn the domain and the offer.
 
-### Sending hygiene
+### Sending hygiene (same domain, so it matters more)
 
-- Send from a real mailbox on a subdomain, for example `julian@mail.monthlyalerts.com`,
-  not the root domain used for transactional email. Keep Resend's transactional
-  reputation separate from cold outreach.
-- SPF, DKIM, DMARC configured before the first send.
-- Warm up: 10/day week 1, 20/day week 2, 30/day week 3, then hold at 30 to 40.
-- Plain text. No images, no tracking pixel, no HTML signature, no unsubscribe
-  header theater. One link maximum, and only in touch 1 and 3.
-- Never send more than 3 emails to a contact, ever.
+Outreach sends from `julian@monthlyalerts.com` through Resend, the same domain
+that carries invites, password resets and monthly reports. There is no
+separate outreach domain. A reputation hit here hits the product, so the
+pipeline is fenced in and the operator rules are strict:
+
+- `OUTREACH_ENABLED=true` is the master switch; every draft is approved by hand.
+- Ramp: 5/day week 1, 8 week 2, 12 week 3, then the configured cap, never
+  above 30/day, weekdays only. Keep the cap at 15 for the first month.
+- Every email: plain text, under 120 words, one link, first sentence about
+  their business, a one-click unsubscribe button (RFC 8058) and a footer link.
+- Circuit breakers: one spam complaint pauses sending and emails the admin;
+  bounces over 5% in 7 days pause it too. Resend webhook must have
+  `email.bounced` and `email.complained` enabled (setup page explains).
+- Never contact: existing users, anyone previously contacted, anyone who
+  declined or unsubscribed (permanent suppression list), addresses without MX.
+- Replies arrive in /admin/inbox and are answered from the same address in
+  the same thread. Never let the support autoresponder near them (it doesn't).
+- DMARC on the root domain: `p=none` with reports now, `p=quarantine` after a
+  clean month. SPF/DKIM are Resend's.
+- If deliverability degrades (replies drop, complaints appear), stop for two
+  weeks and fix targeting. Do not fix it with volume or new wording.
 
 ## 3. Email sequence
 

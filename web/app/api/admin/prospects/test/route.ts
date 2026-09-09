@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
 import { ADMIN_EMAIL } from "@/lib/admin";
 import { requireAdmin } from "@/lib/api";
-import { outreachConfigured, outreachProfile, outreachSend } from "@/lib/outreach";
+import { appUrl } from "@/lib/email";
+import {
+  outreachAddress,
+  outreachConfigured,
+  outreachEnabled,
+  outreachProfile,
+  outreachSend,
+} from "@/lib/outreach";
 
 export const maxDuration = 60;
 
 /**
- * Gmail connection check for the setup page: verifies the OAuth credentials
- * by loading the mailbox profile, and optionally sends a test email to the
- * admin so deliverability to Gmail can be eyeballed. Admin-only.
+ * Sending check for the setup page: confirms the switch and Resend key, and
+ * optionally sends a test email to the admin so inbox placement and the
+ * SPF/DKIM/DMARC headers can be eyeballed. Admin-only.
  */
 export async function POST(request: Request) {
   const auth = await requireAdmin();
@@ -17,8 +24,9 @@ export async function POST(request: Request) {
   if (!outreachConfigured()) {
     return NextResponse.json({
       configured: false,
-      error:
-        "Missing env vars — set OUTREACH_GOOGLE_CLIENT_ID, OUTREACH_GOOGLE_CLIENT_SECRET, and OUTREACH_GOOGLE_REFRESH_TOKEN.",
+      error: outreachEnabled()
+        ? "RESEND_API_KEY is missing."
+        : "OUTREACH_ENABLED is not \"true\" — set it in Vercel (Production) and redeploy.",
     });
   }
 
@@ -32,17 +40,23 @@ export async function POST(request: Request) {
         subject: "MonthlyAlerts outreach test",
         text:
           "This is a test from the prospecting pipeline.\n\n" +
-          "If this landed in your inbox (not spam), the outreach mailbox is working. " +
-          "Check the headers for SPF/DKIM/DMARC = PASS before sending real outreach.",
-        fromName: process.env.OUTREACH_FROM_NAME ?? "MonthlyAlerts",
+          `It was sent from ${outreachAddress()} through Resend, exactly like a real outreach email. ` +
+          "If it landed in your inbox (not Promotions or Spam), open Show original and confirm SPF, DKIM " +
+          "and DMARC all say PASS before approving real sends.\n\n" +
+          `Reply to this email: it should appear in ${appUrl()}/admin/inbox.`,
+        listUnsubscribeUrl: `${appUrl()}/`,
       });
       testSent = true;
     }
-    return NextResponse.json({ configured: true, mailbox: profile.emailAddress, testSent });
+    return NextResponse.json({
+      configured: true,
+      mailbox: `${profile.fromName} <${profile.emailAddress}>`,
+      testSent,
+    });
   } catch (err) {
     return NextResponse.json({
       configured: true,
-      error: err instanceof Error ? err.message : "Gmail API call failed",
+      error: err instanceof Error ? err.message : "Send failed",
     });
   }
 }

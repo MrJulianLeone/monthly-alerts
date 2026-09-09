@@ -4,12 +4,12 @@ import { ADMIN_EMAIL } from "@/lib/admin";
 import { sql } from "@/lib/db";
 import { appUrl, escapeHtml, sendRawEmail } from "@/lib/email";
 import {
+  HARD_DAILY_MAX,
+  inSendWindow,
+  outreachAddress,
   outreachConfigured,
-  outreachListInbox,
+  outreachFromName,
   outreachSend,
-  header,
-  textBody,
-  type GmailMessage,
 } from "@/lib/outreach";
 import {
   bounceRateExceeded,
@@ -22,6 +22,7 @@ import {
   type Prospect,
   type ProspectingSettings,
 } from "@/lib/prospecting";
+import type { SupportMessage } from "@/lib/support";
 
 // The daily prospecting pipeline. Each run advances small batches through
 // every stage; every step is idempotent, so a failed or interrupted run
@@ -35,7 +36,7 @@ function openai(): OpenAI {
   return client;
 }
 
-const FROM_NAME = () => process.env.OUTREACH_FROM_NAME ?? "Julian";
+const FROM_NAME = () => outreachFromName();
 
 const PRODUCT_CONTEXT = `MonthlyAlerts (monthlyalerts.com) is a multilingual construction punch-list tool.
 A project owner sets up a checklist once; subs, inspectors, and crew all work the same list, each in their
@@ -73,80 +74,204 @@ export async function runPipeline(): Promise<PipelineSummary> {
 }
 
 // ---------------------------------------------------------------------------
-// Inbox polling: replies and bounces
+// Inbound: replies, bounces, complaints
+//
+// Outreach goes out from an address on our own domain, so replies land in
+// the same Resend inbound webhook as support mail (support_messages). The
+// webhook hands each inbound message to handleOutreachInbound first; if it
+// belongs to a prospect it is processed here and never reaches the support
+// autoresponder. pollInbox is the daily catch-up sweep over the same table
+// (idempotent), plus DSN-style bounces that arrive as mail. Real bounces and
+// spam complaints arrive as Resend webhook events (email.bounced /
+// email.complained) and are handled by handleBounceEvent / handleComplaint.
 // ---------------------------------------------------------------------------
 
+type InboundMail = {
+  /** Unique id for dedupe (support_messages.id, prefixed). */
+  id: string;
+  fromEmail: string;
+  fromRaw: string;
+  subject: string | null;
+  text: string;
+  messageId: string | null;
+  inReplyTo: string | null;
+};
+
+function fromSupport(m: SupportMessage): InboundMail {
+  const text = m.text_body ?? (m.html_body ? stripHtml(m.html_body) : "");
+  return {
+    id: `support:${m.id}`,
+    fromEmail: m.from_email.toLowerCase(),
+    fromRaw: m.from_name ? `${m.from_name} <${m.from_email}>` : m.from_email,
+    subject: m.subject,
+    text,
+    messageId: m.message_id,
+    inReplyTo: m.in_reply_to,
+  };
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+/** Finds the prospect an inbound message belongs to, by thread first. */
+async function prospectForInbound(mail: InboundMail): Promise<Prospect | null> {
+  const rows = (await sql()`
+    SELECT p.* FROM prospects p
+    LEFT JOIN prospect_emails e
+      ON e.prospect_id = p.id AND e.direction = 'outbound'
+     AND ${mail.inReplyTo}::text IS NOT NULL AND e.message_id_header = ${mail.inReplyTo}
+    WHERE e.id IS NOT NULL
+       OR (p.email IS NOT NULL AND p.email = ${mail.fromEmail} AND p.sent_at IS NOT NULL)
+    ORDER BY (e.id IS NOT NULL) DESC, p.sent_at DESC NULLS LAST
+    LIMIT 1
+  `) as Prospect[];
+  return rows[0] ?? null;
+}
+
+/**
+ * Called by the inbound webhook for every message on our domain. Returns
+ * true when the message was an outreach reply/bounce and has been handled
+ * (so the support autoresponder must not touch it).
+ */
+export async function handleOutreachInbound(message: SupportMessage): Promise<boolean> {
+  const mail = fromSupport(message);
+  const seen = (await sql()`
+    SELECT 1 FROM prospect_emails WHERE gmail_message_id = ${mail.id}
+  `) as unknown[];
+  if (seen.length > 0) return true;
+
+  const isDsn = /mailer-daemon|postmaster|mail delivery/i.test(mail.fromRaw);
+  if (isDsn) return handleDsn(mail);
+  return handleReply(mail);
+}
+
 async function pollInbox(): Promise<StageResult> {
-  if (!outreachConfigured()) return { skipped: "gmail not configured" };
   const settings = await getSettings();
   const after = settings.last_poll_at
     ? new Date(new Date(settings.last_poll_at).getTime() - 60 * 60 * 1000) // 1h overlap
     : new Date(Date.now() - 7 * 86_400_000);
   const pollStarted = new Date();
 
-  const messages = await outreachListInbox(after);
-  let replies = 0;
-  let bounces = 0;
+  const messages = (await sql()`
+    SELECT * FROM support_messages
+    WHERE direction = 'inbound' AND created_at >= ${after.toISOString()}
+    ORDER BY created_at
+    LIMIT 200
+  `) as SupportMessage[];
 
-  for (const msg of messages) {
+  let handled = 0;
+  for (const m of messages) {
     const seen = (await sql()`
-      SELECT 1 FROM prospect_emails WHERE gmail_message_id = ${msg.id}
+      SELECT 1 FROM prospect_emails WHERE gmail_message_id = ${"support:" + m.id}
     `) as unknown[];
     if (seen.length > 0) continue;
-
-    const from = header(msg, "From") ?? "";
-    const failedRecipient = header(msg, "X-Failed-Recipients");
-    const isDsn = /mailer-daemon|postmaster/i.test(from) || Boolean(failedRecipient);
-
-    if (isDsn) {
-      bounces += (await handleBounce(msg, failedRecipient)) ? 1 : 0;
-      continue;
-    }
-    replies += (await handleReply(msg, from)) ? 1 : 0;
+    if (await handleOutreachInbound(m)) handled++;
   }
 
   await sql()`
     UPDATE prospecting_settings SET last_poll_at = ${pollStarted.toISOString()} WHERE id
   `;
-  return { messages: messages.length, replies, bounces };
+  return { scanned: messages.length, handled };
 }
 
-async function handleBounce(msg: GmailMessage, failedRecipient: string | null): Promise<boolean> {
-  const body = textBody(msg);
-  const bounced =
-    failedRecipient?.toLowerCase() ??
-    body.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i)?.[0]?.toLowerCase() ??
-    null;
-
-  const rows = (await sql()`
-    SELECT * FROM prospects
-    WHERE (${bounced}::text IS NOT NULL AND email = ${bounced})
-       OR gmail_thread_id = ${msg.threadId}
-    LIMIT 1
-  `) as Prospect[];
+/** A delivery-status notification that arrived as ordinary mail. */
+async function handleDsn(mail: InboundMail): Promise<boolean> {
+  const bounced = mail.text.match(/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/gi)
+    ?.map((e) => e.toLowerCase())
+    .find((e) => !e.endsWith("@" + outreachAddress().split("@")[1]));
+  if (!bounced) return false;
+  const rows = (await sql()`SELECT * FROM prospects WHERE email = ${bounced} LIMIT 1`) as Prospect[];
   const prospect = rows[0];
   if (!prospect) return false;
+  await recordBounce(prospect, mail.id, mail.subject, mail.text, "Delivery failed (DSN received)");
+  return true;
+}
 
+async function recordBounce(
+  prospect: Prospect,
+  dedupeId: string,
+  subject: string | null,
+  body: string,
+  note: string
+): Promise<void> {
   await sql()`
     INSERT INTO prospect_emails (prospect_id, direction, kind, subject, body_text,
                                  gmail_message_id, gmail_thread_id)
-    VALUES (${prospect.id}, 'inbound', 'bounce', ${header(msg, "Subject")},
-            ${body.slice(0, 4000)}, ${msg.id}, ${msg.threadId})
+    VALUES (${prospect.id}, 'inbound', 'bounce', ${subject}, ${body.slice(0, 4000)},
+            ${dedupeId}, ${prospect.gmail_thread_id})
     ON CONFLICT (gmail_message_id) DO NOTHING
   `;
   if (prospect.email) await suppress(prospect.email, "bounced");
-  await setStatus(prospect.id, "bounced", "Delivery failed (DSN received)");
+  await setStatus(prospect.id, "bounced", note);
 
   if (await bounceRateExceeded()) {
     await sql()`UPDATE prospecting_settings SET paused = true WHERE id AND NOT paused`;
     await alertAdmin(
       "Prospecting paused: bounce rate too high",
-      "The 7-day bounce rate crossed 5%, so outbound sends are paused to protect deliverability.\n" +
+      "The 7-day bounce rate crossed 5%, so outbound sends are paused to protect the domain's deliverability.\n" +
         "Review recent bounces at " + appUrl() + "/admin/prospects, fix the email-finding quality, " +
         "then unpause in settings."
     );
   }
+}
+
+/** Resend `email.bounced` for one of our outreach sends. */
+export async function handleBounceEvent(
+  providerId: string,
+  detail: string
+): Promise<boolean> {
+  const rows = (await sql()`
+    SELECT p.* FROM prospect_emails e JOIN prospects p ON p.id = e.prospect_id
+    WHERE e.gmail_message_id = ${providerId} AND e.direction = 'outbound'
+    LIMIT 1
+  `) as Prospect[];
+  const prospect = rows[0];
+  if (!prospect) return false;
+  await recordBounce(prospect, `bounce:${providerId}`, "Bounce", detail, "Bounced (Resend)");
   return true;
+}
+
+/**
+ * Resend `email.complained`: the recipient marked us as spam. On a shared
+ * domain one complaint is already too many — suppress, pause everything,
+ * and tell the admin.
+ */
+export async function handleComplaint(providerId: string, recipient: string | null): Promise<boolean> {
+  const rows = (await sql()`
+    SELECT p.* FROM prospect_emails e JOIN prospects p ON p.id = e.prospect_id
+    WHERE e.gmail_message_id = ${providerId} AND e.direction = 'outbound'
+    LIMIT 1
+  `) as Prospect[];
+  const prospect = rows[0];
+  const email = prospect?.email ?? recipient?.toLowerCase() ?? null;
+  if (email) await suppress(email, "complaint");
+  if (prospect) {
+    await sql()`
+      INSERT INTO prospect_emails (prospect_id, direction, kind, subject, body_text, gmail_message_id)
+      VALUES (${prospect.id}, 'inbound', 'bounce', 'Spam complaint', 'Recipient reported the email as spam', ${"complaint:" + providerId})
+      ON CONFLICT (gmail_message_id) DO NOTHING
+    `;
+    await setStatus(prospect.id, "suppressed", "Spam complaint — suppressed");
+  }
+  await sql()`UPDATE prospecting_settings SET paused = true WHERE id AND NOT paused`;
+  await alertAdmin(
+    "Prospecting paused: spam complaint",
+    `${email ?? "A recipient"} reported an outreach email as spam. Sending is paused to protect ` +
+      "monthlyalerts.com deliverability (invites, password resets, monthly reports all send from this domain).\n\n" +
+      "Before unpausing: check the last week's sends for anything that isn't personal, short, and relevant; " +
+      "tighten the score threshold or target notes; and keep the daily cap low.\n" +
+      appUrl() + "/admin/prospects"
+  );
+  return !!prospect;
 }
 
 const REPLY_PROMPT = `You classify replies to a cold outreach email about MonthlyAlerts, a construction
@@ -161,19 +286,11 @@ punch-list tool. Respond as JSON: {"class": "interested" | "not_now" | "no" | "u
 
 "note" is one short sentence for the site operator summarizing the reply.`;
 
-async function handleReply(msg: GmailMessage, from: string): Promise<boolean> {
-  const fromEmail = from.match(/<([^>]+)>/)?.[1]?.toLowerCase() ?? from.trim().toLowerCase();
-  const rows = (await sql()`
-    SELECT * FROM prospects
-    WHERE gmail_thread_id = ${msg.threadId}
-       OR (email IS NOT NULL AND email = ${fromEmail})
-    ORDER BY (gmail_thread_id = ${msg.threadId}) DESC
-    LIMIT 1
-  `) as Prospect[];
-  const prospect = rows[0];
-  if (!prospect) return false; // Unrelated mail to the mailbox — leave it alone.
+async function handleReply(mail: InboundMail): Promise<boolean> {
+  const prospect = await prospectForInbound(mail);
+  if (!prospect) return false; // Unrelated mail — leave it to the support inbox.
 
-  const body = textBody(msg).slice(0, 8000);
+  const body = mail.text.slice(0, 8000);
   let verdict: { class: string; note: string } = { class: "other", note: "AI unavailable" };
   try {
     const res = await openai().chat.completions.create({
@@ -181,7 +298,7 @@ async function handleReply(msg: GmailMessage, from: string): Promise<boolean> {
       response_format: { type: "json_object" },
       messages: [
         { role: "system", content: REPLY_PROMPT },
-        { role: "user", content: JSON.stringify({ from, subject: header(msg, "Subject"), body }) },
+        { role: "user", content: JSON.stringify({ from: mail.fromRaw, subject: mail.subject, body }) },
       ],
     });
     const parsed = JSON.parse(res.choices[0].message.content ?? "{}");
@@ -196,8 +313,8 @@ async function handleReply(msg: GmailMessage, from: string): Promise<boolean> {
     INSERT INTO prospect_emails (prospect_id, direction, kind, subject, body_text,
                                  gmail_message_id, gmail_thread_id, message_id_header,
                                  ai_class, ai_note)
-    VALUES (${prospect.id}, 'inbound', 'reply', ${header(msg, "Subject")}, ${body},
-            ${msg.id}, ${msg.threadId}, ${header(msg, "Message-ID")},
+    VALUES (${prospect.id}, 'inbound', 'reply', ${mail.subject}, ${body},
+            ${mail.id}, ${prospect.gmail_thread_id}, ${mail.messageId},
             ${verdict.class}, ${verdict.note})
     ON CONFLICT (gmail_message_id) DO NOTHING
   `;
@@ -247,8 +364,10 @@ ${verdict.note}
 --- Reply ---
 ${body.slice(0, 3000)}
 
-Answer from the outreach mailbox (it's a normal Gmail thread), and review the prospect:
-${appUrl()}/admin/prospects/${prospect.id}`
+Answer from the admin inbox (it replies from ${outreachAddress()} in the same thread):
+${appUrl()}/admin/inbox
+
+Prospect record: ${appUrl()}/admin/prospects/${prospect.id}`
     );
   }
   return true;
@@ -690,11 +809,12 @@ function renderBody(p: Prospect, body: string): string {
     ? body.replaceAll("{{link}}", link)
     : `${body}\n\nP.S. You can see how it works here: ${link}`;
   const unsub = `${appUrl()}/w/${p.visit_token}/u`;
-  return `${rendered}\n\n--\nMonthlyAlerts · If you'd rather not hear from me again: ${unsub}`;
+  return `${rendered}\n\n--\n${FROM_NAME()}, MonthlyAlerts · ${outreachAddress()}\nIf you'd rather not hear from me again, one click stops it: ${unsub}`;
 }
 
 async function sendBatch(): Promise<StageResult> {
-  if (!outreachConfigured()) return { skipped: "gmail not configured" };
+  if (!outreachConfigured()) return { skipped: "outreach not enabled (OUTREACH_ENABLED)" };
+  if (!inSendWindow()) return { skipped: "weekend — no sends" };
   const settings = await getSettings();
   if (settings.paused) return { skipped: "paused" };
   if (await bounceRateExceeded()) {
@@ -704,7 +824,8 @@ async function sendBatch(): Promise<StageResult> {
 
   const startOfDay = new Date();
   startOfDay.setUTCHours(0, 0, 0, 0);
-  const cap = effectiveDailyCap(settings);
+  // Hard ceiling regardless of settings: this is the product's own domain.
+  const cap = Math.min(effectiveDailyCap(settings), HARD_DAILY_MAX);
   let budget = cap - (await sendsSince(startOfDay));
   if (budget <= 0) return { skipped: "daily cap reached", cap };
 
@@ -743,15 +864,16 @@ async function sendBatch(): Promise<StageResult> {
         text: renderBody(p, p.followup_body ?? ""),
         fromName: FROM_NAME(),
         threadId: p.gmail_thread_id ?? undefined,
-        inReplyTo: initial[0]?.message_id_header ?? undefined,
+        inReplyTo: initial[0]?.message_id_header ?? p.gmail_thread_id ?? undefined,
         listUnsubscribeUrl: `${appUrl()}/w/${p.visit_token}/u`,
+        listUnsubscribePostUrl: `${appUrl()}/api/outreach/unsubscribe/${p.visit_token}`,
       });
       await sql()`
         INSERT INTO prospect_emails (prospect_id, direction, kind, subject, body_text,
                                      gmail_message_id, gmail_thread_id, message_id_header)
         VALUES (${p.id}, 'outbound', 'follow_up', ${p.followup_subject},
-                ${renderBody(p, p.followup_body ?? "")}, ${sent.gmailMessageId},
-                ${sent.gmailThreadId}, ${sent.messageIdHeader})
+                ${renderBody(p, p.followup_body ?? "")}, ${sent.providerId},
+                ${sent.threadId}, ${sent.messageIdHeader})
       `;
       await sql()`
         UPDATE prospects
@@ -787,17 +909,18 @@ async function sendBatch(): Promise<StageResult> {
         text: renderBody(p, p.draft_body),
         fromName: FROM_NAME(),
         listUnsubscribeUrl: `${appUrl()}/w/${p.visit_token}/u`,
+        listUnsubscribePostUrl: `${appUrl()}/api/outreach/unsubscribe/${p.visit_token}`,
       });
       await sql()`
         INSERT INTO prospect_emails (prospect_id, direction, kind, subject, body_text,
                                      gmail_message_id, gmail_thread_id, message_id_header)
         VALUES (${p.id}, 'outbound', 'initial', ${p.draft_subject},
-                ${renderBody(p, p.draft_body)}, ${sent.gmailMessageId},
-                ${sent.gmailThreadId}, ${sent.messageIdHeader})
+                ${renderBody(p, p.draft_body)}, ${sent.providerId},
+                ${sent.threadId}, ${sent.messageIdHeader})
       `;
       await sql()`
         UPDATE prospects
-        SET sent_at = now(), status = 'sent', gmail_thread_id = ${sent.gmailThreadId},
+        SET sent_at = now(), status = 'sent', gmail_thread_id = ${sent.threadId},
             updated_at = now()
         WHERE id = ${p.id}
       `;

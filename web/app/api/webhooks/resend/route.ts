@@ -2,15 +2,18 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { NextResponse } from "next/server";
 import { runAutoresponder } from "@/lib/autoresponder";
 import { sql } from "@/lib/db";
+import { handleBounceEvent, handleComplaint, handleOutreachInbound } from "@/lib/prospect-pipeline";
 import { resolveThreadKey, supportAddress, type SupportMessage } from "@/lib/support";
 
 export const maxDuration = 30;
 
 /**
- * Resend inbound-email webhook (email.received). Stores mail sent to the
- * support address in support_messages for the admin inbox. Signed with the
- * svix scheme; RESEND_WEBHOOK_SECRET comes from the webhook's page in the
- * Resend dashboard.
+ * Resend webhook. email.received: stores mail sent to any address on our
+ * domain in support_messages for the admin inbox (outreach replies are routed
+ * to the prospecting pipeline instead of the autoresponder). email.bounced /
+ * email.complained: deliverability signals for outreach sends (a complaint
+ * pauses outreach). Signed with the svix scheme; RESEND_WEBHOOK_SECRET comes
+ * from the webhook's page in the Resend dashboard.
  */
 export async function POST(request: Request) {
   const secret = process.env.RESEND_WEBHOOK_SECRET;
@@ -28,8 +31,31 @@ export async function POST(request: Request) {
   } catch {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
-  if (event.type !== "email.received" || !event.data) {
-    return NextResponse.json({ ok: true, ignored: event.type ?? "unknown" });
+  if (!event.data) return NextResponse.json({ ok: true, ignored: event.type ?? "unknown" });
+
+  if (event.type === "email.bounced" || event.type === "email.complained") {
+    const providerId = str(event.data.email_id) ?? str(event.data.id);
+    if (!providerId) return NextResponse.json({ ok: true, ignored: "no email id" });
+    try {
+      if (event.type === "email.bounced") {
+        const bounce = event.data.bounce as Record<string, unknown> | undefined;
+        const detail = [str(bounce?.type), str(bounce?.subType), str(bounce?.message)]
+          .filter(Boolean)
+          .join(" · ");
+        const matched = await handleBounceEvent(providerId, detail || "Bounced");
+        return NextResponse.json({ ok: true, outreach: matched });
+      }
+      const recipient = addressList(event.data.to)[0] ?? null;
+      const matched = await handleComplaint(providerId, recipient);
+      return NextResponse.json({ ok: true, outreach: matched });
+    } catch (err) {
+      console.error(`${event.type} handling failed:`, err);
+      return NextResponse.json({ ok: true, error: "handler failed" });
+    }
+  }
+
+  if (event.type !== "email.received") {
+    return NextResponse.json({ ok: true, ignored: event.type });
   }
 
   const d = event.data;
@@ -106,7 +132,17 @@ export async function POST(request: Request) {
   // Auto-Submitted/Precedence headers. Skipped entirely on webhook retries
   // (no row inserted).
   if (inserted.length > 0) {
-    await runAutoresponder(inserted[0], { autoSubmitted: isAutoSubmitted(allHeaders) });
+    // Replies to cold outreach belong to the prospecting pipeline (classified,
+    // admin alerted) and must never get an automated support answer.
+    let outreach = false;
+    try {
+      outreach = await handleOutreachInbound(inserted[0]);
+    } catch (err) {
+      console.error("outreach inbound handling failed:", err);
+    }
+    if (!outreach) {
+      await runAutoresponder(inserted[0], { autoSubmitted: isAutoSubmitted(allHeaders) });
+    }
   }
 
   return NextResponse.json({ ok: true });

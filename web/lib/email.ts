@@ -54,6 +54,7 @@ export async function sendRawEmail(opts: {
   html: string;
   text?: string;
   headers?: Record<string, string>;
+  replyTo?: string;
 }) {
   // Test/CI hook: log instead of sending (EMAIL_DISABLED=true).
   if (process.env.EMAIL_DISABLED === "true") {

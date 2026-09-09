@@ -301,13 +301,14 @@ CREATE TABLE IF NOT EXISTS prospects (
   followup_sent_at timestamptz,
   replied_at       timestamptz,
   converted_at     timestamptz,
-  gmail_thread_id  text,                            -- Gmail thread of the outreach
+  gmail_thread_id  text,                            -- outreach thread key (initial email's Message-ID)
   created_at       timestamptz NOT NULL DEFAULT now(),
   updated_at       timestamptz NOT NULL DEFAULT now()
 );
 
 -- Sent + received mail per prospect, in Gmail. kind: 'initial' | 'follow_up'
--- | 'reply' | 'bounce'. gmail_message_id dedupes inbox polling.
+-- | 'reply' | 'bounce'. gmail_message_id is the provider/dedupe id (Resend
+-- email id for outbound; 'support:<id>' / 'bounce:<id>' / 'complaint:<id>' inbound).
 CREATE TABLE IF NOT EXISTS prospect_emails (
   id                uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   prospect_id       uuid NOT NULL REFERENCES prospects(id) ON DELETE CASCADE,

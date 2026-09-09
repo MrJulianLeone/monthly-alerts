@@ -1,5 +1,6 @@
 import { escapeHtml, sendRawEmail } from "@/lib/email";
 import { sql } from "@/lib/db";
+import { outreachAddress, outreachFromName } from "@/lib/outreach";
 
 // Support inbox data layer. See the support_messages comment in db/schema.sql
 // for the threading model.
@@ -195,19 +196,31 @@ export async function sendSupportMessage(opts: {
   const html = `<div style="font-family:-apple-system,Segoe UI,Helvetica,Arial,sans-serif;font-size:15px;line-height:1.6;color:#1c1917;white-space:pre-wrap">${escapeHtml(opts.body)}</div>`;
 
   let headers: Record<string, string> | undefined;
+  let fromAddress = supportAddress();
+  let fromName = process.env.RESEND_FROM_NAME ?? "MonthlyAlerts";
+  let from = supportFrom();
   if (opts.threadKey) {
     const rows = (await sql()`
-      SELECT message_id FROM support_messages
-      WHERE thread_key = ${opts.threadKey} AND direction = 'inbound' AND message_id IS NOT NULL
+      SELECT message_id, to_email FROM support_messages
+      WHERE thread_key = ${opts.threadKey} AND direction = 'inbound'
       ORDER BY created_at DESC LIMIT 1
-    `) as { message_id: string }[];
+    `) as { message_id: string | null; to_email: string }[];
     if (rows.length > 0) {
-      headers = { "In-Reply-To": rows[0].message_id, References: rows[0].message_id };
+      if (rows[0].message_id) {
+        headers = { "In-Reply-To": rows[0].message_id, References: rows[0].message_id };
+      }
+      // A thread that started as cold outreach keeps answering as the person
+      // who wrote it (julian@…), not as "Support".
+      if (rows[0].to_email.toLowerCase() === outreachAddress() && !opts.auto) {
+        fromAddress = outreachAddress();
+        fromName = outreachFromName();
+        from = `${fromName} <${fromAddress}>`;
+      }
     }
   }
 
   const sent = await sendRawEmail({
-    from: supportFrom(),
+    from,
     to,
     subject: opts.subject,
     html,
@@ -222,7 +235,7 @@ export async function sendSupportMessage(opts: {
     VALUES
       ('outbound', ${sent?.id ?? null}, ${headers?.["In-Reply-To"] ?? null},
        ${opts.threadKey ?? crypto.randomUUID()}, ${to},
-       ${supportAddress()}, ${process.env.RESEND_FROM_NAME ?? "MonthlyAlerts"},
+       ${fromAddress}, ${fromName},
        ${to}, ${opts.subject}, ${opts.body}, ${html}, ${opts.auto ?? false})
     RETURNING *
   `) as SupportMessage[];

@@ -76,6 +76,16 @@ outreach, Italy partners, KPI definitions). What the app implements:
   `users.acquisition` / `projects.acquisition`; channel buckets in
   `lib/attribution.ts`; `/admin/kpis` shows monthly funnel, per-channel
   activations, spend (entered there) and CAC vs. the plan's targets.
+- **Contractor outreach** sends from an address on this domain
+  (`OUTREACH_FROM_EMAIL`, default julian@monthlyalerts.com) through Resend, off
+  until `OUTREACH_ENABLED=true`. Safeguards: hand approval of every draft,
+  warm-up ramp with a hard 30/day ceiling, weekdays only, RFC 8058 one-click
+  unsubscribe, permanent suppression list, and circuit breakers (any spam
+  complaint or >5% bounces pauses sending and alerts the admin — the Resend
+  webhook must subscribe to `email.bounced` and `email.complained`). Replies
+  come in through the inbound webhook, are routed to the prospect record
+  instead of the support autoresponder, and are answered from the same address
+  via `/admin/inbox`. Setup and rules: `/admin/prospects/setup`.
 - **Conversion events** (`lib/analytics.ts`): signup, project_created,
   template_used, checkout_started, project_activated → Vercel Analytics, plus
   Google Ads / Meta when `NEXT_PUBLIC_GOOGLE_ADS_ID` / `NEXT_PUBLIC_META_PIXEL_ID`
