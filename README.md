@@ -79,8 +79,9 @@ outreach, Italy partners, KPI definitions). What the app implements:
 - **Contractor outreach** sends from an address on this domain
   (`OUTREACH_FROM_EMAIL`, default julian@monthlyalerts.com) through Resend, off
   until `OUTREACH_ENABLED=true`. Safeguards: hand approval of every draft,
-  warm-up ramp with a hard 30/day ceiling, weekdays only, RFC 8058 one-click
-  unsubscribe, permanent suppression list, and circuit breakers (any spam
+  warm-up ramp with a hard 30/day ceiling, weekdays only, plain text with one
+  link and a reply-to-opt-out footer (RFC 8058 headers opt-in via
+  `OUTREACH_LIST_UNSUBSCRIBE`), permanent suppression list, and circuit breakers (any spam
   complaint or >5% bounces pauses sending and alerts the admin — the Resend
   webhook must subscribe to `email.bounced` and `email.complained`). Replies
   come in through the inbound webhook, are routed to the prospect record
