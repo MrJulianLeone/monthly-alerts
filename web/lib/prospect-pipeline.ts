@@ -808,8 +808,12 @@ function renderBody(p: Prospect, body: string): string {
   const rendered = body.includes("{{link}}")
     ? body.replaceAll("{{link}}", link)
     : `${body}\n\nP.S. You can see how it works here: ${link}`;
-  const unsub = `${appUrl()}/w/${p.visit_token}/u`;
-  return `${rendered}\n\n--\n${FROM_NAME()}, MonthlyAlerts · ${outreachAddress()}\nIf you'd rather not hear from me again, one click stops it: ${unsub}`;
+  // One link only (the tracked one): a second URL and a "unsubscribe" line
+  // are what push a short personal email into Gmail's Promotions tab. The
+  // opt-out is a reply — "no", "not interested", "stop" are classified and
+  // suppressed permanently — and the one-click header path exists when
+  // OUTREACH_LIST_UNSUBSCRIBE is on.
+  return `${rendered}\n\n--\n${FROM_NAME()}, MonthlyAlerts\nNot relevant? Reply "no" and I won't write again.`;
 }
 
 async function sendBatch(): Promise<StageResult> {
